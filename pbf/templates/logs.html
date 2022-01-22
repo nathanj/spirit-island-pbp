@@ -1,0 +1,15 @@
+<div class="content"
+     id="logs"
+     hx-get="{% url 'game_logs' game.id %}"
+     hx-trigger="newLog from:body"
+     hx-swap="outerHTML">
+  Log:
+
+  <ul style="font-size: 1.0rem">
+    {% for log in game.gamelog_set.all %}
+    <li class="p-0 m-0">
+      {{ log.text }}
+    </li>
+    {% endfor %}
+  </ul>
+</div>

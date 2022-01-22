@@ -1,0 +1,3 @@
+[submodule "spirit-island-card-katalog"]
+	path = spirit-island-card-katalog
+	url = https://github.com/oberien/spirit-island-card-katalog.git

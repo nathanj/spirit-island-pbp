@@ -1,0 +1,123 @@
+{% load static %}
+<div id="spirit-{{player.id}}"
+     class="pt-200"
+     hx-target="#spirit-{{player.id}}"
+     hx-swap="outerHTML">
+
+  <div class="content">
+    <img src="{% static player.spirit.url %}" class="img-fluid" alt="{{player.spirit.name}}" />
+  </div>
+
+  <button class="btn"
+	  hx-get="{% url 'ready' player.id %}"
+	  style="background-color: {% if player.ready %}#8a8{% else %}#a88{% endif %};"
+	  >{% if player.ready %}Ready{% else %}Not Ready{% endif %}</button>
+
+  <br/>
+  <textarea class="mt-5"
+	    id="{{player.id}}-notes"
+	    name="notes"
+	    rows="4"
+	    placeholder="Add any notes here..."
+	    hx-post="{% url 'notes' player.id %}"
+	    hx-trigger="keyup changed delay:1000ms"
+	    hx-target="#notes-saved"
+	    hx-indicator="#notes-spinner"
+	    >{{player.notes}}</textarea>
+
+  <span id="notes-spinner"><img src="{% static "pbf/bars.svg" %}" /></span>
+  <span id="notes-saved"></span>
+  <br/>
+
+  {% include "energy.html" %}
+
+  {% if player.selection.count > 0 %}
+  <p>
+  <h4>Selection:</h4>
+  <ul>
+    <div class="container-fluid">
+      <div class="row">
+	{% for card in player.selection.all %}
+	<div class="col-auto">
+	  <div class="w-200 mw-full">
+	    <div class="card p-0 m-15">
+	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+	      <div class="text-center pb-5">
+		<button class="btn" hx-get="{% url 'choose_card' player.id card.id %}">Choose</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	{% endfor %}
+      </div>
+    </div>
+  </ul>
+  {% else %}
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' %}">Gain Minor</button>
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' %}">Gain Major</button>
+  {% endif %}
+
+  <p>
+  <h4>Play/Hand:</h4>
+  <ul>
+    <div class="container-fluid">
+      <div class="row">
+	{% for card in player.play.all %}
+	<div class="col-auto">
+	  <div class="w-200 mw-full">
+	    <div class="card p-0 m-15" style="background-color: #040;">
+	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+	      <div class="text-center pb-5">
+		<button class="btn" hx-get="{% url 'unplay_card' player.id card.id %}">Unplay</button>
+		<button class="btn" hx-get="{% url 'discard_card' player.id card.id %}">Discard</button>
+		<button class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure?">Forget</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	{% endfor %}
+	{% for card in player.hand.all %}
+	<div class="col-auto">
+	  <div class="w-200 mw-full">
+	    <div class="card p-0 m-15">
+	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+	      <div class="text-center pb-5">
+		<button class="btn" hx-get="{% url 'play_card' player.id card.id %}">Play</button>
+		<button class="btn" hx-get="{% url 'discard_card' player.id card.id %}">Discard</button>
+		<button class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure?">Forget</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	{% endfor %}
+      </div>
+    </div>
+  </ul>
+
+  <p>
+  <h4>Discard:</h4>
+  <ul>
+    {% if player.discard.count > 0 %}
+    <button class="btn" hx-get="{% url 'reclaim_all' player.id %}">Reclaim All</button>
+    {% endif %}
+
+
+    <div class="container-fluid">
+      <div class="row">
+	{% for card in player.discard.all %}
+	<div class="col-auto">
+	  <div class="w-200 mw-full">
+	    <div class="card p-0 m-15">
+	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+	      <div class="text-center pb-5">
+		<button class="btn" hx-get="{% url 'reclaim_card' player.id card.id %}">Reclaim</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	{% endfor %}
+      </div>
+    </div>
+
+  </ul>
+</div>

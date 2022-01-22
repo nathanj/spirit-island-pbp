@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block main %}
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-lg-9">
+      <div class="content">
+
+	{% if game.screenshot %}
+	<img src="{{ game.screenshot.url }}" class="img-fluid" />
+	{% endif %}
+
+	{% if game.gameplayer_set.count > 0 %}
+	<div id="tabs" hx-get="{% url 'tab' game.id game.gameplayer_set.first.id %}" hx-trigger="load after:100ms" hx-target="#tabs" hx-swap="innerHTML"></div>
+	{% endif %}
+
+	<hr />
+
+	<h3>Host Actions:</h3>
+
+	<form enctype="multipart/form-data" method="post" action="{% url 'add_screenshot' game.id %}">
+	  {% csrf_token %}
+	  <input type="file" name="screenshot" accept="image/*" id="id_screenshot">
+	  <button type="submit" class="btn">Upload Screenshot</button>
+	</form>
+
+	<form method="post" action="{% url 'unready' game.id %}">
+	  {% csrf_token %}
+	  <button type="submit" class="btn">Unready All</button>
+	</form>
+
+	<form method="post" action="{% url 'time_passes' game.id %}">
+	  {% csrf_token %}
+	  <button type="submit" class="btn" onclick="javascript: return confirm('Are you sure?');">Time Passes</button>
+	</form>
+
+	<form method="post" action="{% url 'add_player' game.id %}">
+	  {% csrf_token %}
+	  <select name="spirit">
+	    {% for spirit in spirits %}
+	    <option value="{{spirit.id}}">{{spirit.name}}</option>
+	    {% endfor %}
+	  </select>
+	  <button type="submit" class="btn" onclick="javascript: return confirm('Are you sure?');">Add Spirit</button>
+	</form>
+
+      </div>
+    </div>
+
+    <div class="col-lg-3">
+      <div class="content">
+	<button class="btn" type="button" onclick="halfmoon.toggleDarkMode()">Dark Mode</button>
+      </div>
+      {% include "logs.html" %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

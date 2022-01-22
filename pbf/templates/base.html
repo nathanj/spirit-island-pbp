@@ -1,0 +1,74 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+    <meta name="viewport" content="width=device-width" />
+
+    <title>Spirit Island</title>
+
+    <link href="{% static 'pbf/halfmoon-variables.min.css' %}" rel="stylesheet" />
+
+<style>
+	#tabs > .tab-list {
+		border-bottom: solid 3px #eee;
+	}
+
+	#tabs > .tab-list a {
+		display: inline-block;
+		padding: 5px 10px;
+		cursor:pointer;
+	}
+
+	#tabs > .tab-list a.selected {
+		background-color: #ccc;
+	}
+
+	#tabs > .tab-content {
+		padding:10px;
+		margin-bottom:100px;
+	}
+	#energy-spinner {
+		display:none;
+	}
+	.htmx-request #energy-spinner {
+		display:inline;
+	}
+	.htmx-request#energy-spinner{
+		display:inline;
+	}
+	#notes-spinner {
+		display:none;
+	}
+	.htmx-request #notes-spinner {
+		display:inline;
+	}
+	.htmx-request#notes-spinner{
+		display:inline;
+	}
+
+
+</style>
+  </head>
+
+  <body data-set-preferred-mode-onload="true">
+
+    <div class="page-wrapper">
+      <div class="content-wrapper">
+	{% block main %}{% endblock %}
+      </div>
+
+    </div>
+
+    <script src="{% static 'pbf/halfmoon.min.js' %}"></script>
+    <script src="{% static 'pbf/htmx.org@1.1.0' %}"></script>
+    <script>
+      document.body.addEventListener('htmx:configRequest', (event) => {
+	event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+      })
+    </script>
+  </body>
+</html>
