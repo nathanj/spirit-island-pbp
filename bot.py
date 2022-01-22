@@ -49,7 +49,7 @@ async def logger():
                     if latest != -1 and len(log) > 0:
                         text = '\n'.join([entry['text'] for entry in log])
                         if debug:
-                            log.debug(text)
+                            print(text)
                         else:
                             await channel.send(embed=discord.Embed(description=text))
                     if latest == -1:
