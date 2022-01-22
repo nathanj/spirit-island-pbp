@@ -1,0 +1,9 @@
+[Unit]
+Description=Spirit Island web site
+
+[Service]
+WorkingDirectory=/home/ubuntu/spirit-island/
+ExecStart=/home/ubuntu/spirit-island/run.sh
+
+[Install]
+WantedBy=default.target

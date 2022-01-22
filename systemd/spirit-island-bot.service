@@ -1,0 +1,9 @@
+[Unit]
+Description=Spirit Island discord bot
+
+[Service]
+WorkingDirectory=/home/ubuntu/spirit-island/
+ExecStart=/home/ubuntu/spirit-island/run-bot.sh
+
+[Install]
+WantedBy=default.target
