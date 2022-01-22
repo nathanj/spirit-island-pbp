@@ -15,6 +15,7 @@ load_dotenv()
 client = discord.Client()
 
 log = structlog.get_logger()
+debug = os.environ.get('DEBUG', None) == 'yes'
 
 @client.event
 async def on_ready():
@@ -47,8 +48,10 @@ async def logger():
                     log = await get_game_log(session, id, latest)
                     if latest != -1 and len(log) > 0:
                         text = '\n'.join([entry['text'] for entry in log])
-                        print(text)
-                        #await channel.send(embed=discord.Embed(description=text))
+                        if debug:
+                            log.debug(text)
+                        else:
+                            await channel.send(embed=discord.Embed(description=text))
                     if latest == -1:
                         game_log_latest[id] = 0
                     game_log_latest[id] = max([entry['id'] for entry in log], default=game_log_latest[id])
