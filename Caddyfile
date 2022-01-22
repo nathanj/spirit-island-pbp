@@ -1,0 +1,16 @@
+si.bitcrafter.net {
+	handle_path /static/* {
+		root * /home/ubuntu/spirit-island/static/
+		file_server
+	}
+
+	handle_path /screenshot/* {
+		root * /home/ubuntu/spirit-island/screenshot/
+		file_server
+	}
+
+	handle {
+		reverse_proxy localhost:8000
+	}
+
+}
