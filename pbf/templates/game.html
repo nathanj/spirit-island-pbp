@@ -8,7 +8,9 @@
       <div class="content">
 
 	{% if game.screenshot %}
-	<img src="{{ game.screenshot.url }}" class="img-fluid" />
+	<a href="{{ game.screenshot.url }}">
+	  <img src="{{ game.screenshot.url }}" class="img-fluid" />
+	</a>
 	{% endif %}
 
 	{% if game.gameplayer_set.count > 0 %}
