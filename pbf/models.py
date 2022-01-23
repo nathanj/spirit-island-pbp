@@ -40,7 +40,7 @@ class Game(models.Model):
     minor_deck = models.ManyToManyField(Card, related_name='minor_deck')
     major_deck = models.ManyToManyField(Card, related_name='major_deck')
     screenshot = models.ImageField(upload_to='screenshot', blank=True)
-    discord_channel = models.CharField(max_length=255, default="")
+    discord_channel = models.CharField(max_length=255, default="", blank=True)
 
     def __str__(self):
         return str(self.id)
