@@ -39,10 +39,11 @@ class Game(models.Model):
     name = models.CharField(max_length=255, blank=False)
     minor_deck = models.ManyToManyField(Card, related_name='minor_deck')
     major_deck = models.ManyToManyField(Card, related_name='major_deck')
-    screenshot = models.ImageField(upload_to='screenshot')
+    screenshot = models.ImageField(upload_to='screenshot', blank=True)
+    discord_channel = models.CharField(max_length=255, default="")
 
     def __str__(self):
-        return self.name
+        return str(self.id)
 
 class GamePlayer(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)

@@ -10,7 +10,7 @@ api = NinjaAPI()
 class GameSchema(ModelSchema):
     class Config:
         model = Game
-        model_fields = ['id', 'turn', 'name']
+        model_fields = ['id', 'turn', 'name', 'discord_channel']
 
 class GameLogSchema(ModelSchema):
     class Config:

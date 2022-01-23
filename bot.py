@@ -37,20 +37,21 @@ async def get_game_log(session, id, latest):
 async def logger():
     game_log_latest = defaultdict(lambda: -1)
     await asyncio.sleep(10)
-    channel = client.get_channel(int(os.environ['DISCORD_CHANNEL']))
     async with aiohttp.ClientSession() as session:
         while True:
             try:
                 games = await get_games(session)
                 for g in games:
                     id = g['id']
+                    channel_id = g['discord_channel']
                     latest = game_log_latest[id]
                     log = await get_game_log(session, id, latest)
                     if latest != -1 and len(log) > 0:
                         text = '\n'.join([entry['text'] for entry in log])
                         if debug:
                             print(text)
-                        else:
+                        elif len(channel_id) > 0:
+                            channel = client.get_channel(int(channel_id))
                             await channel.send(embed=discord.Embed(description=text))
                     if latest == -1:
                         game_log_latest[id] = 0
