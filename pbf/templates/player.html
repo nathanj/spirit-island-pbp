@@ -44,6 +44,7 @@
 	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      <div class="text-center pb-5">
 		<button class="btn" hx-get="{% url 'choose_card' player.id card.id %}">Choose</button>
+		<button class="btn" hx-get="{% url 'choose_card2' player.id card.id %}">Choose + Another</button>
 	      </div>
 	    </div>
 	  </div>
@@ -53,8 +54,8 @@
     </div>
   </ul>
   {% else %}
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' %}">Gain Minor</button>
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' %}">Gain Major</button>
+  <p>Gain Minor: <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}">4 Cards</button> <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '6' %}">6 Cards</button>
+  <p>Gain Major: <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}">4 Cards</button>
   {% endif %}
 
   <p>

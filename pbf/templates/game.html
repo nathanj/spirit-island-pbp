@@ -45,6 +45,16 @@
 	  <button type="submit" class="btn" onclick="javascript: return confirm('Are you sure?');">Add Spirit</button>
 	</form>
 
+	<form method="post" action="{% url 'draw_card' game.id 'minor' %}">
+	  {% csrf_token %}
+	  <button type="submit" class="btn">Draw Minor Power</button>
+	</form>
+
+	<form method="post" action="{% url 'draw_card' game.id 'major' %}">
+	  {% csrf_token %}
+	  <button type="submit" class="btn">Draw Major Power</button>
+	</form>
+
       </div>
     </div>
 
