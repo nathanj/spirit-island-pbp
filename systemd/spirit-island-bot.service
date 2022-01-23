@@ -2,6 +2,8 @@
 Description=Spirit Island discord bot
 
 [Service]
+User=ubuntu
+Group=ubuntu
 WorkingDirectory=/home/ubuntu/spirit-island/
 ExecStart=/home/ubuntu/spirit-island/run-bot.sh
 

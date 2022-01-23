@@ -8,10 +8,10 @@ git reset --hard origin/master
 
 echo Restarting services
 
-systemctl --user restart spirit-island
-systemctl --user restart spirit-island-bot
+sudo systemctl restart spirit-island
+sudo systemctl restart spirit-island-bot
 
 sleep 5
 
-systemctl --user status spirit-island
-systemctl --user status spirit-island-bot
+systemctl status spirit-island
+systemctl status spirit-island-bot
