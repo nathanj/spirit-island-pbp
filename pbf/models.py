@@ -11,7 +11,7 @@ class Spirit(models.Model):
         return Card.objects.filter(spirit_id=self.id)
 
     def url(self):
-        return '/pbf/' + self.name.lower() + '.jpg'
+        return '/pbf/' + self.name.replace(' ', '-').lower() + '.jpg'
 
 class Card(models.Model):
     MINOR = 0

@@ -338,17 +338,4 @@ class Command(BaseCommand):
         if settings.DEBUG:
             User.objects.create_superuser(username='admin', password='admin').save()
 
-        g = Game(name='My Game')
-        g.save()
-        g.minor_deck.set(Card.objects.filter(type=Card.MINOR))
-        g.major_deck.set(Card.objects.filter(type=Card.MAJOR))
-
-        gp = GamePlayer(game=g, spirit=Spirit.objects.get(name='Finder'), notes="You can add notes here...\ntop:1 bottom:1")
-        gp.save()
-        gp.hand.set(Card.objects.filter(spirit=Spirit.objects.get(name='Finder')))
-
-        gp = GamePlayer(game=g, spirit=Spirit.objects.get(name='Stone'))
-        gp.save()
-        gp.hand.set(Card.objects.filter(spirit=Spirit.objects.get(name='Stone')))
-
         self.stdout.write(self.style.SUCCESS('Seeded database'))
