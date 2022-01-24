@@ -20,7 +20,7 @@
 	    rows="4"
 	    placeholder="Add any notes here..."
 	    hx-post="{% url 'notes' player.id %}"
-	    hx-trigger="keyup changed delay:1000ms"
+	    hx-trigger="keyup changed delay:5000ms"
 	    hx-target="#notes-saved"
 	    hx-indicator="#notes-spinner"
 	    >{{player.notes}}</textarea>
