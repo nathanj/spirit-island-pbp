@@ -93,7 +93,8 @@ def gain_power(request, player_id, type, num):
 
     player.selection.set(selection)
 
-    player.game.gamelog_set.create(text=f'{player.spirit.name} gains a {type} power')
+    cards_str = ", ".join([str(card) for card in selection])
+    player.game.gamelog_set.create(text=f'{player.spirit.name} gains a {type} power. Choices: {cards_str}')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
