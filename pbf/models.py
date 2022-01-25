@@ -48,13 +48,13 @@ class Game(models.Model):
 class GamePlayer(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     spirit = models.ForeignKey(Spirit, blank=False, on_delete=models.CASCADE)
-    hand = models.ManyToManyField(Card, related_name='hand')
-    discard = models.ManyToManyField(Card, related_name='discard')
-    play = models.ManyToManyField(Card, related_name='play')
-    selection = models.ManyToManyField(Card, related_name='selection')
+    hand = models.ManyToManyField(Card, related_name='hand', blank=True)
+    discard = models.ManyToManyField(Card, related_name='discard', blank=True)
+    play = models.ManyToManyField(Card, related_name='play', blank=True)
+    selection = models.ManyToManyField(Card, related_name='selection', blank=True)
     ready = models.BooleanField(default=False)
     energy = models.IntegerField(default=0)
-    notes = models.TextField()
+    notes = models.TextField(blank=True)
 
 class GameLog(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
