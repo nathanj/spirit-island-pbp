@@ -271,9 +271,9 @@ def change_energy(request, player_id, amount):
     player.save()
 
     if amount > 0:
-        player.game.gamelog_set.create(text=f'{player.spirit.name} gains {amount} energy')
+        player.game.gamelog_set.create(text=f'{player.spirit.name} gains {amount} energy ({player.energy})')
     else:
-        player.game.gamelog_set.create(text=f'{player.spirit.name} pays {-amount} energy')
+        player.game.gamelog_set.create(text=f'{player.spirit.name} pays {-amount} energy ({player.energy})')
 
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
