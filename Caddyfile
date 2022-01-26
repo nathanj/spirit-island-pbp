@@ -1,4 +1,6 @@
 si.bitcrafter.net {
+	encode gzip
+
 	handle_path /static/* {
 		root * /home/ubuntu/spirit-island/static/
 		file_server
