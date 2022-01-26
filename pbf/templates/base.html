@@ -50,6 +50,18 @@
 		display:inline;
 	}
 
+@media screen and (max-device-width:1400px), screen and (max-width:1400px) {
+	#my-container {
+		transform: translateX(-10%) scale(0.8);
+	}
+}
+
+@media screen and (max-device-width:850px), screen and (max-width:850px) {
+	#my-container {
+		transform: translateX(-30%) scale(0.4);
+	}
+}
+
 
 </style>
   </head>
@@ -65,10 +77,15 @@
 
     <script src="{% static 'pbf/halfmoon.min.js' %}"></script>
     <script src="{% static 'pbf/htmx.org@1.1.0' %}"></script>
+    <script src="{% static 'pbf/fabric.min.js' %}"></script>
+    <script src="{% static 'pbf/axios.min.js' %}"></script>
     <script>
       document.body.addEventListener('htmx:configRequest', (event) => {
 	event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
       })
+
+axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
+axios.defaults.xsrfCookieName = "csrftoken";
     </script>
   </body>
 </html>

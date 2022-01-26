@@ -44,7 +44,7 @@
 	    <option value="{{spirit.id}}">{{spirit.name}}</option>
 	    {% endfor %}
 	  </select>
-	  <button type="submit" class="btn" onclick="javascript: return confirm('Are you sure?');">Add Spirit</button>
+	  <button type="submit" class="btn" >Add Spirit</button>
 	</form>
 
 	<form method="post" action="{% url 'draw_card' game.id 'minor' %}">

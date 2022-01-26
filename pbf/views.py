@@ -1,3 +1,4 @@
+import json
 from random import shuffle
 
 from django.db import transaction
@@ -32,12 +33,42 @@ def new_game(request):
     game.major_deck.set(Card.objects.filter(type=Card.MAJOR))
     return redirect(reverse('view_game', args=[game.id]))
 
+spirit_presence = {
+        'Bringer': ((465,160,1.0), (535,160,1.0), (605,160,1.0), (675,160,1.0), (745,160,1.0), (815,160,1.0), (465,260,1.0), (535,260,1.0), (605,260,1.0), (675,260,1.0), (745,260,1.0)),
+        'Stone': ((465,155,1.0), (538,155,1.0), (611,155,1.0), (684,155,1.0), (757,155,1.0), (830,155,1.0), (465,257,1.0), (538,257,1.0), (611,257,1.0), (684,257,1.0), (757,257,1.0)),
+        'Serpent': ((457,158,1.0), (527,158,1.0), (597,158,1.0), (732,158,1.0), (802,158,1.0), (872,158,1.0),
+            (667,208,1.0), 
+            (457,258,1.0), (527,258,1.0), (597,258,1.0), (742,258,1.0), (812,258,1.0),
+            (83,487,1.0), (153,487,1.0), (223,487,1.0),
+            (50,547,1.0), (120,547,1.0), (190,547,1.0),
+            ),
+        }
+
+
+@transaction.atomic
 def add_player(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
+    colors = {
+            'red': '#fc3b5a',
+            'peach': '#ffd585',
+            'purple': '#715dff',
+            'pink': '#e67bfe',
+            'orange': '#d15a01',
+            'green': '#0d9501',
+            }
+    color_values = list(colors.values())
+    for player in game.gameplayer_set.all():
+        color_values.remove(player.color)
+    shuffle(color_values)
     spirit_id = int(request.POST['spirit'])
     spirit = get_object_or_404(Spirit, pk=spirit_id)
-    gp = GamePlayer(game=game, spirit=spirit, notes="You can add notes here...\ntop:1 bottom:1")
+    gp = GamePlayer(game=game, spirit=spirit, notes="You can add notes here...\ntop:1 bottom:1", color=color_values[0])
     gp.save()
+    try:
+        for presence in spirit_presence[spirit.name]:
+            gp.presence_set.create(left=presence[0], top=presence[1], opacity=presence[2])
+    except:
+        pass
     gp.hand.set(Card.objects.filter(spirit=spirit))
     return redirect(reverse('view_game', args=[game.id]))
 
@@ -276,6 +307,17 @@ def change_energy(request, player_id, amount):
         player.game.gamelog_set.create(text=f'{player.spirit.name} pays {-amount} energy ({player.energy})')
 
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
+
+@transaction.atomic
+def toggle_presence(request, player_id):
+    j = json.loads(request.body)
+    print(j)
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    presence = get_object_or_404(player.presence_set, left=j['left'], top=j['top'])
+    presence.opacity = abs(1.0 - presence.opacity)
+    presence.save()
+
+    return HttpResponse("")
 
 
 def tab(request, game_id, player_id):

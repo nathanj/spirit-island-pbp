@@ -55,6 +55,16 @@ class GamePlayer(models.Model):
     ready = models.BooleanField(default=False)
     energy = models.IntegerField(default=0)
     notes = models.TextField(blank=True)
+    color = models.CharField(max_length=255, blank=True)
+
+    def __str__(self):
+        return str(self.id) + ' - ' + str(self.spirit.name)
+
+class Presence(models.Model):
+    game_player = models.ForeignKey(GamePlayer, on_delete=models.CASCADE)
+    left = models.IntegerField()
+    top = models.IntegerField()
+    opacity = models.FloatField(default=1.0)
 
 class GameLog(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
