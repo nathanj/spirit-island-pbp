@@ -60,6 +60,13 @@ class GamePlayer(models.Model):
     def __str__(self):
         return str(self.id) + ' - ' + str(self.spirit.name)
 
+    def border_color(self):
+        r = int(self.color[1:3], 16)
+        g = int(self.color[3:5], 16)
+        b = int(self.color[5:7], 16)
+
+        return "#%02x%02x%02x" % (r // 2, g // 2, b // 2)
+
 class Presence(models.Model):
     game_player = models.ForeignKey(GamePlayer, on_delete=models.CASCADE)
     left = models.IntegerField()
