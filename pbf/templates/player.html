@@ -5,9 +5,9 @@
      hx-swap="outerHTML">
 
   <div class="content">
-	  <div id="my-container">
-    <canvas id="spirit-img" width="957" height="630" ></canvas>
-	  </div>
+    <div id="my-container">
+      <canvas id="spirit-img" width="957" height="630" ></canvas>
+    </div>
 	<script>
 	    var canvas = this.__canvas = new fabric.Canvas('spirit-img', {
 	      hoverCursor: 'pointer',
@@ -23,7 +23,7 @@
 	      canvas.add(img);
 
 	      {% for presence in player.presence_set.all %}
-	      var circle = new fabric.Circle({ radius: 30, fill: '{{ player.color }}', left: {{presence.left}}, top: {{presence.top}}, opacity: {{presence.opacity}}, stroke: '{{ player.border_color}}', strokeWidth: 1, strokeUniform: true });
+	      var circle = new fabric.Circle({ radius: 30, fill: '{{ player.color }}', left: {{presence.left}}, top: {{presence.top}}, opacity: {{presence.opacity}}, stroke: '{{ player.border_color}}', strokeWidth: 3, strokeUniform: true });
 	      circle.hasControls = false;
 	      circle.hasBorders = false;
 	      circle.selectable = false;
