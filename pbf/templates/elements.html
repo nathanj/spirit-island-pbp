@@ -1,0 +1,81 @@
+{% load static %}
+<div id="spirit-elements-{{player.id}}"
+     hx-target="#spirit-elements-{{player.id}}"
+     hx-swap="outerHTML">
+  <p>
+
+  <a hx-get="{% url 'add_element' player.id 'sun' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-sun.png" %}" alt="sun" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.sun }}</span>
+  </a>
+  {% if player.temporary_sun > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element' player.id 'sun' %}">(+{{player.temporary_sun}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+  <a hx-get="{% url 'add_element' player.id 'moon' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-moon.png" %}" alt="moon" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.moon }}</span>
+  </a>
+  {% if player.temporary_moon > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element' player.id 'moon' %}">(+{{player.temporary_moon}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+  <a hx-get="{% url 'add_element' player.id 'fire' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-fire.png" %}" alt="fire" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.fire }}</span>
+  </a>
+  {% if player.temporary_fire > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element' player.id 'fire' %}">(+{{player.temporary_fire}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+  <a hx-get="{% url 'add_element' player.id 'air' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-air.png" %}" alt="air" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.air }}</span>
+  </a>
+  {% if player.temporary_air > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element' player.id 'air' %}">(+{{player.temporary_air}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+  <a hx-get="{% url 'add_element' player.id 'water' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-water.png" %}" alt="water" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.water }}</span>
+  </a>
+  {% if player.temporary_water > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element' player.id 'water' %}">(+{{player.temporary_water}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+
+  <a hx-get="{% url 'add_element' player.id 'earth' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-earth.png" %}" alt="earth" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.earth }}</span>
+  </a>
+  {% if player.temporary_earth > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element' player.id 'earth' %}">(+{{player.temporary_earth}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+  <a hx-get="{% url 'add_element' player.id 'plant' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-plant.png" %}" alt="plant" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.plant }}</span>
+  </a>
+  {% if player.temporary_plant > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element' player.id 'plant' %}">(+{{player.temporary_plant}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+  <a hx-get="{% url 'add_element' player.id 'animal' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-animal.png" %}" alt="animal" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.animal }}</span>
+  </a>
+  {% if player.temporary_animal > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element' player.id 'animal' %}">(+{{player.temporary_animal}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+  </p>
+</div>

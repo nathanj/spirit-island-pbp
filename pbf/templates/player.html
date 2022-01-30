@@ -11,6 +11,7 @@
   <br/>
 
   {% include "energy.html" %}
+  {% include "elements.html" %}
 
   {% if player.selection.count > 0 %}
   <p>
@@ -36,12 +37,16 @@
   </ul>
   {% else %}
   <p>Gain Minor: <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}">4 Cards</button> <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '6' %}">6 Cards</button>
-  <p>Gain Major: <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}">4 Cards</button>
+  <p>Gain Major: <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}">4 Cards</button> <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards</button>
   {% endif %}
 
   <p>
   <h4>Play/Hand:</h4>
   <ul>
+    {% if player.play.count > 0 %}
+    <button class="btn" hx-get="{% url 'discard_all' player.id %}">Discard All Played</button>
+    {% endif %}
+
     <div class="container-fluid">
       <div class="row">
 	{% for card in player.play.all %}

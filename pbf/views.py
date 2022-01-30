@@ -142,7 +142,8 @@ def view_game(request, game_id):
         form = GameForm(instance=game)
 
     spirits = Spirit.objects.order_by('name').all()
-    return render(request, 'game.html', { 'game': game, 'form': form, 'spirits': spirits })
+    logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
+    return render(request, 'game.html', { 'game': game, 'form': form, 'spirits': spirits, 'logs': logs })
 
 @transaction.atomic
 def draw_card(request, game_id, type):
@@ -274,6 +275,18 @@ def reclaim_all(request, player_id):
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 @transaction.atomic
+def discard_all(request, player_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    cards = list(player.play.all())
+    for card in cards:
+        player.discard.add(card)
+    player.play.clear()
+
+    player.game.gamelog_set.create(text=f'{player.spirit.name} discards all')
+
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
+@transaction.atomic
 def discard_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     try:
@@ -332,10 +345,6 @@ def unready(request, game_id):
 def time_passes(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
     for player in game.gameplayer_set.all():
-        cards = player.play.all()
-        for card in cards:
-            player.discard.add(card)
-        player.play.clear()
         player.ready = False
         player.save()
     game.turn += 1
@@ -355,22 +364,62 @@ def change_energy(request, player_id, amount):
     player.save()
 
     if amount > 0:
-        player.game.gamelog_set.create(text=f'{player.spirit.name} gains {amount} energy ({player.energy})')
+        player.game.gamelog_set.create(text=f'{player.spirit.name} gains {amount} energy (now: {player.energy})')
     else:
-        player.game.gamelog_set.create(text=f'{player.spirit.name} pays {-amount} energy ({player.energy})')
+        player.game.gamelog_set.create(text=f'{player.spirit.name} pays {-amount} energy (now: {player.energy})')
+
+    return with_log_trigger(render(request, 'energy.html', {'player': player}))
+
+@transaction.atomic
+def pay_energy(request, player_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    amount = player.get_play_cost()
+    player.energy -= amount
+    player.save()
+
+    player.game.gamelog_set.create(text=f'{player.spirit.name} pays {amount} energy (now: {player.energy})')
 
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
 @transaction.atomic
 def toggle_presence(request, player_id):
     j = json.loads(request.body)
-    print(j)
     player = get_object_or_404(GamePlayer, pk=player_id)
     presence = get_object_or_404(player.presence_set, left=j['left'], top=j['top'])
     presence.opacity = abs(1.0 - presence.opacity)
     presence.save()
 
     return HttpResponse("")
+
+@transaction.atomic
+def add_element(request, player_id, element):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    if element == 'sun': player.temporary_sun += 1
+    if element == 'moon': player.temporary_moon += 1
+    if element == 'fire': player.temporary_fire += 1
+    if element == 'air': player.temporary_air += 1
+    if element == 'water': player.temporary_water += 1
+    if element == 'earth': player.temporary_earth += 1
+    if element == 'plant': player.temporary_plant += 1
+    if element == 'animal': player.temporary_animal += 1
+    player.save()
+
+    return with_log_trigger(render(request, 'elements.html', {'player': player}))
+
+@transaction.atomic
+def remove_element(request, player_id, element):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    if element == 'sun': player.temporary_sun = 0
+    if element == 'moon': player.temporary_moon = 0
+    if element == 'fire': player.temporary_fire = 0
+    if element == 'air': player.temporary_air = 0
+    if element == 'water': player.temporary_water = 0
+    if element == 'earth': player.temporary_earth = 0
+    if element == 'plant': player.temporary_plant = 0
+    if element == 'animal': player.temporary_animal = 0
+    player.save()
+
+    return with_log_trigger(render(request, 'elements.html', {'player': player}))
 
 
 def tab(request, game_id, player_id):
@@ -380,5 +429,6 @@ def tab(request, game_id, player_id):
 
 def game_logs(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
-    return render(request, 'logs.html', {'game': game})
+    logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
+    return render(request, 'logs.html', {'game': game, 'logs': logs})
 

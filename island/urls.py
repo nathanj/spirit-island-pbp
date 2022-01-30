@@ -26,9 +26,13 @@ urlpatterns = [
     path('game/<int:player_id>/forget/<int:card_id>', views.forget_card, name='forget_card'),
     path('game/<int:player_id>/reclaim/<int:card_id>', views.reclaim_card, name='reclaim_card'),
     path('game/<int:player_id>/reclaim/all', views.reclaim_all, name='reclaim_all'),
+    path('game/<int:player_id>/discard/all', views.discard_all, name='discard_all'),
     path('game/<int:player_id>/discard/<int:card_id>', views.discard_card, name='discard_card'),
+    path('game/<int:player_id>/energy/pay', views.pay_energy, name='pay_energy'),
     path('game/<int:player_id>/energy/<str:amount>', views.change_energy, name='change_energy'),
     path('game/<int:player_id>/presence', views.toggle_presence, name='toggle_presence'),
     path('game/<int:player_id>/ready', views.ready, name='ready'),
     path('game/<int:player_id>/notes', views.notes, name='notes'),
+    path('game/<int:player_id>/element/<str:element>/add', views.add_element, name='add_element'),
+    path('game/<int:player_id>/element/<str:element>/remove', views.remove_element, name='remove_element'),
 ]
