@@ -1,5 +1,14 @@
+(static) {
+	@static {
+		file
+		path *.ico *.css *.js *.gif *.jpg *.jpeg *.png *.svg *.woff *.woff2
+	}
+	header @static Cache-Control max-age=5184000
+}
+
 si.bitcrafter.net {
-	encode gzip
+	import static
+	encode zstd gzip
 
 	handle_path /static/* {
 		root * /home/ubuntu/spirit-island/static/
