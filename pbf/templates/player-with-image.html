@@ -1,52 +1,16 @@
 {% load static %}
-  <div class="content">
-    <div id="my-container">
-      <canvas id="spirit-img" width="957" height="630" ></canvas>
-    </div>
-	<script>
-	    var canvas = this.__canvas = new fabric.Canvas('spirit-img', {
-	      hoverCursor: 'pointer',
-	      selection: false,
-	      targetFindTolerance: 2
-	    });
-
-	    fabric.Image.fromURL("{% static player.spirit.url %}", function(img) {
-	      img.set({left: 0, top: 0});
-	      img.scaleX = 957.0 / img.width;
-	      img.scaleY = 630.0 / img.height;
-	      img.selectable = img.hasControls = img.hasBorders = false;
-	      canvas.add(img);
-
-	      {% for presence in player.presence_set.all %}
-	      var circle = new fabric.Circle({ radius: 30, fill: '{{ player.color }}', left: {{presence.left}}, top: {{presence.top}}, opacity: {{presence.opacity}}, stroke: '{{ player.border_color}}', strokeWidth: 3, strokeUniform: true });
-	      circle.hasControls = false;
-	      circle.hasBorders = false;
-	      circle.selectable = false;
-	      circle.on({
-			'mousedown': function(e) {
-			  e.target.opacity = Math.abs(e.target.opacity - 1.0);
-
-			  axios.post("{% url 'toggle_presence' player.id %}", {
-			    left: e.target.left,
-			    top: e.target.top
-			  })
-			    .then(function (response) {
-			      // handle success
-			      //console.log(response);
-			    })
-			    .catch(function (error) {
-			      // handle error
-			      //console.log(error);
-			    })
-			    .then(function () {
-			      // always executed
-			    });
-			}
-	      });
-	      canvas.add(circle);
-	      {% endfor %}
-	    });
-	</script>
+<div id="spirit-image-{{player.id}}"
+     class="content spirit-image"
+     hx-target="#spirit-image-{{player.id}}"
+     hx-swap="outerHTML">
+  <div style="position: relative">
+    {% for presence in player.presence_set.all %}
+    <a style="cursor: pointer" hx-post="{% url 'toggle_presence' player.id presence.left presence.top %}">
+      <img style="position: absolute; left: {{presence.left}}px; top: {{presence.top}}px; opacity: {{presence.opacity}};" src="{% static player.disk_url %}" width="90" height="90" />
+    </a>
+    {% endfor %}
+    <img src="{% static player.spirit.url %}" width="957" height="630" />
   </div>
 
   {% include "player.html" %}
+</div>

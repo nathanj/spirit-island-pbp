@@ -66,6 +66,16 @@ class Game(models.Model):
     def __str__(self):
         return str(self.id)
 
+
+colors_to_circle_color_map = {
+        'blue': '#715dff',
+        'green': '#0d9501',
+        'orange': '#d15a01',
+        'purple': '#e67bfe',
+        'red': '#fc3b5a',
+        'yellow': '#ffd585',
+        }
+
 class GamePlayer(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     spirit = models.ForeignKey(Spirit, blank=False, on_delete=models.CASCADE)
@@ -89,12 +99,11 @@ class GamePlayer(models.Model):
     def __str__(self):
         return str(self.id) + ' - ' + str(self.spirit.name)
 
-    def border_color(self):
-        r = int(self.color[1:3], 16)
-        g = int(self.color[3:5], 16)
-        b = int(self.color[5:7], 16)
+    def disk_url(self):
+        return 'pbf/disk_' + self.color + '.png'
 
-        return "#%02x%02x%02x" % (r // 2, g // 2, b // 2)
+    def circle_color(self):
+        return colors_to_circle_color_map[self.color]
 
     @property
     def elements(self):
