@@ -40,19 +40,6 @@ def combine_images(filenames):
 async def on_ready():
     print(f'We have logged in as {client}')
 
-async def get_games(session):
-    async with session.get('http://localhost:8000/api/game') as response:
-        if response.status == 200:
-            return await response.json()
-    return []
-
-async def get_game_log(session, id, latest):
-    LOG.msg("getting log", id=id, latest=latest)
-    async with session.get(f'http://localhost:8000/api/game/{id}/log?after={latest}') as response:
-        if response.status == 200:
-            return await response.json()
-    return []
-
 async def relay_game(channel_id, log):
     channel = client.get_channel(channel_id)
     combined_text = []
@@ -89,8 +76,8 @@ async def logger():
         try:
             async with async_timeout.timeout(5):
                 message = await pubsub.get_message(ignore_subscribe_messages=True)
-                LOG.msg("got message", message=message)
                 if message is not None:
+                    LOG.msg("got message", message=message)
                     channel_id = int(message['channel'].split(':')[1])
                     print(channel_id)
                     if channel_id in game_log_buffer:
@@ -99,21 +86,16 @@ async def logger():
                         game_log_buffer[channel_id] = {'timestamp': datetime.datetime.utcnow(), 'logs': []}
                     game_log_buffer[channel_id]['logs'].append(json.loads(message['data']))
 
-                LOG.msg("buffer", game_log_buffer=game_log_buffer)
                 keys = list(game_log_buffer.keys())
                 for channel_id in keys:
-                    LOG.msg("now", now=datetime.datetime.utcnow())
-                    LOG.msg("sending at", send=(game_log_buffer[channel_id]['timestamp'] + datetime.timedelta(minutes=1)))
-                    if game_log_buffer[channel_id]['timestamp'] + datetime.timedelta(seconds=10) < datetime.datetime.utcnow():
-                        print('actually sending data!')
+                    if game_log_buffer[channel_id]['timestamp'] + datetime.timedelta(seconds=60) < datetime.datetime.utcnow():
+                        LOG.msg('sending', channel_id=channel_id)
                         await relay_game(channel_id, game_log_buffer[channel_id]['logs'])
                         del game_log_buffer[channel_id]
                 await asyncio.sleep(1)
         except asyncio.TimeoutError:
-            print('timeout')
+            LOG.msg('timeout')
             pass
-
-    #await asyncio.sleep(10)
 
 client.loop.create_task(logger())
 client.run(os.environ['DISCORD_KEY'])
