@@ -15,6 +15,8 @@ python-dotenv = "^0.19.2"
 "discord.py" = "^1.7.3"
 requests-async = "^0.6.2"
 structlog = "^21.5.0"
+redis = "^4.1.2"
+aioredis = {extras = ["hiredis"], version = "^2.0.1"}
 
 [tool.poetry.dev-dependencies]
 

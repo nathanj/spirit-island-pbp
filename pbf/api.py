@@ -15,7 +15,7 @@ class GameSchema(ModelSchema):
 class GameLogSchema(ModelSchema):
     class Config:
         model = GameLog
-        model_fields = ['id', 'date', 'text']
+        model_fields = ['id', 'date', 'text', 'images']
 
 @api.get("/game", response=List[GameSchema])
 def game(request):

@@ -1,5 +1,6 @@
 [Unit]
 Description=Spirit Island web site
+Wants=redis-server.service
 
 [Service]
 User=ubuntu

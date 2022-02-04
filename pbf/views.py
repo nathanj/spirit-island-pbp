@@ -9,6 +9,18 @@ from django.urls import reverse
 
 from .models import *
 
+import redis
+
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=1)
+
+def add_log_msg(game, text, images=None):
+    game.gamelog_set.create(text=text, images=images)
+    if len(game.discord_channel) > 0:
+        j = {'text': text}
+        if images is not None:
+            j['images'] = images
+        redis_client.publish(f'log-relay:{game.discord_channel}', json.dumps(j))
+
 class GameForm(ModelForm):
     class Meta:
         model = Game
@@ -128,12 +140,8 @@ def view_game(request, game_id):
     if request.method == 'POST':
         form = GameForm(request.POST, request.FILES, instance=game)
         if form.is_valid():
-            # file is saved
             form.save()
-            #if old_screenshot is None:
-            game.gamelog_set.create(text=f'New screenshot uploaded.')
-            #else:
-            #    game.gamelog_set.create(text=f'New screenshot uploaded. Old: {old_screenshot}')
+            add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot.url)
             return redirect(reverse('view_game', args=[game.id]))
     else:
         form = GameForm(instance=game)
@@ -155,7 +163,7 @@ def draw_card(request, game_id, type):
     card = cards[0]
     deck.remove(card)
 
-    game.gamelog_set.create(text=f'Host drew {card.name}')
+    add_log_msg(game, text=f'Host drew {card.name}')
 
     return redirect(reverse('view_game', args=[game.id]))
 
@@ -176,7 +184,9 @@ def gain_power(request, player_id, type, num):
     player.selection.set(selection)
 
     cards_str = ", ".join([str(card) for card in selection])
-    player.game.gamelog_set.create(text=f'{player.spirit.name} gains a {type} power. Choices: {cards_str}')
+    images = ",".join(['./pbf/static' + card.url() for card in selection])
+    add_log_msg(player.game, text=f'{player.spirit.name} gains a {type} power. Choices: {cards_str}',
+            images=images)
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -187,7 +197,7 @@ def choose_card(request, player_id, card_id):
     player.selection.clear()
     player.hand.add(card)
 
-    player.game.gamelog_set.create(text=f'{player.spirit.name} gains {card.name}')
+    add_log_msg(player.game, text=f'{player.spirit.name} gains {card.name}')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -198,7 +208,7 @@ def choose_card2(request, player_id, card_id):
     player.selection.remove(card)
     player.hand.add(card)
 
-    player.game.gamelog_set.create(text=f'{player.spirit.name} gains {card.name}')
+    add_log_msg(player.game, text=f'{player.spirit.name} gains {card.name}')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -209,7 +219,7 @@ def play_card(request, player_id, card_id):
     player.play.add(card)
     player.hand.remove(card)
 
-    player.game.gamelog_set.create(text=f'{player.spirit.name} plays {card.name}')
+    add_log_msg(player.game, text=f'{player.spirit.name} plays {card.name}')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -220,7 +230,7 @@ def unplay_card(request, player_id, card_id):
     player.hand.add(card)
     player.play.remove(card)
 
-    player.game.gamelog_set.create(text=f'{player.spirit.name} unplays {card.name}')
+    add_log_msg(player.game, text=f'{player.spirit.name} unplays {card.name}')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -243,7 +253,7 @@ def forget_card(request, player_id, card_id):
     except:
         pass
 
-    player.game.gamelog_set.create(text=f'{player.spirit.name} forgets {card.name}')
+    add_log_msg(player.game, text=f'{player.spirit.name} forgets {card.name}')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -255,7 +265,7 @@ def reclaim_card(request, player_id, card_id):
     player.hand.add(card)
     player.discard.remove(card)
 
-    player.game.gamelog_set.create(text=f'{player.spirit.name} reclaims {card.name}')
+    add_log_msg(player.game, text=f'{player.spirit.name} reclaims {card.name}')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -267,7 +277,7 @@ def reclaim_all(request, player_id):
         player.hand.add(card)
     player.discard.clear()
 
-    player.game.gamelog_set.create(text=f'{player.spirit.name} reclaims all')
+    add_log_msg(player.game, text=f'{player.spirit.name} reclaims all')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -279,7 +289,7 @@ def discard_all(request, player_id):
         player.discard.add(card)
     player.play.clear()
 
-    player.game.gamelog_set.create(text=f'{player.spirit.name} discards all')
+    add_log_msg(player.game, text=f'{player.spirit.name} discards all')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -299,7 +309,7 @@ def discard_card(request, player_id, card_id):
     except:
         pass
 
-    player.game.gamelog_set.create(text=f'{player.spirit.name} discards {card.name}')
+    add_log_msg(player.game, text=f'{player.spirit.name} discards {card.name}')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -310,12 +320,12 @@ def ready(request, player_id):
     player.save()
 
     if player.ready:
-        player.game.gamelog_set.create(text=f'{player.spirit.name} is ready')
+        add_log_msg(player.game, text=f'{player.spirit.name} is ready')
     else:
-        player.game.gamelog_set.create(text=f'{player.spirit.name} is not ready')
+        add_log_msg(player.game, text=f'{player.spirit.name} is not ready')
 
     if player.game.gameplayer_set.filter(ready=False).count() == 0:
-        player.game.gamelog_set.create(text=f'All spirits are ready!')
+        add_log_msg(player.game, text=f'All spirits are ready!')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -334,7 +344,7 @@ def unready(request, game_id):
         player.ready = False
         player.save()
 
-    player.game.gamelog_set.create(text=f'All spirits marked not ready')
+    add_log_msg(player.game, text=f'All spirits marked not ready')
 
     return redirect(reverse('view_game', args=[game.id]))
 
@@ -347,8 +357,8 @@ def time_passes(request, game_id):
     game.turn += 1
     game.save()
 
-    player.game.gamelog_set.create(text=f'Time passes...')
-    player.game.gamelog_set.create(text=f'-- Turn {game.turn} --')
+    add_log_msg(player.game, text=f'Time passes...')
+    add_log_msg(player.game, text=f'-- Turn {game.turn} --')
 
     return redirect(reverse('view_game', args=[game.id]))
 
@@ -361,9 +371,9 @@ def change_energy(request, player_id, amount):
     player.save()
 
     if amount > 0:
-        player.game.gamelog_set.create(text=f'{player.spirit.name} gains {amount} energy (now: {player.energy})')
+        add_log_msg(player.game, text=f'{player.spirit.name} gains {amount} energy (now: {player.energy})')
     else:
-        player.game.gamelog_set.create(text=f'{player.spirit.name} pays {-amount} energy (now: {player.energy})')
+        add_log_msg(player.game, text=f'{player.spirit.name} pays {-amount} energy (now: {player.energy})')
 
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
@@ -374,7 +384,7 @@ def pay_energy(request, player_id):
     player.energy -= amount
     player.save()
 
-    player.game.gamelog_set.create(text=f'{player.spirit.name} pays {amount} energy (now: {player.energy})')
+    add_log_msg(player.game, text=f'{player.spirit.name} pays {amount} energy (now: {player.energy})')
 
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
