@@ -6,6 +6,8 @@ cd /home/ubuntu/spirit-island
 git fetch origin
 git reset --hard origin/master
 
+sudo systemctl daemon-reload
+
 echo Restarting services
 
 sudo systemctl restart spirit-island
