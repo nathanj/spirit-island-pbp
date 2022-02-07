@@ -122,9 +122,12 @@ def add_player(request, game_id):
     if len(colors) > 1:
         colors.remove('yellow')
     shuffle(colors)
-    spirit_id = int(request.POST['spirit'])
-    spirit = get_object_or_404(Spirit, pk=spirit_id)
-    gp = GamePlayer(game=game, spirit=spirit, notes="You can add notes here...\ntop:1 bottom:1", color=colors[0])
+    spirit_name = request.POST['spirit']
+    aspect = None
+    if '-' in spirit_name:
+        spirit_name, aspect = spirit_name.split(' - ')
+    spirit = get_object_or_404(Spirit, name=spirit_name)
+    gp = GamePlayer(game=game, spirit=spirit, notes="You can add notes here...\ntop:1 bottom:1", color=colors[0], aspect=aspect)
     gp.save()
     try:
         for presence in spirit_presence[spirit.name]:
@@ -146,7 +149,19 @@ def view_game(request, game_id):
     else:
         form = GameForm(instance=game)
 
-    spirits = Spirit.objects.order_by('name').all()
+    spirits = [s.name for s in Spirit.objects.order_by('name').all()]
+    spirits.append('Lightning - Immense')
+    spirits.append('Lightning - Pandemonium')
+    spirits.append('Lightning - Wind')
+    spirits.append('River - Sunshine')
+    spirits.append('River - Travel')
+    spirits.append('Earth - Might')
+    spirits.append('Earth - Resilence')
+    spirits.append('Shadows - Amorphous')
+    spirits.append('Shadows - Foreboding')
+    spirits.append('Shadows - Madness')
+    spirits.append('Shadows - Reach')
+    spirits.sort()
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
     return render(request, 'game.html', { 'game': game, 'form': form, 'spirits': spirits, 'logs': logs })
 
@@ -415,14 +430,14 @@ def add_element(request, player_id, element):
 @transaction.atomic
 def remove_element(request, player_id, element):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    if element == 'sun': player.temporary_sun = 0
-    if element == 'moon': player.temporary_moon = 0
-    if element == 'fire': player.temporary_fire = 0
-    if element == 'air': player.temporary_air = 0
-    if element == 'water': player.temporary_water = 0
-    if element == 'earth': player.temporary_earth = 0
-    if element == 'plant': player.temporary_plant = 0
-    if element == 'animal': player.temporary_animal = 0
+    if element == 'sun': player.temporary_sun -= 1
+    if element == 'moon': player.temporary_moon -= 1
+    if element == 'fire': player.temporary_fire -= 1
+    if element == 'air': player.temporary_air -= 1
+    if element == 'water': player.temporary_water -= 1
+    if element == 'earth': player.temporary_earth -= 1
+    if element == 'plant': player.temporary_plant -= 1
+    if element == 'animal': player.temporary_animal -= 1
     player.save()
 
     return with_log_trigger(render(request, 'elements.html', {'player': player}))

@@ -41,7 +41,7 @@
 	  {% csrf_token %}
 	  <select name="spirit">
 	    {% for spirit in spirits %}
-	    <option value="{{spirit.id}}">{{spirit.name}}</option>
+	    <option value="{{spirit}}">{{spirit}}</option>
 	    {% endfor %}
 	  </select>
 	  <button type="submit" class="btn" >Add Spirit</button>

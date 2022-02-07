@@ -95,9 +95,33 @@ class GamePlayer(models.Model):
     temporary_earth = models.IntegerField(default=0)
     temporary_plant = models.IntegerField(default=0)
     temporary_animal = models.IntegerField(default=0)
+    aspect = models.CharField(max_length=255, default=None, null=True)
 
     def __str__(self):
         return str(self.id) + ' - ' + str(self.spirit.name)
+
+    def aspect_url(self):
+        return f'pbf/aspect-{self.aspect.lower()}.jpg'
+
+    def aspect_left(self):
+        if self.aspect == 'Immense':
+            return 650
+        elif self.aspect == 'Pandemonium':
+            return 370
+        elif self.aspect == 'Sunshine':
+            return 700
+        else:
+            return 0
+
+    def aspect_top(self):
+        if self.aspect == 'Immense':
+            return 360
+        elif self.aspect == 'Pandemonium':
+            return 360
+        elif self.aspect == 'Sunshine':
+            return 360
+        else:
+            return 400
 
     def disk_url(self):
         return 'pbf/disk_' + self.color + '.png'

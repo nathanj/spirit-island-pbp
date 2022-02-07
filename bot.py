@@ -38,20 +38,18 @@ def combine_images(filenames):
 
 @client.event
 async def on_ready():
-    print(f'We have logged in as {client}')
+    LOG.msg(f'We have logged in as {client}')
 
 async def relay_game(channel_id, log):
     channel = client.get_channel(channel_id)
     combined_text = []
     for entry in log:
-        print(entry)
         if 'images' in entry:
             if len(combined_text) > 0:
                 await channel.send(embed=discord.Embed(description='\n'.join(combined_text)))
                 combined_text = []
             images = entry['images']
             filenames = images.split(',')
-            print(filenames)
             if len(filenames) > 1:
                 combine_images(filenames)
                 await channel.send(embed=discord.Embed(description=entry['text']), file=discord.File('out.jpg'))
@@ -79,7 +77,6 @@ async def logger():
                 if message is not None:
                     LOG.msg("got message", message=message)
                     channel_id = int(message['channel'].split(':')[1])
-                    print(channel_id)
                     if channel_id in game_log_buffer:
                         game_log_buffer[channel_id]['timestamp'] = datetime.datetime.utcnow()
                     else:
