@@ -51,7 +51,8 @@ class Card(models.Model):
     def get_elements(self):
         counter = Counter()
         for e in self.elements.split(','):
-            counter[Elements[e]] = 1
+            if len(e) > 0:
+                counter[Elements[e]] = 1
         return counter
 
 class Game(models.Model):
