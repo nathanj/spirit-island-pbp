@@ -27,6 +27,9 @@ class Spirit(models.Model):
         return '/pbf/' + self.name.replace(' ', '-').lower() + '.jpg'
 
 class Card(models.Model):
+    class Meta:
+        ordering = ('name', )
+
     MINOR = 0
     MAJOR = 1
     UNIQUE = 2
@@ -96,7 +99,7 @@ class GamePlayer(models.Model):
     temporary_earth = models.IntegerField(default=0)
     temporary_plant = models.IntegerField(default=0)
     temporary_animal = models.IntegerField(default=0)
-    aspect = models.CharField(max_length=255, default=None, null=True)
+    aspect = models.CharField(max_length=255, default=None, null=True, blank=True)
 
     def __str__(self):
         return str(self.id) + ' - ' + str(self.spirit.name)
