@@ -88,6 +88,7 @@ class GamePlayer(models.Model):
     play = models.ManyToManyField(Card, related_name='play', blank=True)
     selection = models.ManyToManyField(Card, related_name='selection', blank=True)
     ready = models.BooleanField(default=False)
+    paid_this_turn = models.BooleanField(default=False)
     energy = models.IntegerField(default=0)
     notes = models.TextField(blank=True)
     color = models.CharField(max_length=255, blank=True)

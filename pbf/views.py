@@ -368,6 +368,7 @@ def time_passes(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
     for player in game.gameplayer_set.all():
         player.ready = False
+        player.paid_this_turn = False
         player.save()
     game.turn += 1
     game.save()
@@ -397,6 +398,7 @@ def pay_energy(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     amount = player.get_play_cost()
     player.energy -= amount
+    player.paid_this_turn = True
     player.save()
 
     add_log_msg(player.game, text=f'{player.spirit.name} pays {amount} energy (now: {player.energy})')
