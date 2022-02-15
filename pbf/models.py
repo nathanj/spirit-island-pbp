@@ -89,6 +89,7 @@ class GamePlayer(models.Model):
     selection = models.ManyToManyField(Card, related_name='selection', blank=True)
     ready = models.BooleanField(default=False)
     paid_this_turn = models.BooleanField(default=False)
+    gained_this_turn = models.BooleanField(default=False)
     energy = models.IntegerField(default=0)
     notes = models.TextField(blank=True)
     color = models.CharField(max_length=255, blank=True)
@@ -101,6 +102,7 @@ class GamePlayer(models.Model):
     temporary_plant = models.IntegerField(default=0)
     temporary_animal = models.IntegerField(default=0)
     aspect = models.CharField(max_length=255, default=None, null=True, blank=True)
+    starting_energy = models.IntegerField(default=0)
 
     def __str__(self):
         return str(self.id) + ' - ' + str(self.spirit.name)
@@ -147,6 +149,8 @@ class GamePlayer(models.Model):
         counter[Elements.Animal] += self.temporary_animal
         for card in self.play.all():
             counter += card.get_elements()
+        for presence in self.presence_set.all():
+            counter += presence.get_elements()
         return defaultdict(int, counter)
 
     def sun(self): return self.elements[Elements.Sun]
@@ -161,11 +165,49 @@ class GamePlayer(models.Model):
     def get_play_cost(self):
         return sum([card.cost for card in self.play.all()])
 
+    def get_gain_energy(self):
+        amount = max([self.starting_energy] + [p.get_energy() for p in self.presence_set.all()]) + sum([p.get_plus_energy() for p in self.presence_set.all()])
+        if self.aspect == 'Immense':
+            return amount * 2
+        else:
+            return amount
+
 class Presence(models.Model):
     game_player = models.ForeignKey(GamePlayer, on_delete=models.CASCADE)
     left = models.IntegerField()
     top = models.IntegerField()
     opacity = models.FloatField(default=1.0)
+    energy = models.CharField(max_length=255, blank=True)
+    elements = models.CharField(max_length=255, blank=True)
+
+    def get_energy(self):
+        if self.opacity == 1.0:
+            return 0
+        try:
+            if self.energy[0] != '+':
+                return int(self.energy)
+        except:
+            pass
+        return 0
+
+    def get_plus_energy(self):
+        if self.opacity == 1.0:
+            return 0
+        try:
+            if self.energy[0] == '+':
+                return int(self.energy)
+        except:
+            pass
+        return 0
+
+    def get_elements(self):
+        counter = Counter()
+        if self.opacity == 1.0:
+            return counter
+        for e in self.elements.split(','):
+            if len(e) > 0:
+                counter[Elements[e]] += 1
+        return counter
 
 class GameLog(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)

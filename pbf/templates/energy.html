@@ -7,6 +7,13 @@
   Energy: {{ player.energy }} 
   <button class="btn" hx-get="{% url 'change_energy' player.id '1' %}">+1</button>
   <button class="btn" hx-get="{% url 'change_energy' player.id '-1' %}">-1</button>
+  {% if player.gained_this_turn %}
+    Gained!
+  {% else %}
+    <button class="btn"
+	    hx-get="{% url 'gain_energy' player.id %}"
+	    style="background-color: #a88;">Gain Energy ({{player.get_gain_energy}})</button>
+  {% endif %}
   {% if player.paid_this_turn %}
     Paid!
   {% else %}
