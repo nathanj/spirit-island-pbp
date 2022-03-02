@@ -91,8 +91,15 @@ class GamePlayer(models.Model):
     paid_this_turn = models.BooleanField(default=False)
     gained_this_turn = models.BooleanField(default=False)
     energy = models.IntegerField(default=0)
-    notes = models.TextField(blank=True)
-    color = models.CharField(max_length=255, blank=True)
+    COLORS = (
+        ('blue', 'blue'),
+        ('green', 'green'),
+        ('orange', 'orange'),
+        ('purple', 'purple'),
+        ('red', 'red'),
+        ('yellow', 'yellow'),
+    )
+    color = models.CharField(max_length=255, blank=True, choices=COLORS)
     temporary_sun = models.IntegerField(default=0)
     temporary_moon = models.IntegerField(default=0)
     temporary_fire = models.IntegerField(default=0)

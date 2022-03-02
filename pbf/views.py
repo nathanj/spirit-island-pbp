@@ -155,7 +155,7 @@ def add_player(request, game_id):
     if '-' in spirit_name:
         spirit_name, aspect = spirit_name.split(' - ')
     spirit = get_object_or_404(Spirit, name=spirit_name)
-    gp = GamePlayer(game=game, spirit=spirit, notes="You can add notes here...\ntop:1 bottom:1", color=colors[0], aspect=aspect, starting_energy=spirit_starting_energy[spirit.name])
+    gp = GamePlayer(game=game, spirit=spirit, color=colors[0], aspect=aspect, starting_energy=spirit_starting_energy[spirit.name])
     gp.save()
     try:
         for presence in spirit_presence[spirit.name]:
@@ -376,14 +376,6 @@ def ready(request, player_id):
         add_log_msg(player.game, text=f'All spirits are ready!')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
-
-@transaction.atomic
-def notes(request, player_id):
-    player = get_object_or_404(GamePlayer, pk=player_id)
-    player.notes = request.POST['notes']
-    player.save()
-
-    return HttpResponse("")
 
 @transaction.atomic
 def unready(request, game_id):

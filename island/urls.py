@@ -33,7 +33,6 @@ urlpatterns = [
     path('game/<int:player_id>/energy/<str:amount>', views.change_energy, name='change_energy'),
     path('game/<int:player_id>/presence/<int:left>/<int:top>', views.toggle_presence, name='toggle_presence'),
     path('game/<int:player_id>/ready', views.ready, name='ready'),
-    path('game/<int:player_id>/notes', views.notes, name='notes'),
     path('game/<int:player_id>/element/<str:element>/add', views.add_element, name='add_element'),
     path('game/<int:player_id>/element/<str:element>/remove', views.remove_element, name='remove_element'),
 ]
