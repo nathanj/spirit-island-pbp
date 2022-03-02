@@ -93,6 +93,9 @@ async def logger():
         except asyncio.TimeoutError:
             LOG.msg('timeout')
             pass
+        except Exception as ex:
+            LOG.msg(ex)
+            pass
 
 client.loop.create_task(logger())
 client.run(os.environ['DISCORD_KEY'])
