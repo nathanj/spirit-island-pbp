@@ -1,0 +1,23 @@
+{% load static %}
+
+<p>
+<h4>Discard Pile:</h4>
+<ul>
+  <div class="container-fluid">
+    <div class="row">
+      {% for card in player.game.discard_pile.all %}
+      <div class="col-auto">
+	<div class="w-100 mw-full">
+	  <div class="card p-0 m-15">
+	    <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+	    <div class="text-center pb-5">
+	      <button class="btn" hx-get="{% url 'choose_from_discard' player.id card.id %}">Claim</button>
+	    </div>
+	  </div>
+	</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</ul>

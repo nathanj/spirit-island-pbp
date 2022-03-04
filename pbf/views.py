@@ -236,21 +236,28 @@ def gain_power(request, player_id, type, num):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def choose_card(request, player_id, card_id):
+def discard_pile(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    card = get_object_or_404(player.selection, pk=card_id)
-    player.selection.clear()
-    player.hand.add(card)
+    return render(request, 'discard_pile.html', { 'player': player })
 
-    add_log_msg(player.game, text=f'{player.spirit.name} gains {card.name}')
+def choose_from_discard(request, player_id, card_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(player.game.discard_pile, pk=card_id)
+    player.hand.add(card)
+    player.game.discard_pile.remove(card)
+
+    add_log_msg(player.game, text=f'{player.spirit.name} gains {card.name} from the discard pile')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def choose_card2(request, player_id, card_id):
+def choose_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.selection, pk=card_id)
-    player.selection.remove(card)
     player.hand.add(card)
+    player.selection.remove(card)
+    for card in player.selection.all():
+        player.game.discard_pile.add(card)
+    player.selection.clear()
 
     add_log_msg(player.game, text=f'{player.spirit.name} gains {card.name}')
 
@@ -278,21 +285,15 @@ def unplay_card(request, player_id, card_id):
 
 def forget_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    try:
-        card = player.hand.get(pk=card_id)
-        player.hand.remove(card)
-    except:
-        pass
-    try:
-        card = player.play.get(pk=card_id)
-        player.play.remove(card)
-    except:
-        pass
-    try:
-        card = player.discard.get(pk=card_id)
-        player.discard.remove(card)
-    except:
-        pass
+
+    for location in [player.hand, player.play, player.discard]:
+        try:
+            card = location.get(pk=card_id)
+            location.remove(card)
+            player.game.discard_pile.add(card)
+        except:
+            pass
+        break
 
     add_log_msg(player.game, text=f'{player.spirit.name} forgets {card.name}')
 

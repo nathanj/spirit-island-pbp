@@ -64,6 +64,7 @@ class Game(models.Model):
     name = models.CharField(max_length=255, blank=False)
     minor_deck = models.ManyToManyField(Card, related_name='minor_deck')
     major_deck = models.ManyToManyField(Card, related_name='major_deck')
+    discard_pile = models.ManyToManyField(Card, related_name='discard_pile')
     screenshot = models.ImageField(upload_to='screenshot', blank=True)
     discord_channel = models.CharField(max_length=255, default="", blank=True)
 

@@ -40,7 +40,6 @@
 	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      <div class="text-center pb-5">
 		<button class="btn" hx-get="{% url 'choose_card' player.id card.id %}">Choose</button>
-		<button class="btn" hx-get="{% url 'choose_card2' player.id card.id %}">Choose + Another</button>
 	      </div>
 	    </div>
 	  </div>
@@ -119,4 +118,11 @@
     </div>
 
   </ul>
+
+  <div id="spirit-discard-deck-{{player.id}}"
+       hx-target="#spirit-discard-deck-{{player.id}}"
+       hx-swap="outerHTML">
+    <button class="btn" hx-get="{% url 'discard_pile' player.id %}">Show Power Discard Pile</button>
+  </div>
+
 </div>
