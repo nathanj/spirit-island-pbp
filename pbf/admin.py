@@ -1,12 +1,17 @@
 from django.contrib import admin
 from .models import *
 
-class SpiritAdmin(admin.ModelAdmin):
-    pass
 class CardAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request, obj=None):
+        return False
+    def has_delete_permission(self, request, obj=None):
+        return False
     search_fields = ('name',)
+
 class GameAdmin(admin.ModelAdmin):
-    pass
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 class GamePlayerAdmin(admin.ModelAdmin):
     autocomplete_fields = ('hand', 'discard', 'play', 'selection')
 
