@@ -10,16 +10,12 @@
   {% if player.gained_this_turn %}
     Gained!
   {% else %}
-    <button class="btn"
-	    hx-get="{% url 'gain_energy' player.id %}"
-	    style="background-color: #a88;">Gain Energy ({{player.get_gain_energy}})</button>
+    <button class="btn" hx-get="{% url 'gain_energy' player.id %}">Gain Energy ({{player.get_gain_energy}})</button>
   {% endif %}
   {% if player.paid_this_turn %}
     Paid!
   {% else %}
-    <button class="btn"
-	    hx-get="{% url 'pay_energy' player.id %}"
-	    style="background-color: #a88;">Pay Cost ({{player.get_play_cost}})</button>
+    <button class="btn" hx-get="{% url 'pay_energy' player.id %}">Pay Cost ({{player.get_play_cost}})</button>
   {% endif %}
   <span id="energy-spinner"><img src="{% static "pbf/bars.svg" %}" /></span>
 </div>
