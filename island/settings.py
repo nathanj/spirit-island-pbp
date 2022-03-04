@@ -135,6 +135,8 @@ INTERNAL_IPS = [
     "127.0.0.1",
 ]
 
+ATOMIC_REQUESTS = True
+
 #LOGGING = {
 #    'version': 1,
 #    'filters': {

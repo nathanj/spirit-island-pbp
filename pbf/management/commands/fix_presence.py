@@ -13,7 +13,6 @@ class Command(BaseCommand):
         # parser.add_argument('poll_ids', nargs='+', type=int)
         pass
 
-    @transaction.atomic
     def handle(self, *args, **options):
         serpent = GamePlayer.objects.get(pk=8)
         bringer = GamePlayer.objects.get(pk=9)

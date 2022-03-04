@@ -336,7 +336,6 @@ class Command(BaseCommand):
         # parser.add_argument('poll_ids', nargs='+', type=int)
         pass
 
-    @transaction.atomic
     def handle(self, *args, **options):
         for s in spirits:
             Spirit(name=s[0]).save()

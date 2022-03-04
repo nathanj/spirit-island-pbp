@@ -198,7 +198,6 @@ def view_game(request, game_id):
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
     return render(request, 'game.html', { 'game': game, 'form': form, 'spirits': spirits, 'logs': logs })
 
-@transaction.atomic
 def draw_card(request, game_id, type):
     game = get_object_or_404(Game, pk=game_id)
     if type == 'minor':
@@ -215,7 +214,6 @@ def draw_card(request, game_id, type):
 
     return redirect(reverse('view_game', args=[game.id]))
 
-@transaction.atomic
 def gain_power(request, player_id, type, num):
     player = get_object_or_404(GamePlayer, pk=player_id)
     if type == 'minor':
@@ -238,7 +236,6 @@ def gain_power(request, player_id, type, num):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-@transaction.atomic
 def choose_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.selection, pk=card_id)
@@ -249,7 +246,6 @@ def choose_card(request, player_id, card_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-@transaction.atomic
 def choose_card2(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.selection, pk=card_id)
@@ -260,7 +256,6 @@ def choose_card2(request, player_id, card_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-@transaction.atomic
 def play_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.hand, pk=card_id)
@@ -271,7 +266,6 @@ def play_card(request, player_id, card_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-@transaction.atomic
 def unplay_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.play, pk=card_id)
@@ -282,7 +276,6 @@ def unplay_card(request, player_id, card_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-@transaction.atomic
 def forget_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     try:
@@ -306,7 +299,6 @@ def forget_card(request, player_id, card_id):
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 
-@transaction.atomic
 def reclaim_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.discard, pk=card_id)
@@ -317,7 +309,6 @@ def reclaim_card(request, player_id, card_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-@transaction.atomic
 def reclaim_all(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     cards = list(player.discard.all())
@@ -329,7 +320,6 @@ def reclaim_all(request, player_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-@transaction.atomic
 def discard_all(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     cards = list(player.play.all())
@@ -341,7 +331,6 @@ def discard_all(request, player_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-@transaction.atomic
 def discard_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     try:
@@ -361,7 +350,6 @@ def discard_card(request, player_id, card_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-@transaction.atomic
 def ready(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     player.ready = not player.ready
@@ -377,7 +365,6 @@ def ready(request, player_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-@transaction.atomic
 def unready(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
     for player in game.gameplayer_set.all():
@@ -388,7 +375,6 @@ def unready(request, game_id):
 
     return redirect(reverse('view_game', args=[game.id]))
 
-@transaction.atomic
 def time_passes(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
     for player in game.gameplayer_set.all():
@@ -404,7 +390,6 @@ def time_passes(request, game_id):
     return redirect(reverse('view_game', args=[game.id]))
 
 
-@transaction.atomic
 def change_energy(request, player_id, amount):
     amount = int(amount)
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -418,7 +403,6 @@ def change_energy(request, player_id, amount):
 
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
-@transaction.atomic
 def pay_energy(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     amount = player.get_play_cost()
@@ -430,7 +414,6 @@ def pay_energy(request, player_id):
 
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
-@transaction.atomic
 def gain_energy(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     amount = player.get_gain_energy()
@@ -442,7 +425,6 @@ def gain_energy(request, player_id):
 
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
-@transaction.atomic
 def toggle_presence(request, player_id, left, top):
     player = get_object_or_404(GamePlayer, pk=player_id)
     presence = get_object_or_404(player.presence_set, left=left, top=top)
@@ -451,7 +433,6 @@ def toggle_presence(request, player_id, left, top):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-@transaction.atomic
 def add_element(request, player_id, element):
     player = get_object_or_404(GamePlayer, pk=player_id)
     if element == 'sun': player.temporary_sun += 1
@@ -466,7 +447,6 @@ def add_element(request, player_id, element):
 
     return with_log_trigger(render(request, 'elements.html', {'player': player}))
 
-@transaction.atomic
 def remove_element(request, player_id, element):
     player = get_object_or_404(GamePlayer, pk=player_id)
     if element == 'sun': player.temporary_sun -= 1
