@@ -10,7 +10,6 @@ class GameAdmin(admin.ModelAdmin):
 class GamePlayerAdmin(admin.ModelAdmin):
     autocomplete_fields = ('hand', 'discard', 'play', 'selection')
 
-admin.site.register(Spirit, SpiritAdmin)
 admin.site.register(Card, CardAdmin)
 admin.site.register(Game, GameAdmin)
 admin.site.register(GamePlayer, GamePlayerAdmin)

@@ -81,6 +81,9 @@ colors_to_circle_color_map = {
         }
 
 class GamePlayer(models.Model):
+    class Meta:
+        ordering = ('-id', )
+
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     spirit = models.ForeignKey(Spirit, blank=False, on_delete=models.CASCADE)
     hand = models.ManyToManyField(Card, related_name='hand', blank=True)
@@ -112,7 +115,7 @@ class GamePlayer(models.Model):
     starting_energy = models.IntegerField(default=0)
 
     def __str__(self):
-        return str(self.id) + ' - ' + str(self.spirit.name)
+        return str(self.game.id) + ' - ' + str(self.spirit.name)
 
     def aspect_url(self):
         return f'pbf/aspect-{self.aspect.lower()}.jpg'
