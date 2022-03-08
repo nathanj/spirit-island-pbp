@@ -327,6 +327,9 @@ def discard_all(request, player_id):
     for card in cards:
         player.discard.add(card)
     player.play.clear()
+    player.gained_this_turn = False
+    player.paid_this_turn = False
+    player.save()
 
     add_log_msg(player.game, text=f'{player.spirit.name} discards all')
 
@@ -380,7 +383,6 @@ def time_passes(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
     for player in game.gameplayer_set.all():
         player.ready = False
-        player.paid_this_turn = False
         player.save()
     game.turn += 1
     game.save()
