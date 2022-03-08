@@ -12,9 +12,41 @@ import structlog
 import asyncio
 import async_timeout
 import aioredis
+import re
 from collections import defaultdict
 from dotenv import load_dotenv
 from PIL import Image
+
+spirit_emoji_map = {
+'Bringer': 'SpiritBodanBringerDreamsNightmar',
+'Exploratory Bringer':  'SpiritBodanBringerDreamsNightmar',
+'Downpour': 'SpiritDownpourDrenchesWorld',
+'Earth': 'SpiritVitalStrengthEarth',
+'Fangs': 'SpiritSharpFangsLeaves',
+'Finder': 'SpiritFinderPathsUnseen',
+'Fractured': 'SpiritFracturedDaysSplitSky',
+'Green': 'SpiritSpreadRampantGreen',
+'Keeper': 'SpiritKeeperForbiddenWilds',
+'Lightning': 'SpiritLightningSwiftStrike',
+'Lure': 'SpiritLureDeepWilderness',
+'Minds': 'SpiritManyMindsMoveOne',
+'Mist': 'SpiritShroudSilentMist',
+'Ocean': 'SpiritOceanHungryGrasp',
+'River': 'SpiritRiverSurgesSunlight',
+'Serpent': 'SpiritSnekSerpentSlumbering',
+'Shadows': 'SpiritShadowsFlickerFlame',
+'Shifting': 'SpiritShiftingMemoryAges',
+'Starlight': 'SpiritStarlightSeeksForm',
+'Stone': 'SpiritStoneUnyieldingDefiance',
+'Thunderspeaker': 'SpiritThunderspeaker',
+'Trickster': 'SpiritGrinningTricksterStirsTrou',
+'Vengeance': 'SpiritVengeanceBurningPlague',
+'Volcano': 'SpiritVolcanoLoomingHigh',
+'Wildfire': 'SpiritHeartWildfire',
+}
+
+emoji_to_discord_map = {}
+energy_to_discord_map = {}
 
 load_dotenv()
 client = discord.Client()
@@ -40,32 +72,68 @@ def combine_images(filenames):
 async def on_ready():
     LOG.msg(f'We have logged in as {client}')
 
+def load_emojis():
+    guild = client.get_guild(846580409050857493)
+    for e in guild.emojis:
+        if e.name in spirit_emoji_map.values():
+            emoji_to_discord_map[e.name] = str(e)
+        if e.name == '4Energy1':
+            energy_to_discord_map[e.name] = str(e)
+        if e.name == '4Energy2':
+            energy_to_discord_map[e.name] = str(e)
+        if e.name == '4Energy3':
+            energy_to_discord_map[e.name] = str(e)
+
+def adjust_msg(msg):
+    for spirit in spirit_emoji_map:
+        msg = re.sub(f'^{spirit}', emoji_to_discord_map[spirit_emoji_map[spirit]], msg)
+    match = re.search(r'''(\d+) energy''', msg)
+    if match is not None:
+        new_msg = ''
+        value = int(match[1])
+        while value >= 3:
+            new_msg += energy_to_discord_map['4Energy3']
+            value -= 3
+        while value >= 2:
+            new_msg += energy_to_discord_map['4Energy2']
+            value -= 2
+        while value >= 1:
+            new_msg += energy_to_discord_map['4Energy1']
+            value -= 1
+        if len(new_msg) > 0:
+            msg = re.sub(r'''(\d+) energy''', new_msg, msg)
+    return msg
+
 async def relay_game(channel_id, log):
     channel = client.get_channel(channel_id)
     combined_text = []
     for entry in log:
+        msg = adjust_msg(entry['text'])
         if 'images' in entry:
             if len(combined_text) > 0:
-                await channel.send(embed=discord.Embed(description='\n'.join(combined_text)))
+                await channel.send('\n'.join(combined_text))
                 combined_text = []
             images = entry['images']
             filenames = images.split(',')
             if len(filenames) > 1:
                 combine_images(filenames)
-                await channel.send(embed=discord.Embed(description=entry['text']), file=discord.File('out.jpg'))
+                await channel.send(msg, file=discord.File('out.jpg'))
             else:
-                await channel.send(embed=discord.Embed(description=entry['text']), file=discord.File(filenames[0]))
+                await channel.send(msg, file=discord.File(filenames[0]))
         else:
-            combined_text.append(entry['text'])
+            combined_text.append(msg)
 
     if len(combined_text) > 0:
-        await channel.send(embed=discord.Embed(description='\n'.join(combined_text)))
+        await channel.send('\n'.join(combined_text))
         combined_text = []
 
 # Buffer up the log so we can send a group of related log messages together.
 game_log_buffer = {}
 
 async def logger():
+    await client.wait_until_ready()
+    load_emojis()
+
     redis = await aioredis.from_url("redis://localhost", decode_responses=True)
     pubsub = redis.pubsub()
     await pubsub.psubscribe("log-relay:*")
