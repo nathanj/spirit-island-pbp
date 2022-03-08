@@ -62,9 +62,9 @@ class Game(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     turn = models.IntegerField(default=1)
     name = models.CharField(max_length=255, blank=False)
-    minor_deck = models.ManyToManyField(Card, related_name='minor_deck')
-    major_deck = models.ManyToManyField(Card, related_name='major_deck')
-    discard_pile = models.ManyToManyField(Card, related_name='discard_pile')
+    minor_deck = models.ManyToManyField(Card, related_name='minor_deck', blank=True)
+    major_deck = models.ManyToManyField(Card, related_name='major_deck', blank=True)
+    discard_pile = models.ManyToManyField(Card, related_name='discard_pile', blank=True)
     screenshot = models.ImageField(upload_to='screenshot', blank=True)
     discord_channel = models.CharField(max_length=255, default="", blank=True)
 
