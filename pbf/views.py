@@ -255,8 +255,8 @@ def choose_card(request, player_id, card_id):
     card = get_object_or_404(player.selection, pk=card_id)
     player.hand.add(card)
     player.selection.remove(card)
-    for card in player.selection.all():
-        player.game.discard_pile.add(card)
+    for discard in player.selection.all():
+        player.game.discard_pile.add(discard)
     player.selection.clear()
 
     add_log_msg(player.game, text=f'{player.spirit.name} gains {card.name}')
