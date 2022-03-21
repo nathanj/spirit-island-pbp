@@ -91,6 +91,7 @@ class GamePlayer(models.Model):
     discard = models.ManyToManyField(Card, related_name='discard', blank=True)
     play = models.ManyToManyField(Card, related_name='play', blank=True)
     selection = models.ManyToManyField(Card, related_name='selection', blank=True)
+    days = models.ManyToManyField(Card, related_name='days', blank=True)
     ready = models.BooleanField(default=False)
     paid_this_turn = models.BooleanField(default=False)
     gained_this_turn = models.BooleanField(default=False)
@@ -182,6 +183,9 @@ class GamePlayer(models.Model):
             return amount * 2
         else:
             return amount
+
+    def days_ordered(self):
+        return self.days.order_by('type', 'cost')
 
 class Presence(models.Model):
     game_player = models.ForeignKey(GamePlayer, on_delete=models.CASCADE)

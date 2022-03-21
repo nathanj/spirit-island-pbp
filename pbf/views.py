@@ -168,6 +168,22 @@ def add_player(request, game_id):
         print(ex)
         pass
     gp.hand.set(Card.objects.filter(spirit=spirit))
+
+    # Handle Days that Never Were
+    if spirit_name == 'Fractured':
+        cards = list(game.minor_deck.all())
+        shuffle(cards)
+        selection = cards[:4]
+        for c in cards[:4]:
+            game.minor_deck.remove(c)
+            gp.days.add(c)
+        cards = list(game.major_deck.all())
+        shuffle(cards)
+        selection = cards[:4]
+        for c in cards[:4]:
+            game.major_deck.remove(c)
+            gp.days.add(c)
+
     return redirect(reverse('view_game', args=[game.id]))
 
 def view_game(request, game_id):
@@ -250,6 +266,16 @@ def choose_from_discard(request, player_id, card_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
+def send_days(request, player_id, card_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(player.selection, pk=card_id)
+    player.days.add(card)
+    player.selection.remove(card)
+
+    add_log_msg(player.game, text=f'{player.spirit.name} sends {card.name} to the Days That Never Were')
+
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
 def choose_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.selection, pk=card_id)
@@ -260,6 +286,16 @@ def choose_card(request, player_id, card_id):
     player.selection.clear()
 
     add_log_msg(player.game, text=f'{player.spirit.name} gains {card.name}')
+
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
+def choose_days(request, player_id, card_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(player.days, pk=card_id)
+    player.hand.add(card)
+    player.days.remove(card)
+
+    add_log_msg(player.game, text=f'{player.spirit.name} gains {card.name} from the Days That Never Were')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 

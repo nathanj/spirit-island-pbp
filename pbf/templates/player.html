@@ -40,6 +40,9 @@
 	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      <div class="text-center pb-5">
 		<button class="btn" hx-get="{% url 'choose_card' player.id card.id %}">Choose</button>
+		{% if player.spirit.name == 'Fractured' %}
+		<button class="btn" hx-get="{% url 'send_days' player.id card.id %}">Send to Days</button>
+		{% endif %}
 	      </div>
 	    </div>
 	  </div>
@@ -118,6 +121,30 @@
     </div>
 
   </ul>
+
+  {% if player.spirit.name == 'Fractured' %}
+  <p>
+  <h4>Days That Never Were:</h4>
+  <ul>
+    <div class="container-fluid">
+      <div class="row">
+	{% for card in player.days_ordered.all %}
+	<div class="col-auto">
+	  <div class="w-200 mw-full">
+	    <div class="card p-0 m-15">
+	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+	      <div class="text-center pb-5">
+		<button class="btn" hx-get="{% url 'choose_days' player.id card.id %}">Choose</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	{% endfor %}
+      </div>
+    </div>
+
+  </ul>
+  {% endif %}
 
   <div id="spirit-discard-deck-{{player.id}}"
        hx-target="#spirit-discard-deck-{{player.id}}"
