@@ -140,7 +140,7 @@ async def logger():
 
     while True:
         try:
-            async with async_timeout.timeout(5):
+            async with async_timeout.timeout(30):
                 message = await pubsub.get_message(ignore_subscribe_messages=True)
                 if message is not None:
                     LOG.msg("got message", message=message)
@@ -153,10 +153,11 @@ async def logger():
 
                 keys = list(game_log_buffer.keys())
                 for channel_id in keys:
-                    if game_log_buffer[channel_id]['timestamp'] + datetime.timedelta(seconds=60) < datetime.datetime.utcnow():
+                    if game_log_buffer[channel_id]['timestamp'] + datetime.timedelta(seconds=20) < datetime.datetime.utcnow():
                         LOG.msg('sending', channel_id=channel_id)
-                        await relay_game(channel_id, game_log_buffer[channel_id]['logs'])
+                        logs = game_log_buffer[channel_id]['logs']
                         del game_log_buffer[channel_id]
+                        await relay_game(channel_id, logs)
                 await asyncio.sleep(1)
         except asyncio.TimeoutError:
             LOG.msg('timeout')
