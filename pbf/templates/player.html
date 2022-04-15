@@ -112,6 +112,7 @@
 	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      <div class="text-center pb-5">
 		<button class="btn" hx-get="{% url 'reclaim_card' player.id card.id %}">Reclaim</button>
+		<button class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure?">Forget</button>
 	      </div>
 	    </div>
 	  </div>

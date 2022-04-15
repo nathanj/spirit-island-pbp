@@ -327,9 +327,9 @@ def forget_card(request, player_id, card_id):
             card = location.get(pk=card_id)
             location.remove(card)
             player.game.discard_pile.add(card)
+            break
         except:
             pass
-        break
 
     add_log_msg(player.game, text=f'{player.spirit.name} forgets {card.name}')
 
