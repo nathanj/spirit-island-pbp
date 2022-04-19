@@ -365,6 +365,14 @@ def discard_all(request, player_id):
     player.play.clear()
     player.gained_this_turn = False
     player.paid_this_turn = False
+    player.temporary_sun = 0
+    player.temporary_moon = 0
+    player.temporary_fire = 0
+    player.temporary_air = 0
+    player.temporary_water = 0
+    player.temporary_earth = 0
+    player.temporary_plant = 0
+    player.temporary_animal = 0
     player.save()
 
     add_log_msg(player.game, text=f'{player.spirit.name} discards all')
