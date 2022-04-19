@@ -230,6 +230,20 @@ def draw_card(request, game_id, type):
 
     return redirect(reverse('view_game', args=[game.id]))
 
+def reshuffle_discard(game, type):
+    if type == 'minor':
+        minors = game.discard_pile.filter(type=Card.MINOR).all()
+        for card in minors:
+            game.discard_pile.remove(card)
+            game.minor_deck.add(card)
+    else:
+        majors = game.discard_pile.filter(type=Card.MAJOR).all()
+        for card in majors:
+            game.discard_pile.remove(card)
+            game.major_deck.add(card)
+
+    add_log_msg(game, text=f'Re-shuffling {type} power deck')
+
 def gain_power(request, player_id, type, num):
     player = get_object_or_404(GamePlayer, pk=player_id)
     if type == 'minor':
@@ -242,6 +256,17 @@ def gain_power(request, player_id, type, num):
     selection = cards[:num]
     for c in selection:
         deck.remove(c)
+
+    # handle power deck running out
+    if len(selection) != num:
+        reshuffle_discard(player.game, type)
+
+        cards = list(deck.all())
+        shuffle(cards)
+        selection2 = cards[:num-len(selection)]
+        for c in selection2:
+            deck.remove(c)
+        selection += selection2
 
     player.selection.set(selection)
 
