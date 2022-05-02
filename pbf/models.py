@@ -81,6 +81,15 @@ colors_to_circle_color_map = {
         'yellow': '#ffd585',
         }
 
+colors_to_emoji_map = {
+        'blue': '🔵',
+        'green': '🟢',
+        'orange': '🟠',
+        'purple': '🟣',
+        'red': '🔴',
+        'yellow': '🟡',
+        }
+
 class GamePlayer(models.Model):
     class Meta:
         ordering = ('-id', )
@@ -147,6 +156,10 @@ class GamePlayer(models.Model):
 
     def circle_color(self):
         return colors_to_circle_color_map[self.color]
+
+    @property
+    def circle_emoji(self):
+        return colors_to_emoji_map[self.color]
 
     @property
     def elements(self):

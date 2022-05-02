@@ -86,7 +86,7 @@ def load_emojis():
 
 def adjust_msg(msg):
     for spirit in spirit_emoji_map:
-        msg = re.sub(f'^{spirit}', emoji_to_discord_map[spirit_emoji_map[spirit]], msg)
+        msg = re.sub(f'^(.) {spirit}', '\\1 ' + emoji_to_discord_map[spirit_emoji_map[spirit]], msg)
     match = re.search(r'''(\d+) energy''', msg)
     if match is not None:
         new_msg = ''

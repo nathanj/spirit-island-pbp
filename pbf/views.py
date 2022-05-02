@@ -257,7 +257,7 @@ def gain_power(request, player_id, type, num):
 
     cards_str = ", ".join([str(card) for card in selection])
     images = ",".join(['./pbf/static' + card.url() for card in selection])
-    add_log_msg(player.game, text=f'{player.spirit.name} gains a {type} power. Choices: {cards_str}',
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains a {type} power. Choices: {cards_str}',
             images=images)
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
@@ -272,7 +272,7 @@ def choose_from_discard(request, player_id, card_id):
     player.hand.add(card)
     player.game.discard_pile.remove(card)
 
-    add_log_msg(player.game, text=f'{player.spirit.name} gains {card.name} from the discard pile')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {card.name} from the discard pile')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -282,7 +282,7 @@ def send_days(request, player_id, card_id):
     player.days.add(card)
     player.selection.remove(card)
 
-    add_log_msg(player.game, text=f'{player.spirit.name} sends {card.name} to the Days That Never Were')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} sends {card.name} to the Days That Never Were')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -295,7 +295,7 @@ def choose_card(request, player_id, card_id):
         player.game.discard_pile.add(discard)
     player.selection.clear()
 
-    add_log_msg(player.game, text=f'{player.spirit.name} gains {card.name}')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {card.name}')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -305,7 +305,7 @@ def choose_days(request, player_id, card_id):
     player.hand.add(card)
     player.days.remove(card)
 
-    add_log_msg(player.game, text=f'{player.spirit.name} gains {card.name} from the Days That Never Were')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {card.name} from the Days That Never Were')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -328,7 +328,7 @@ def play_card(request, player_id, card_id):
     player.play.add(card)
     player.hand.remove(card)
 
-    add_log_msg(player.game, text=f'{player.spirit.name} plays {card.name}')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} plays {card.name}')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -338,7 +338,7 @@ def unplay_card(request, player_id, card_id):
     player.hand.add(card)
     player.play.remove(card)
 
-    add_log_msg(player.game, text=f'{player.spirit.name} unplays {card.name}')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} unplays {card.name}')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -354,7 +354,7 @@ def forget_card(request, player_id, card_id):
         except:
             pass
 
-    add_log_msg(player.game, text=f'{player.spirit.name} forgets {card.name}')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} forgets {card.name}')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -365,7 +365,7 @@ def reclaim_card(request, player_id, card_id):
     player.hand.add(card)
     player.discard.remove(card)
 
-    add_log_msg(player.game, text=f'{player.spirit.name} reclaims {card.name}')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} reclaims {card.name}')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -376,7 +376,7 @@ def reclaim_all(request, player_id):
         player.hand.add(card)
     player.discard.clear()
 
-    add_log_msg(player.game, text=f'{player.spirit.name} reclaims all')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} reclaims all')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -398,7 +398,7 @@ def discard_all(request, player_id):
     player.temporary_animal = 0
     player.save()
 
-    add_log_msg(player.game, text=f'{player.spirit.name} discards all')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} discards all')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -417,7 +417,7 @@ def discard_card(request, player_id, card_id):
     except:
         pass
 
-    add_log_msg(player.game, text=f'{player.spirit.name} discards {card.name}')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} discards {card.name}')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -427,9 +427,9 @@ def ready(request, player_id):
     player.save()
 
     if player.ready:
-        add_log_msg(player.game, text=f'{player.spirit.name} is ready')
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} is ready')
     else:
-        add_log_msg(player.game, text=f'{player.spirit.name} is not ready')
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} is not ready')
 
     if player.game.gameplayer_set.filter(ready=False).count() == 0:
         add_log_msg(player.game, text=f'All spirits are ready!')
@@ -467,9 +467,9 @@ def change_energy(request, player_id, amount):
     player.save()
 
     if amount > 0:
-        add_log_msg(player.game, text=f'{player.spirit.name} gains {amount} energy (now: {player.energy})')
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {amount} energy (now: {player.energy})')
     else:
-        add_log_msg(player.game, text=f'{player.spirit.name} pays {-amount} energy (now: {player.energy})')
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} pays {-amount} energy (now: {player.energy})')
 
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
@@ -480,7 +480,7 @@ def pay_energy(request, player_id):
     player.paid_this_turn = True
     player.save()
 
-    add_log_msg(player.game, text=f'{player.spirit.name} pays {amount} energy (now: {player.energy})')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} pays {amount} energy (now: {player.energy})')
 
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
@@ -491,7 +491,7 @@ def gain_energy(request, player_id):
     player.gained_this_turn = True
     player.save()
 
-    add_log_msg(player.game, text=f'{player.spirit.name} gains {amount} energy (now: {player.energy})')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {amount} energy (now: {player.energy})')
 
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
