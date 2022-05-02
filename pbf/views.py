@@ -211,7 +211,7 @@ def draw_card(request, game_id, type):
     card = cards[0]
     deck.remove(card)
 
-    add_log_msg(game, text=f'Host drew {card.name}')
+    add_log_msg(game, text=f'Host drew {card.name}', images='./pbf/static/' + card.url())
 
     return redirect(reverse('view_game', args=[game.id]))
 
