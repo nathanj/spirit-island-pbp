@@ -169,21 +169,6 @@ def add_player(request, game_id):
         pass
     gp.hand.set(Card.objects.filter(spirit=spirit))
 
-    # Handle Days that Never Were
-    if spirit_name == 'Fractured':
-        cards = list(game.minor_deck.all())
-        shuffle(cards)
-        selection = cards[:4]
-        for c in cards[:4]:
-            game.minor_deck.remove(c)
-            gp.days.add(c)
-        cards = list(game.major_deck.all())
-        shuffle(cards)
-        selection = cards[:4]
-        for c in cards[:4]:
-            game.major_deck.remove(c)
-            gp.days.add(c)
-
     return redirect(reverse('view_game', args=[game.id]))
 
 def view_game(request, game_id):
@@ -321,6 +306,19 @@ def choose_days(request, player_id, card_id):
     player.days.remove(card)
 
     add_log_msg(player.game, text=f'{player.spirit.name} gains {card.name} from the Days That Never Were')
+
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
+def create_days(request, player_id, num):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    game = player.game
+
+    for deck in [game.minor_deck, game.major_deck]:
+        cards = list(deck.all())
+        shuffle(cards)
+        for c in cards[:num]:
+            deck.remove(c)
+            player.days.add(c)
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
