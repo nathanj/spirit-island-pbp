@@ -66,7 +66,12 @@ class Game(models.Model):
     major_deck = models.ManyToManyField(Card, related_name='major_deck', blank=True)
     discard_pile = models.ManyToManyField(Card, related_name='discard_pile', blank=True)
     screenshot = models.ImageField(upload_to='screenshot', blank=True)
-    discord_channel = models.CharField(max_length=255, default="", blank=True)
+    CHANNELS = (
+        ('957389286834057306', '#pbp1-updates'),
+        ('883019769937268816', '#pbp2-updates'),
+        ('703767917854195733', '#bot-testing'),
+    )
+    discord_channel = models.CharField(max_length=255, default="", blank=True, choices=CHANNELS)
 
     def __str__(self):
         return str(self.id)
