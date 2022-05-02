@@ -210,6 +210,7 @@ def draw_card(request, game_id, type):
     shuffle(cards)
     card = cards[0]
     deck.remove(card)
+    game.discard_pile.add(card)
 
     add_log_msg(game, text=f'Host drew {card.name}', images='./pbf/static/' + card.url())
 
