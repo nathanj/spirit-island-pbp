@@ -279,9 +279,14 @@ def choose_from_discard(request, player_id, card_id):
 
 def send_days(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    card = get_object_or_404(player.selection, pk=card_id)
-    player.days.add(card)
-    player.selection.remove(card)
+    for location in [player.selection, player.game.discard_pile]:
+        try:
+            card = get_object_or_404(location, pk=card_id)
+            player.days.add(card)
+            location.remove(card)
+            break
+        except:
+            pass
 
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} sends {card.name} to the Days That Never Were')
 
