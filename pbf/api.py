@@ -17,6 +17,28 @@ class GameLogSchema(ModelSchema):
         model = GameLog
         model_fields = ['id', 'date', 'text', 'images']
 
+def get_ip(request):
+    if 'HTTP_X_FORWARDED_FOR' in request.META:
+        return request.META["HTTP_X_FORWARDED_FOR"]
+    else:
+        return request.META["REMOTE_ADDR"]
+
+def ip_whitelist(request):
+    if get_ip(request) == "127.0.0.1":
+        return "127.0.0.1"
+
+@api.get("/ip", auth=ip_whitelist)
+def ip(request):
+    return f"Authenticated client, IP = {request.auth}"
+
+@api.post("/game/{game_id}/link/{channel_id}", auth=ip_whitelist)
+def game_link(request, game_id, channel_id):
+    game = get_object_or_404(Game, pk=game_id)
+    Game.objects.filter(discord_channel=channel_id).update(discord_channel='')
+    game.discord_channel = channel_id
+    game.save()
+    return "ok"
+
 @api.get("/game", response=List[GameSchema])
 def game(request):
     return Game.objects.all()
