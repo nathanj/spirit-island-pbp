@@ -67,7 +67,7 @@ spirit_starting_energy = {
         'Starlight': 1,
         'Stone': 2,
         'Thunderspeaker': 1,
-        'Trickster': 2,
+        'Trickster': 1,
         'Volcano': 1,
         'Wildfire': 0,
         'Serpent': 1,
