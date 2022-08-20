@@ -60,6 +60,7 @@ class Card(models.Model):
 
 class Game(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
     turn = models.IntegerField(default=1)
     name = models.CharField(max_length=255, blank=False)
     minor_deck = models.ManyToManyField(Card, related_name='minor_deck', blank=True)
@@ -69,6 +70,7 @@ class Game(models.Model):
     CHANNELS = (
         ('957389286834057306', '#pbp1-updates'),
         ('883019769937268816', '#pbp2-updates'),
+        ('1010285070680072192', '#pbp-allspirit-updates'),
         ('703767917854195733', '#bot-testing'),
     )
     discord_channel = models.CharField(max_length=255, default="", blank=True, choices=CHANNELS)
