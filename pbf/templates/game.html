@@ -27,16 +27,6 @@
 	  <button type="submit" class="btn">Upload Screenshot</button>
 	</form>
 
-	<form method="post" action="{% url 'unready' game.id %}">
-	  {% csrf_token %}
-	  <button type="submit" class="btn">Unready All</button>
-	</form>
-
-	<form method="post" action="{% url 'time_passes' game.id %}">
-	  {% csrf_token %}
-	  <button type="submit" class="btn" onclick="javascript: return confirm('Are you sure?');">Time Passes</button>
-	</form>
-
 	<form method="post" action="{% url 'add_player' game.id %}">
 	  {% csrf_token %}
 	  <select name="spirit">

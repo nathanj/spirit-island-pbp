@@ -17,10 +17,16 @@
     </div>
   </div>
 
+  {% if player.ready %}
+  <button class="btn"
+	  style="background-color: #8a8;"
+	  hx-get="{% url 'discard_all' player.id %}">Ready! Click to Discard All Played and Unready</button>
+  {% else %}
   <button class="btn"
 	  hx-get="{% url 'ready' player.id %}"
-	  style="background-color: {% if player.ready %}#8a8{% else %}#a88{% endif %};"
-	  >{% if player.ready %}Ready{% else %}Not Ready{% endif %}</button>
+	  style="background-color: #a88;"
+	  >Not Ready</button>
+  {% endif %}
 
   <br/>
 
@@ -59,8 +65,6 @@
   <p>
   <h4>Play/Hand:</h4>
   <ul>
-    <button class="btn" hx-get="{% url 'discard_all' player.id %}">Discard All Played</button>
-
     <div class="container-fluid">
       <div class="row">
 	{% for card in player.play.all %}
