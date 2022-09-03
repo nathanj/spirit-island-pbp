@@ -41,8 +41,8 @@
       <div class="row">
 	{% for card in player.selection.all %}
 	<div class="col-auto">
-	  <div class="w-200 mw-full">
-	    <div class="card p-0 m-15">
+	  <div class="w-100 w-md-200 mw-full">
+	    <div class="card p-0 m-5 m-md-10">
 	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      <div class="text-center pb-5">
 		<button class="btn" hx-get="{% url 'choose_card' player.id card.id %}">Choose</button>
@@ -69,8 +69,8 @@
       <div class="row">
 	{% for card in player.play.all %}
 	<div class="col-auto">
-	  <div class="w-200 mw-full">
-	    <div class="card p-0 m-15" style="background-color: #040;">
+	  <div class="w-100 w-md-200 mw-full">
+	    <div class="card p-0 m-5 m-md-10" style="background-color: #040;">
 	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      <div class="text-center pb-5">
 		<button class="btn" hx-get="{% url 'unplay_card' player.id card.id %}">Unplay</button>
@@ -83,8 +83,8 @@
 	{% endfor %}
 	{% for card in player.hand.all %}
 	<div class="col-auto">
-	  <div class="w-200 mw-full">
-	    <div class="card p-0 m-15">
+	  <div class="w-100 w-md-200 mw-full">
+	    <div class="card p-0 m-5 m-md-10">
 	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      <div class="text-center pb-5">
 		<button class="btn" hx-get="{% url 'play_card' player.id card.id %}">Play</button>
@@ -111,8 +111,8 @@
       <div class="row">
 	{% for card in player.discard.all %}
 	<div class="col-auto">
-	  <div class="w-200 mw-full">
-	    <div class="card p-0 m-15">
+	  <div class="w-100 w-md-200 mw-full">
+	    <div class="card p-0 m-5 m-md-10">
 	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      <div class="text-center pb-5">
 		<button class="btn" hx-get="{% url 'reclaim_card' player.id card.id %}">Reclaim</button>
@@ -139,8 +139,8 @@
 	{% else %}
 	{% for card in player.days_ordered.all %}
 	<div class="col-auto">
-	  <div class="w-200 mw-full">
-	    <div class="card p-0 m-15">
+	  <div class="w-100 w-md-200 mw-full">
+	    <div class="card p-0 m-5 m-md-10">
 	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      <div class="text-center pb-5">
 		<button class="btn" hx-get="{% url 'choose_days' player.id card.id %}">Gain</button>
