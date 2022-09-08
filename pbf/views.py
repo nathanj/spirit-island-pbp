@@ -26,6 +26,11 @@ class GameForm(ModelForm):
         model = Game
         fields = ['screenshot']
 
+class GameForm2(ModelForm):
+    class Meta:
+        model = Game
+        fields = ['screenshot2']
+
 def with_log_trigger(response):
     response['HX-Trigger'] = 'newLog'
     return response
@@ -173,15 +178,19 @@ def add_player(request, game_id):
 
 def view_game(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
-    old_screenshot = game.screenshot
     if request.method == 'POST':
-        form = GameForm(request.POST, request.FILES, instance=game)
-        if form.is_valid():
-            form.save()
-            add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot.url)
-            return redirect(reverse('view_game', args=[game.id]))
-    else:
-        form = GameForm(instance=game)
+        if 'screenshot' in request.FILES:
+            form = GameForm(request.POST, request.FILES, instance=game)
+            if form.is_valid():
+                form.save()
+                add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot.url)
+                return redirect(reverse('view_game', args=[game.id]))
+        if 'screenshot2' in request.FILES:
+            form = GameForm2(request.POST, request.FILES, instance=game)
+            if form.is_valid():
+                form.save()
+                add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot.url)
+                return redirect(reverse('view_game', args=[game.id]))
 
     spirits = [s.name for s in Spirit.objects.order_by('name').all()]
     spirits.append('Lightning - Immense')
@@ -197,7 +206,7 @@ def view_game(request, game_id):
     spirits.append('Shadows - Reach')
     spirits.sort()
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
-    return render(request, 'game.html', { 'game': game, 'form': form, 'spirits': spirits, 'logs': logs })
+    return render(request, 'game.html', { 'game': game, 'spirits': spirits, 'logs': logs })
 
 def draw_card(request, game_id, type):
     game = get_object_or_404(Game, pk=game_id)

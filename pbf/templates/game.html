@@ -13,6 +13,12 @@
 	</a>
 	{% endif %}
 
+	{% if game.screenshot2 %}
+	<a href="{{ game.screenshot2.url }}">
+	  <img src="{{ game.screenshot2.url }}" class="img-fluid" />
+	</a>
+	{% endif %}
+
 	{% if game.gameplayer_set.count > 0 %}
 	<div id="tabs" hx-get="{% url 'tab' game.id game.gameplayer_set.first.id %}" hx-trigger="load after:100ms" hx-target="#tabs" hx-swap="innerHTML"></div>
 	{% endif %}
@@ -25,6 +31,12 @@
 	  {% csrf_token %}
 	  <input type="file" name="screenshot" accept="image/*" id="id_screenshot">
 	  <button type="submit" class="btn">Upload Screenshot</button>
+	</form>
+
+	<form enctype="multipart/form-data" method="post" action="{% url 'add_screenshot' game.id %}">
+	  {% csrf_token %}
+	  <input type="file" name="screenshot2" accept="image/*" id="id_screenshot2">
+	  <button type="submit" class="btn">Upload Screenshot 2</button>
 	</form>
 
 	<form method="post" action="{% url 'add_player' game.id %}">

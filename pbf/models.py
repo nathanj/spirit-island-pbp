@@ -67,6 +67,7 @@ class Game(models.Model):
     major_deck = models.ManyToManyField(Card, related_name='major_deck', blank=True)
     discard_pile = models.ManyToManyField(Card, related_name='discard_pile', blank=True)
     screenshot = models.ImageField(upload_to='screenshot', blank=True)
+    screenshot2 = models.ImageField(upload_to='screenshot', blank=True)
     CHANNELS = (
         ('957389286834057306', '#pbp1-updates'),
         ('883019769937268816', '#pbp2-updates'),
