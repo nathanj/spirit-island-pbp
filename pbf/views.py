@@ -189,7 +189,7 @@ def view_game(request, game_id):
             form = GameForm2(request.POST, request.FILES, instance=game)
             if form.is_valid():
                 form.save()
-                add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot.url)
+                add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot2.url)
                 return redirect(reverse('view_game', args=[game.id]))
 
     spirits = [s.name for s in Spirit.objects.order_by('name').all()]
