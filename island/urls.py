@@ -39,4 +39,6 @@ urlpatterns = [
     path('game/<int:player_id>/ready', views.ready, name='ready'),
     path('game/<int:player_id>/element/<str:element>/add', views.add_element, name='add_element'),
     path('game/<int:player_id>/element/<str:element>/remove', views.remove_element, name='remove_element'),
+    path('game/<int:player_id>/element-permanent/<str:element>/add', views.add_element_permanent, name='add_element_permanent'),
+    path('game/<int:player_id>/element-permanent/<str:element>/remove', views.remove_element_permanent, name='remove_element_permanent'),
 ]

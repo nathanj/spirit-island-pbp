@@ -131,6 +131,14 @@ class GamePlayer(models.Model):
     temporary_earth = models.IntegerField(default=0)
     temporary_plant = models.IntegerField(default=0)
     temporary_animal = models.IntegerField(default=0)
+    permanent_sun = models.IntegerField(default=0)
+    permanent_moon = models.IntegerField(default=0)
+    permanent_fire = models.IntegerField(default=0)
+    permanent_air = models.IntegerField(default=0)
+    permanent_water = models.IntegerField(default=0)
+    permanent_earth = models.IntegerField(default=0)
+    permanent_plant = models.IntegerField(default=0)
+    permanent_animal = models.IntegerField(default=0)
     aspect = models.CharField(max_length=255, default=None, null=True, blank=True)
     starting_energy = models.IntegerField(default=0)
 
@@ -173,14 +181,14 @@ class GamePlayer(models.Model):
     @property
     def elements(self):
         counter = Counter()
-        counter[Elements.Sun] += self.temporary_sun
-        counter[Elements.Moon] += self.temporary_moon
-        counter[Elements.Fire] += self.temporary_fire
-        counter[Elements.Air] += self.temporary_air
-        counter[Elements.Water] += self.temporary_water
-        counter[Elements.Earth] += self.temporary_earth
-        counter[Elements.Plant] += self.temporary_plant
-        counter[Elements.Animal] += self.temporary_animal
+        counter[Elements.Sun] += self.temporary_sun + self.permanent_sun
+        counter[Elements.Moon] += self.temporary_moon + self.permanent_moon
+        counter[Elements.Fire] += self.temporary_fire + self.permanent_fire
+        counter[Elements.Air] += self.temporary_air + self.permanent_air
+        counter[Elements.Water] += self.temporary_water + self.permanent_water
+        counter[Elements.Earth] += self.temporary_earth + self.permanent_earth
+        counter[Elements.Plant] += self.temporary_plant + self.permanent_plant
+        counter[Elements.Animal] += self.temporary_animal + self.permanent_animal
         for card in self.play.all():
             counter += card.get_elements()
         for presence in self.presence_set.all():

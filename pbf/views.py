@@ -551,6 +551,34 @@ def remove_element(request, player_id, element):
 
     return with_log_trigger(render(request, 'elements.html', {'player': player}))
 
+def add_element_permanent(request, player_id, element):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    if element == 'sun': player.permanent_sun += 1
+    if element == 'moon': player.permanent_moon += 1
+    if element == 'fire': player.permanent_fire += 1
+    if element == 'air': player.permanent_air += 1
+    if element == 'water': player.permanent_water += 1
+    if element == 'earth': player.permanent_earth += 1
+    if element == 'plant': player.permanent_plant += 1
+    if element == 'animal': player.permanent_animal += 1
+    player.save()
+
+    return with_log_trigger(render(request, 'elements.html', {'player': player}))
+
+def remove_element_permanent(request, player_id, element):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    if element == 'sun': player.permanent_sun -= 1
+    if element == 'moon': player.permanent_moon -= 1
+    if element == 'fire': player.permanent_fire -= 1
+    if element == 'air': player.permanent_air -= 1
+    if element == 'water': player.permanent_water -= 1
+    if element == 'earth': player.permanent_earth -= 1
+    if element == 'plant': player.permanent_plant -= 1
+    if element == 'animal': player.permanent_animal -= 1
+    player.save()
+
+    return with_log_trigger(render(request, 'elements.html', {'player': player}))
+
 
 def tab(request, game_id, player_id):
     game = get_object_or_404(Game, pk=game_id)

@@ -4,6 +4,8 @@
      hx-swap="outerHTML">
   <p>
 
+  <abbr title="Click the element to add a temporary element that will be discarded at the end of the turn. Click the number in parentheses to decrease the number.">Element Tracker</abbr>:
+
   <a hx-get="{% url 'add_element' player.id 'sun' %}" style="cursor: pointer">
   <img src="{% static "pbf/element-sun.png" %}" alt="sun" style="width: 1.8em; height: 1.8em" />
   <span style="font-size: 2em;">{{ player.sun }}</span>
@@ -74,6 +76,83 @@
   </a>
   {% if player.temporary_animal > 0 %}
   <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element' player.id 'animal' %}">(+{{player.temporary_animal}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+  <br />
+
+  <abbr title="Click the element to add a permanent element that will not be discarded at the end of the turn. Click the number in parentheses to decrease the number.">Permanent Elements</abbr>:
+
+  <a hx-get="{% url 'add_element_permanent' player.id 'sun' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-sun.png" %}" alt="sun" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.permanent_sun }}</span>
+  </a>
+  {% if player.permanent_sun > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element_permanent' player.id 'sun' %}">(+{{player.permanent_sun}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+  <a hx-get="{% url 'add_element_permanent' player.id 'moon' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-moon.png" %}" alt="moon" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.permanent_moon }}</span>
+  </a>
+  {% if player.permanent_moon > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element_permanent' player.id 'moon' %}">(+{{player.permanent_moon}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+  <a hx-get="{% url 'add_element_permanent' player.id 'fire' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-fire.png" %}" alt="fire" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.permanent_fire }}</span>
+  </a>
+  {% if player.permanent_fire > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element_permanent' player.id 'fire' %}">(+{{player.permanent_fire}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+  <a hx-get="{% url 'add_element_permanent' player.id 'air' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-air.png" %}" alt="air" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.permanent_air }}</span>
+  </a>
+  {% if player.permanent_air > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element_permanent' player.id 'air' %}">(+{{player.permanent_air}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+  <a hx-get="{% url 'add_element_permanent' player.id 'water' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-water.png" %}" alt="water" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.permanent_water }}</span>
+  </a>
+  {% if player.permanent_water > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element_permanent' player.id 'water' %}">(+{{player.permanent_water}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+
+  <a hx-get="{% url 'add_element_permanent' player.id 'earth' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-earth.png" %}" alt="earth" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.permanent_earth }}</span>
+  </a>
+  {% if player.permanent_earth > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element_permanent' player.id 'earth' %}">(+{{player.permanent_earth}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+  <a hx-get="{% url 'add_element_permanent' player.id 'plant' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-plant.png" %}" alt="plant" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.permanent_plant }}</span>
+  </a>
+  {% if player.permanent_plant > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element_permanent' player.id 'plant' %}">(+{{player.permanent_plant}})</a>
+  {% endif %}
+  <span style="padding-right: 1em"></span>
+
+  <a hx-get="{% url 'add_element_permanent' player.id 'animal' %}" style="cursor: pointer">
+  <img src="{% static "pbf/element-animal.png" %}" alt="animal" style="width: 1.8em; height: 1.8em" />
+  <span style="font-size: 2em;">{{ player.permanent_animal }}</span>
+  </a>
+  {% if player.permanent_animal > 0 %}
+  <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'remove_element_permanent' player.id 'animal' %}">(+{{player.permanent_animal}})</a>
   {% endif %}
   <span style="padding-right: 1em"></span>
 
