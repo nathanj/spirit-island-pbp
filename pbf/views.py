@@ -535,7 +535,7 @@ def add_element(request, player_id, element):
     if element == 'animal': player.temporary_animal += 1
     player.save()
 
-    return with_log_trigger(render(request, 'elements.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def remove_element(request, player_id, element):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -549,7 +549,7 @@ def remove_element(request, player_id, element):
     if element == 'animal': player.temporary_animal -= 1
     player.save()
 
-    return with_log_trigger(render(request, 'elements.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def add_element_permanent(request, player_id, element):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -563,7 +563,7 @@ def add_element_permanent(request, player_id, element):
     if element == 'animal': player.permanent_animal += 1
     player.save()
 
-    return with_log_trigger(render(request, 'elements.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def remove_element_permanent(request, player_id, element):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -577,7 +577,7 @@ def remove_element_permanent(request, player_id, element):
     if element == 'animal': player.permanent_animal -= 1
     player.save()
 
-    return with_log_trigger(render(request, 'elements.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 
 def tab(request, game_id, player_id):

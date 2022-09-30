@@ -14,6 +14,15 @@ class Elements(Enum):
     Plant = 7
     Animal = 8
 
+class Threshold():
+    def __init__(self, x, y, achieved):
+        self.x = x
+        self.y = y
+        self.achieved = achieved
+
+    def __repr__(self):
+        return f'{self.achieved} - {self.x}, {self.y}'
+
 class Spirit(models.Model):
     name = models.CharField(max_length=255, blank=False)
 
@@ -216,6 +225,309 @@ class GamePlayer(models.Model):
 
     def days_ordered(self):
         return self.days.order_by('type', 'cost')
+
+    def chunk(self, str, n):
+        return [str[i:i+n] for i in range(0, len(str), n)]
+
+    def check_elements(self, elements, desired):
+        if type(desired) == type([]):
+            return any([self.check_elements(elements, d) for d in desired])
+
+        chunks = self.chunk(desired, 2)
+        for c in chunks:
+            amt = int(c[0])
+            e = c[1]
+            if e == 'S' and elements[Elements.Sun] < amt: return False
+            if e == 'M' and elements[Elements.Moon] < amt: return False
+            if e == 'F' and elements[Elements.Fire] < amt: return False
+            if e == 'A' and elements[Elements.Air] < amt: return False
+            if e == 'W' and elements[Elements.Water] < amt: return False
+            if e == 'E' and elements[Elements.Earth] < amt: return False
+            if e == 'P' and elements[Elements.Plant] < amt: return False
+            if e == 'N' and elements[Elements.Animal] < amt: return False
+        return True
+
+    def thresholds(self):
+        elements = self.elements
+        thresholds = []
+        name = self.spirit.name
+        if self.aspect:
+            name = self.aspect + name
+        if name in spirit_thresholds:
+            for t in spirit_thresholds[name]:
+                thresholds.append(Threshold(t[0], t[1], self.check_elements(elements, t[2])))
+        return thresholds
+
+spirit_thresholds = {
+        'Bringer': [
+            (360, 450, '2M2A'),
+            (360, 515, '3M'),
+            (650, 450, '1M1A'),
+            (650, 490, '2M1A1N'),
+            (650, 530, '3M2A1N'),
+            ],
+        'Exploratory Bringer': [
+            (360, 450, '2M2A'),
+            (360, 535, '3M'),
+            (650, 450, '1M1A'),
+            (650, 490, '2M1A1N'),
+            (650, 530, '3M2A1N'),
+            ],
+        'Downpour': [
+            (360, 480, '1A3W'),
+            (360, 530, '5W1E'),
+            (360, 580, '3A9W2E'),
+            (650, 480, '3W2P'),
+            (650, 530, '5W1E2P'),
+            (650, 580, '7W2E3P'),
+            ],
+        'Earth': [
+            (370, 440, '1S2E2P'),
+            (370, 480, '2S3E2P'),
+            (370, 520, '2S4E3P'),
+            ],
+        'ResilenceEarth': [
+            (370, 440, '1S2E2P'),
+            (370, 480, '2S3E2P'),
+            (370, 520, '2S4E3P'),
+            ],
+        'MightEarth': [
+            (370, 440, '1S2E2P'),
+            (370, 480, '2S3E2P'),
+            (370, 520, '2S4E3P'),
+            (-5, 493, '1P'),
+            (-5, 535, '1S2E'),
+            (-5, 565, '2P3E'),
+            (-5, 595, '1S3P'),
+            ],
+        'Fangs': [
+            (360, 440, '2N'),
+            (360, 480, '2P3N'),
+            (360, 520, '2N'),
+            (625, 440, '1M1F4N'),
+            (625, 480, '1M2F5N'),
+            ],
+        'Finder': [
+            (360, 455, '2M2A'),
+            (360, 495, '2S2A'),
+            (360, 535, '2M4A3W'),
+            (648, 465, '1A2W'),
+            (648, 505, '2A2E'),
+            (648, 545, '3A2P'),
+            ],
+        'Fractured': [
+            (360, 495, '3M1A'),
+            (360, 540, '2S2M'),
+            (360, 595, '3S2A'),
+            (640, 470, '1S2M2A'),
+            (640, 555, '2S3M2A'),
+            ],
+        'Green': [
+            (365, 440, '1M2P'),
+            (365, 480, '2M3P'),
+            (365, 520, '3M4P'),
+            (645, 440, '1W3P'),
+            (645, 480, '2W4P'),
+            (645, 520, '3W1E5P'),
+            ],
+        'Keeper': [
+            (365, 440, '2S1F2P'),
+            (365, 480, '2S2F3P'),
+            (365, 520, '4P'),
+            (635, 440, '2S'),
+            (635, 480, '1P'),
+            (635, 520, '3P'),
+            (635, 560, '1A'),
+            ],
+        'Lightning': [
+            (363, 440, '3F2A'),
+            (363, 475, '4F3A'),
+            (363, 510, '5F4A1W'),
+            (363, 545, '5F5A2W'),
+            ],
+        'ImmenseLightning': [
+            (363, 440, '3F2A'),
+            (363, 475, '4F3A'),
+            (363, 510, '5F4A1W'),
+            (363, 545, '5F5A2W'),
+            ],
+        'PandemoniumLightning': [
+            (363, 450, '3F2A'),
+            (363, 475, '4F3A'),
+            (363, 500, '5F4A1M'),
+            (363, 525, '5F5A2M'),
+            ],
+        'WindLightning': [
+            (363, 440, '3F2A'),
+            (363, 475, '4F3A'),
+            (363, 510, '5F4A1W'),
+            (363, 545, '5F5A2W'),
+            (0, 490, '1A'),
+            (0, 520, '3A'),
+            (0, 550, '4A1W'),
+            (0, 580, '5A2W'),
+            ],
+        'Lure': [
+            (360, 480, '2M'),
+            (360, 510, '2M1A'),
+            (360, 540, '3M2A1N'),
+            (360, 570, '4A'),
+            (650, 470, '1F3P'),
+            (650, 500, '2P'),
+            (650, 530, '4P1N'),
+            (650, 560, '6P'),
+            ],
+        'Minds': [
+            (360, 435, '2A1N'),
+            (360, 475, '3A1W2N'),
+            (360, 515, '1F4A2N'),
+            (640, 450, '1A2N'),
+            (640, 490, '2A3N'),
+            (640, 530, '3A4N'),
+            (640, 570, '4A1E5N'),
+            ],
+        'Mist': [
+            (360, 435, '1M2A1W'),
+            (360, 480, '2M3A2W'),
+            (360, 525, '4M4A3W'),
+            (360, 560, '5M6A4W'),
+            (650, 435, '1A2W'),
+            (650, 475, '2A3W'),
+            (650, 515, '3A4W'),
+            ],
+        'Ocean': [
+            (370, 495, '1M1A2W'),
+            (370, 535, '2M1A3W'),
+            (370, 570, '3M2A4W'),
+            (645, 495, '2W1E'),
+            (645, 535, '3W2E'),
+            (645, 570, '4W3E'),
+            ],
+        'River': [
+            (365, 440, '1S2W'),
+            (365, 480, '2S3W'),
+            (365, 520, '3S4W1E'),
+            ],
+        'TravelRiver': [
+            (365, 440, '1S2W'),
+            (365, 480, '2S3W'),
+            (365, 520, '3S4W1E'),
+            ],
+        'SunshineRiver': [
+            (365, 440, '1S2W'),
+            (365, 480, '2S3W'),
+            (365, 520, '3S4W1E'),
+            (698, 450, '2S'),
+            (698, 478, '3S1W'),
+            (698, 505, '4S2W'),
+            ],
+        'Serpent': [
+            (360, 440, '2F1W1P'),
+            (360, 500, '2W3E2P'),
+            (360, 560, '3F3W3E3P'),
+            (638, 440, '1F1E'),
+            (638, 495, '2M2E'),
+            (638, 555, '5M6F6E'),
+            ],
+        'Shadows': [
+            (365, 440, '2M1F'),
+            (365, 475, '3M2F'),
+            (365, 515, '4M3F2A'),
+            ],
+        'ReachShadows': [
+            (365, 440, '2M1F'),
+            (365, 475, '3M2F'),
+            (365, 515, '4M3F2A'),
+            ],
+        'MadnessShadows': [
+            (365, 440, '2M1F'),
+            (365, 475, '3M2F'),
+            (365, 515, '4M3F2A'),
+            ],
+        'AmorphousShadows': [
+            (365, 440, '2M1F'),
+            (365, 475, '3M2F'),
+            (365, 515, '4M3F2A'),
+            ],
+        'ForebodingShadows': [
+            (365, 440, '2M1F'),
+            (365, 475, '3M2F'),
+            (365, 515, '4M3F2A'),
+            (-5, 490, '2A'),
+            (-5, 525, '1M'),
+            (-5, 560, '2F'),
+            (-5, 580, '2M4A'),
+            ],
+        'Shifting': [
+            (365, 430, '2E'),
+            (365, 465, '1A2E'),
+            (365, 500, '2M3A4E'),
+            (645, 430, '1M'),
+            (645, 465, '2M1A'),
+            ],
+        'Starlight': [
+            (655, 90, '3A'),
+            (655, 120, '3E'),
+            (655, 210, '3F'),
+            (655, 240, '3W'),
+            (655, 330, '3P'),
+            (655, 360, '3N'),
+            (655, 445, '2M'),
+            (655, 475, '3M'),
+            (655, 575, '4S'),
+            ],
+        'Stone': [
+            (363, 435, '2E'),
+            (363, 495, '4E'),
+            (363, 530, '6E1P'),
+            (650, 465, '3E'),
+            (650, 505, '5E'),
+            (650, 545, '7E2S'),
+            ],
+        'Thunderspeaker': [
+            (370, 425, '4A'),
+            (370, 455, '1N'),
+            (640, 425, '4A'),
+            (640, 455, '2S1F'),
+            (640, 495, '4S3F'),
+            ],
+        'Trickster': [
+            (360, 415, '1M1F2A'),
+            (360, 565, '2M1F2A'),
+            (650, 415, '3M'),
+            (650, 450, '3A'),
+            (650, 490, ['3S', '3F']),
+            (650, 530, '3N'),
+            ],
+        'Vengeance': [
+            (360, 455, '1F3N'),
+            (360, 495, '1W2F4N'),
+            (360, 545, '3W3F5N'),
+            (650, 430, '3A'),
+            (650, 465, '3F1N'),
+            (650, 505, '4F2N'),
+            (650, 545, '5F2A2N'),
+            ],
+        'Volcano': [
+            (360, 455, '2F2E'),
+            (360, 495, '3F3E'),
+            (360, 530, '4F2A4E'),
+            (360, 580, '5F3A5E'),
+            (653, 408, '3E'),
+            (653, 445, '3F'),
+            (653, 485, '4E4F'),
+            (653, 525, '5F'),
+            ],
+        'Wildfire': [
+            (360, 445, '1P'),
+            (360, 475, '3P'),
+            (360, 510, '4F2A'),
+            (360, 570, '7F'),
+            (640, 445, '4F1P'),
+            (640, 485, '4F2P'),
+            (640, 525, '5F2P2E'),
+            ],
+        }
 
 class Presence(models.Model):
     game_player = models.ForeignKey(GamePlayer, on_delete=models.CASCADE)

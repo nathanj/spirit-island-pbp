@@ -13,6 +13,13 @@
       {% if player.aspect %}
       <img style="position: absolute; left: {{player.aspect_left}}px; top: {{player.aspect_top}}px;" src="{% static player.aspect_url %}" width="370" height="230" />
       {% endif %}
+      {% for threshold in player.thresholds %}
+      {% if threshold.achieved %}
+      <img style="position: absolute; left: {{threshold.x}}px; top: {{threshold.y}}px;" src="{% static "pbf/green.png" %}" width="20" height="20" />
+      {% else %}
+      <img style="position: absolute; left: {{threshold.x}}px; top: {{threshold.y}}px;" src="{% static "pbf/red.svg" %}" width="20" height="20" />
+      {% endif %}
+      {% endfor %}
       <img src="{% static player.spirit.url %}" width="957" height="630" />
     </div>
   </div>
