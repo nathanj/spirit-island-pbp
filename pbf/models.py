@@ -81,6 +81,7 @@ class Game(models.Model):
         ('957389286834057306', '#pbp1-updates'),
         ('883019769937268816', '#pbp2-updates'),
         ('1022258668428865586', '#pbp3-updates'),
+        ('1025502499387478127', '#pbp4-updates'),
         ('1010285070680072192', '#pbp-allspirit-updates'),
         ('703767917854195733', '#bot-testing'),
     )
