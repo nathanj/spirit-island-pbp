@@ -5,6 +5,7 @@ from pbf.api import api
 
 urlpatterns = [
     path('__debug__/', include('debug_toolbar.urls')),
+    path('', include('django_prometheus.urls')),
     path('admin/', admin.site.urls),
     path("api/", api.urls),
     path('', views.home, name='home'),
