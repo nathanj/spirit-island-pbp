@@ -270,6 +270,7 @@ def gain_power(request, player_id, type, num):
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains a {type} power. Choices: {cards_str}',
             images=images)
 
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def discard_pile(request, player_id):
@@ -282,8 +283,7 @@ def choose_from_discard(request, player_id, card_id):
     player.hand.add(card)
     player.game.discard_pile.remove(card)
 
-    #add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {card.name} from the discard pile')
-
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def send_days(request, player_id, card_id):
@@ -299,6 +299,7 @@ def send_days(request, player_id, card_id):
 
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} sends {card.name} to the Days That Never Were')
 
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def choose_card(request, player_id, card_id):
@@ -312,6 +313,7 @@ def choose_card(request, player_id, card_id):
 
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {card.name}')
 
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def choose_days(request, player_id, card_id):
@@ -322,6 +324,7 @@ def choose_days(request, player_id, card_id):
 
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {card.name} from the Days That Never Were')
 
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def create_days(request, player_id, num):
@@ -335,7 +338,22 @@ def create_days(request, player_id, num):
             deck.remove(c)
             player.days.add(c)
 
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
+
+def compute_card_thresholds(player):
+    player.play_cards = []
+    for card in player.play.all():
+        card.computed_thresholds = card.thresholds(player.elements)
+        player.play_cards.append(card)
+    player.hand_cards = []
+    for card in player.hand.all():
+        card.computed_thresholds = card.thresholds(player.elements)
+        player.hand_cards.append(card)
+    player.selection_cards = []
+    for card in player.selection.all():
+        card.computed_thresholds = card.thresholds(player.elements)
+        player.selection_cards.append(card)
 
 def play_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -343,8 +361,7 @@ def play_card(request, player_id, card_id):
     player.play.add(card)
     player.hand.remove(card)
 
-    #add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} plays {card.name}')
-
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def unplay_card(request, player_id, card_id):
@@ -353,8 +370,7 @@ def unplay_card(request, player_id, card_id):
     player.hand.add(card)
     player.play.remove(card)
 
-    #add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} unplays {card.name}')
-
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def forget_card(request, player_id, card_id):
@@ -369,8 +385,7 @@ def forget_card(request, player_id, card_id):
         except:
             pass
 
-    #add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} forgets {card.name}')
-
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 
@@ -380,8 +395,7 @@ def reclaim_card(request, player_id, card_id):
     player.hand.add(card)
     player.discard.remove(card)
 
-    #add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} reclaims {card.name}')
-
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def reclaim_all(request, player_id):
@@ -391,8 +405,7 @@ def reclaim_all(request, player_id):
         player.hand.add(card)
     player.discard.clear()
 
-    #add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} reclaims all')
-
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def discard_all(request, player_id):
@@ -414,6 +427,7 @@ def discard_all(request, player_id):
     player.temporary_animal = 0
     player.save()
 
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def discard_card(request, player_id, card_id):
@@ -431,8 +445,7 @@ def discard_card(request, player_id, card_id):
     except:
         pass
 
-    #add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} discards {card.name}')
-
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def ready(request, player_id):
@@ -454,6 +467,7 @@ def ready(request, player_id):
     if player.game.gameplayer_set.filter(ready=False).count() == 0:
         add_log_msg(player.game, text=f'All spirits are ready!')
 
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def unready(request, game_id):
@@ -486,11 +500,7 @@ def change_energy(request, player_id, amount):
     player.energy += amount
     player.save()
 
-    #if amount > 0:
-    #    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {amount} energy (now: {player.energy})')
-    #else:
-    #    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} pays {-amount} energy (now: {player.energy})')
-
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
 def pay_energy(request, player_id):
@@ -500,8 +510,7 @@ def pay_energy(request, player_id):
     player.paid_this_turn = True
     player.save()
 
-    #add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} pays {amount} energy (now: {player.energy})')
-
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
 def gain_energy(request, player_id):
@@ -511,8 +520,7 @@ def gain_energy(request, player_id):
     player.gained_this_turn = True
     player.save()
 
-    #add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {amount} energy (now: {player.energy})')
-
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
 def toggle_presence(request, player_id, left, top):
@@ -521,6 +529,7 @@ def toggle_presence(request, player_id, left, top):
     presence.opacity = abs(1.0 - presence.opacity)
     presence.save()
 
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def add_element(request, player_id, element):
@@ -535,6 +544,7 @@ def add_element(request, player_id, element):
     if element == 'animal': player.temporary_animal += 1
     player.save()
 
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def remove_element(request, player_id, element):
@@ -549,6 +559,7 @@ def remove_element(request, player_id, element):
     if element == 'animal': player.temporary_animal -= 1
     player.save()
 
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def add_element_permanent(request, player_id, element):
@@ -563,6 +574,7 @@ def add_element_permanent(request, player_id, element):
     if element == 'animal': player.permanent_animal += 1
     player.save()
 
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def remove_element_permanent(request, player_id, element):
@@ -577,6 +589,7 @@ def remove_element_permanent(request, player_id, element):
     if element == 'animal': player.permanent_animal -= 1
     player.save()
 
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def change_name(request, player_id):
@@ -584,11 +597,13 @@ def change_name(request, player_id):
     player.name = request.POST['name']
     player.save()
 
+    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'name.html', {'player': player, 'success': True}))
 
 def tab(request, game_id, player_id):
     game = get_object_or_404(Game, pk=game_id)
     player = get_object_or_404(GamePlayer, pk=player_id)
+    compute_card_thresholds(player)
     return render(request, 'tabs.html', {'game': game, 'player': player})
 
 def game_logs(request, game_id):

@@ -4,6 +4,28 @@ from collections import Counter, defaultdict
 
 from django.db import models
 
+def chunk(str, n):
+    return [str[i:i+n] for i in range(0, len(str), n)]
+
+def check_elements(elements, desired):
+    if type(desired) == type([]):
+        return any([check_elements(elements, d) for d in desired])
+
+    chunks = chunk(desired, 2)
+    for c in chunks:
+        amt = int(c[0])
+        e = c[1]
+        if e == 'S' and elements[Elements.Sun] < amt: return False
+        if e == 'M' and elements[Elements.Moon] < amt: return False
+        if e == 'F' and elements[Elements.Fire] < amt: return False
+        if e == 'A' and elements[Elements.Air] < amt: return False
+        if e == 'W' and elements[Elements.Water] < amt: return False
+        if e == 'E' and elements[Elements.Earth] < amt: return False
+        if e == 'P' and elements[Elements.Plant] < amt: return False
+        if e == 'N' and elements[Elements.Animal] < amt: return False
+    return True
+
+
 class Elements(Enum):
     Sun = 1
     Moon = 2
@@ -66,6 +88,12 @@ class Card(models.Model):
             if len(e) > 0:
                 counter[Elements[e]] = 1
         return counter
+
+    def thresholds(self, elements):
+        thresholds = []
+        for t in card_thresholds.get(self.name, []):
+            thresholds.append(Threshold(t[0], t[1], check_elements(elements, t[2])))
+        return thresholds
 
 class Game(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -228,27 +256,6 @@ class GamePlayer(models.Model):
     def days_ordered(self):
         return self.days.order_by('type', 'cost')
 
-    def chunk(self, str, n):
-        return [str[i:i+n] for i in range(0, len(str), n)]
-
-    def check_elements(self, elements, desired):
-        if type(desired) == type([]):
-            return any([self.check_elements(elements, d) for d in desired])
-
-        chunks = self.chunk(desired, 2)
-        for c in chunks:
-            amt = int(c[0])
-            e = c[1]
-            if e == 'S' and elements[Elements.Sun] < amt: return False
-            if e == 'M' and elements[Elements.Moon] < amt: return False
-            if e == 'F' and elements[Elements.Fire] < amt: return False
-            if e == 'A' and elements[Elements.Air] < amt: return False
-            if e == 'W' and elements[Elements.Water] < amt: return False
-            if e == 'E' and elements[Elements.Earth] < amt: return False
-            if e == 'P' and elements[Elements.Plant] < amt: return False
-            if e == 'N' and elements[Elements.Animal] < amt: return False
-        return True
-
     def thresholds(self):
         elements = self.elements
         thresholds = []
@@ -257,7 +264,7 @@ class GamePlayer(models.Model):
             name = self.aspect + name
         if name in spirit_thresholds:
             for t in spirit_thresholds[name]:
-                thresholds.append(Threshold(t[0], t[1], self.check_elements(elements, t[2])))
+                thresholds.append(Threshold(t[0], t[1], check_elements(elements, t[2])))
         return thresholds
 
 spirit_thresholds = {
@@ -530,6 +537,75 @@ spirit_thresholds = {
             (640, 525, '5F2P2E'),
             ],
         }
+
+card_thresholds = {
+"Accelerated Rot": [ (30, 78, '3S2W3P') ],
+"Angry Bears": [ (35, 76, '2F3N') ],
+"Bargains of Power and Protection": [ (30, 82, '3S2W2E') ],
+"Blazing Renewal": [ (30, 80, '3F3E2P') ],
+"Bloodwrack Plague": [ (35, 74, '2E4N') ],
+"Cast down into the Briny Deep": [ (25, 70, '2S2M4W4E') ],
+"Cleansing Floods": [ (38, 80, '4W') ],
+"Death Falls Gently from Open Blossoms": [ (35, 73, '3A3P') ],
+"Dissolve the Bonds of Kinship": [ (30, 76, '2F2W3N') ],
+"Dream of the Untouched Land": [ (23, 65, '3M2W3E2P') ],
+"Entwined Power": [ (35, 77, '2W4P') ],
+"Fire and Flood": [ (38, 73, '3F'), (38, 83, '3W') ],
+"Flow like Water, Reach like Air": [ (36, 76, '2A2W') ],
+"Focus the Land's Anguish": [ (38, 80, '3S') ],
+"Forests of Living Obsidian": [ (30, 80, '2S3F3E') ],
+"Grant Hatred a Ravenous Form": [ (36, 80, '4M2F') ],
+"Indomitable Claim": [ (34, 72, '2S3E') ],
+"Infestation of Venomous Spiders": [ (30, 76, '2A2E3N') ],
+"Infinite Vitality": [ (40, 75, '4E') ],
+"Insatiable Hunger of the Swarm": [ (35, 80, '2A4N') ],
+"Instruments of their own Ruin": [ (32, 70, '4S2F2N') ],
+"Irresistible Call": [ (28, 76, '2S3A2P') ],
+"Manifest Incarnation": [ (35, 76, '3S3M') ],
+"Melt Earth into Quicksand": [ (28, 78, '2M4W2E') ],
+"Mists of Oblivion": [ (30, 79, '2M3A2W') ],
+"Paralyzing Fright": [ (35, 78, '2A3E') ],
+"Pent-Up Calamity": [ (30, 78, '2M3F') ],
+"Pillar of Living Flame": [ (38, 80, '4F') ],
+"Poisoned Land": [ (30, 76, '3E2P2N') ],
+"Powerstorm": [ (30, 76, '2S2F3N') ],
+"Pyroclastic Flow": [ (30, 79, '2F3A2E') ],
+'Savage Transformation': [ (38, 76, '2M3N') ],
+"Sea Monsters": [ (30, 80, '3W3N') ],
+"Settle Into Hunting-Grounds": [ (35, 76, '2P3N') ],
+"Sleep and Never Waken": [ (28, 74, '3M2A2N') ],
+"Smothering Infestation": [ (36, 80, '2W2P') ],
+"Spill Bitterness into the Earth": [ (33, 76, '3F3W') ],
+"Storm-Swath": [ (28, 68, '2F3A2W') ],
+"Strangling Firevine": [ (35, 76, '2F3P') ],
+"Sweep into the Sea": [ (35, 80, '3S2W') ],
+"Talons of Lightning": [ (35, 76, '3F3A') ],
+"Terrifying Nightmares": [ (38, 78, '4M') ],
+"The Jungle Hungers": [ (33, 76, '2M3P') ],
+"The Land Thrashes in Furious Pain": [ (35, 78, '3M3E') ],
+"The Trees and Stones Speak of War": [ (30, 76, '2S2E2P') ],
+"The Wounded Wild Turns on its Assailants": [ (30, 73, '2F3P2N') ],
+"Thickets Erupt with Every Touch of Breeze": [ (38, 80, '3P') ],
+"Tigers Hunting": [ (30, 76, '2S2M3A') ],
+"Transform to a Murderous Darkness": [ (30, 78, '3M2F2A') ],
+"Trees Radiate Celestial Brilliance": [ (28, 80, '3S2M2P') ],
+"Tsunami": [ (33, 72, '3W2E') ],
+"Twisted Flowers Murmur Ultimatums": [ (30, 76, '3M2A3P') ],
+"Unleash a Torrent of the Self's Own Essence": [ (33, 80, '2S3F') ],
+"Unlock the Gates of Deepest Power": [ (18, 72, '2S2M2F2A2W2E2P2N') ],
+"Unrelenting Growth": [ (33, 72, '3S3P') ],
+"Utter a Curse of Dread and Bone": [ (35, 76, '3M2N') ],
+"Vanish Softly Away, Forgotten by All": [ (35, 78, '3M3A') ],
+"Vengeance of the Dead": [ (38, 76, '3N') ],
+"Vigor of the Breaking Dawn": [ (36, 72, '3S2N') ],
+"Voice of Command": [ (35, 78, '3S2A') ],
+"Volcanic Eruption": [ (35, 72, '4F3E') ],
+"Walls of Rock and Thorn": [ (35, 72, '2E2P') ],
+"Weave Together the Fabric of Place": [ (42, 80, '4A') ],
+"Winds of Rust and Atrophy": [ (30, 80, '3A3W2N') ],
+"Wrap in Wings of Sunlight": [ (30, 76, '2S2A2N') ],
+}
+
 
 class Presence(models.Model):
     game_player = models.ForeignKey(GamePlayer, on_delete=models.CASCADE)

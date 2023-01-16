@@ -46,11 +46,20 @@
   <ul>
     <div class="container-fluid">
       <div class="row">
-	{% for card in player.selection.all %}
+	{% for card in player.selection_cards %}
 	<div class="col-auto">
 	  <div class="w-100 w-md-200 mw-full">
 	    <div class="card p-0 m-5 m-md-10">
-	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+	      <div style="position: relative">
+		{% for threshold in card.computed_thresholds %}
+		{% if threshold.achieved %}
+		<img style="position: absolute; left: {{threshold.x}}%; top: {{threshold.y}}%; width: 2vmin; height: 2vmin;" src="{% static "pbf/green.png" %}" />
+		{% else %}
+		<img style="position: absolute; left: {{threshold.x}}%; top: {{threshold.y}}%; width: 2vmin; height: 2vmin;" src="{% static "pbf/red.svg" %}" />
+		{% endif %}
+		{% endfor %}
+		<img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+	      </div>
 	      <div class="text-center pb-5">
 		<button class="btn" hx-get="{% url 'choose_card' player.id card.id %}">Choose</button>
 		{% if player.spirit.name == 'Fractured' %}
@@ -74,11 +83,22 @@
   <ul>
     <div class="container-fluid">
       <div class="row">
-	{% for card in player.play.all %}
+	{% for card in player.play_cards %}
 	<div class="col-auto">
 	  <div class="w-100 w-md-200 mw-full">
 	    <div class="card p-0 m-5 m-md-10" style="background-color: #040;">
-	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+	      <div style="position: relative">
+
+		{% for threshold in card.computed_thresholds %}
+		{% if threshold.achieved %}
+		<img style="position: absolute; left: {{threshold.x}}%; top: {{threshold.y}}%; width: 2vmin; height: 2vmin;" src="{% static "pbf/green.png" %}" />
+		{% else %}
+		<img style="position: absolute; left: {{threshold.x}}%; top: {{threshold.y}}%; width: 2vmin; height: 2vmin;" src="{% static "pbf/red.svg" %}" />
+		{% endif %}
+		{% endfor %}
+
+		<img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+	      </div>
 	      <div class="text-center pb-5">
 		<button class="btn" hx-get="{% url 'unplay_card' player.id card.id %}">Unplay</button>
 		<button class="btn" hx-get="{% url 'discard_card' player.id card.id %}">Discard</button>
@@ -88,11 +108,22 @@
 	  </div>
 	</div>
 	{% endfor %}
-	{% for card in player.hand.all %}
+	{% for card in player.hand_cards %}
 	<div class="col-auto">
 	  <div class="w-100 w-md-200 mw-full">
 	    <div class="card p-0 m-5 m-md-10">
-	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+	      <div style="position: relative">
+
+		{% for threshold in card.computed_thresholds %}
+		{% if threshold.achieved %}
+		<img style="position: absolute; left: {{threshold.x}}%; top: {{threshold.y}}%; width: 2vmin; height: 2vmin;" src="{% static "pbf/green.png" %}" />
+		{% else %}
+		<img style="position: absolute; left: {{threshold.x}}%; top: {{threshold.y}}%; width: 2vmin; height: 2vmin;" src="{% static "pbf/red.svg" %}" />
+		{% endif %}
+		{% endfor %}
+
+		<img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+	      </div>
 	      <div class="text-center pb-5">
 		<button class="btn" hx-get="{% url 'play_card' player.id card.id %}">Play</button>
 		<button class="btn" hx-get="{% url 'discard_card' player.id card.id %}">Discard</button>
