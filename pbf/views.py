@@ -579,6 +579,12 @@ def remove_element_permanent(request, player_id, element):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
+def change_name(request, player_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    player.name = request.POST['name']
+    player.save()
+
+    return with_log_trigger(render(request, 'name.html', {'player': player, 'success': True}))
 
 def tab(request, game_id, player_id):
     game = get_object_or_404(Game, pk=game_id)

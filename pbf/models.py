@@ -114,6 +114,7 @@ class GamePlayer(models.Model):
         ordering = ('-id', )
 
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, blank=True)
     spirit = models.ForeignKey(Spirit, blank=False, on_delete=models.CASCADE)
     hand = models.ManyToManyField(Card, related_name='hand', blank=True)
     discard = models.ManyToManyField(Card, related_name='discard', blank=True)

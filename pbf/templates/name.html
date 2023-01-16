@@ -1,0 +1,16 @@
+{% load static %}
+<div id="spirit-name-{{player.id}}"
+     class="pt-200"
+     hx-target="#spirit-name-{{player.id}}"
+     hx-swap="outerHTML"
+     hx-indicator="#name-spinner">
+  <p>
+  <form hx-post="{% url 'change_name' player.id %}">
+    Name: <input type="text" name="name" value="{{player.name}}" />
+    <button class="btn" hx-post="{% url 'change_name' player.id %}">Change</button>
+    {% if success %}Name changed!{% endif %}
+    <img id="name-spinner" class="htmx-indicator" src="{% static "pbf/bars.svg" %}"/>
+  </form>
+</div>
+
+
