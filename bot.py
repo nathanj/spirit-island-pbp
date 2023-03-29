@@ -77,7 +77,7 @@ async def on_guild_channel_update(before, after):
     LOG.msg(f'channel update #{after.name}')
     if isinstance(before, discord.TextChannel) and isinstance(after, discord.TextChannel):
         LOG.msg(f'id: {after.id}')
-        if after.id in (957389286834057306, 883019769937268816, 703767917854195733, 1010285070680072192, 1022258668428865586, 1025502499387478127):
+        if after.id in (957389286834057306, 883019769937268816, 703767917854195733, 1010285070680072192, 1022258668428865586, 1025502499387478127, 1090363335888863375):
             LOG.msg(f'before topic: {before.topic}')
             LOG.msg(f'after  topic: {after.topic}')
             if before.topic != after.topic:

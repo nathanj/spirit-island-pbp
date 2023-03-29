@@ -111,6 +111,7 @@ class Game(models.Model):
         ('1022258668428865586', '#pbp3-updates'),
         ('1025502499387478127', '#pbp4-updates'),
         ('1010285070680072192', '#pbp-allspirit-updates'),
+        ('1090363335888863375', '#pbp5-updates'),
         ('703767917854195733', '#bot-testing'),
     )
     discord_channel = models.CharField(max_length=255, default="", blank=True, choices=CHANNELS)
