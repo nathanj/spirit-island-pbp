@@ -587,7 +587,7 @@ card_thresholds = {
 "The Trees and Stones Speak of War": [ (30, 76, '2S2E2P') ],
 "The Wounded Wild Turns on its Assailants": [ (30, 73, '2F3P2N') ],
 "Thickets Erupt with Every Touch of Breeze": [ (38, 80, '3P') ],
-"Tigers Hunting": [ (30, 76, '2S2M3A') ],
+"Tigers Hunting": [ (30, 76, '2S2M3N') ],
 "Transform to a Murderous Darkness": [ (30, 78, '3M2F2A') ],
 "Trees Radiate Celestial Brilliance": [ (28, 80, '3S2M2P') ],
 "Tsunami": [ (33, 72, '3W2E') ],
