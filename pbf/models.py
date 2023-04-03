@@ -105,16 +105,16 @@ class Game(models.Model):
     discard_pile = models.ManyToManyField(Card, related_name='discard_pile', blank=True)
     screenshot = models.ImageField(upload_to='screenshot', blank=True)
     screenshot2 = models.ImageField(upload_to='screenshot', blank=True)
-    CHANNELS = (
-        ('957389286834057306', '#pbp1-updates'),
-        ('883019769937268816', '#pbp2-updates'),
-        ('1022258668428865586', '#pbp3-updates'),
-        ('1025502499387478127', '#pbp4-updates'),
-        ('1010285070680072192', '#pbp-allspirit-updates'),
-        ('1090363335888863375', '#pbp5-updates'),
-        ('703767917854195733', '#bot-testing'),
-    )
-    discord_channel = models.CharField(max_length=255, default="", blank=True, choices=CHANNELS)
+    #CHANNELS = (
+    #    ('957389286834057306', '#pbp1-updates'),
+    #    ('883019769937268816', '#pbp2-updates'),
+    #    ('1022258668428865586', '#pbp3-updates'),
+    #    ('1025502499387478127', '#pbp4-updates'),
+    #    ('1010285070680072192', '#pbp-allspirit-updates'),
+    #    ('1090363335888863375', '#pbp5-updates'),
+    #    ('703767917854195733', '#bot-testing'),
+    #)
+    discord_channel = models.CharField(max_length=255, default="", blank=True)
 
     def __str__(self):
         return str(self.id)
