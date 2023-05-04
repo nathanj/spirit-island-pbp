@@ -72,12 +72,14 @@ def combine_images(filenames):
 async def on_ready():
     LOG.msg(f'We have logged in as {client}')
 
+update_channel_regex = re.compile(r'\d+up')
+
 @client.event
 async def on_guild_channel_update(before, after):
     LOG.msg(f'channel update #{after.name}')
     if isinstance(before, discord.TextChannel) and isinstance(after, discord.TextChannel):
         LOG.msg(f'id: {after.id}')
-        if after.name.startswith('pbp') and after.name.endswith('updates'):
+        if update_channel_regex.match(after.name):
             LOG.msg(f'before topic: {before.topic}')
             LOG.msg(f'after  topic: {after.topic}')
             if before.topic != after.topic:
