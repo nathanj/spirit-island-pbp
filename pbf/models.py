@@ -569,7 +569,7 @@ card_thresholds = {
 "Pent-Up Calamity": [ (30, 78, '2M3F') ],
 "Pillar of Living Flame": [ (38, 80, '4F') ],
 "Poisoned Land": [ (30, 76, '3E2P2N') ],
-"Powerstorm": [ (30, 76, '2S2F3N') ],
+"Powerstorm": [ (30, 76, '2S2F3A') ],
 "Pyroclastic Flow": [ (30, 79, '2F3A2E') ],
 'Savage Transformation': [ (38, 76, '2M3N') ],
 "Sea Monsters": [ (30, 80, '3W3N') ],
