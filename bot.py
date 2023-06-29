@@ -43,6 +43,11 @@ spirit_emoji_map = {
 'Vengeance': 'SpiritVengeanceBurningPlague',
 'Volcano': 'SpiritVolcanoLoomingHigh',
 'Wildfire': 'SpiritHeartWildfire',
+'Teeth': 'SpiritChompDevouringTeeth',
+'Eyes': 'SpiritEyesWatchTrees',
+'Mud': 'SpiritOtterFathomlessMud',
+'Heat': 'SpiritRisingHeatStoneSand',
+'Whirlwind': 'SpiritKittySunBrightWhirlwind',
 }
 
 emoji_to_discord_map = {}
