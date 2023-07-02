@@ -48,6 +48,14 @@ spirit_emoji_map = {
 'Mud': 'SpiritOtterFathomlessMud',
 'Heat': 'SpiritRisingHeatStoneSand',
 'Whirlwind': 'SpiritKittySunBrightWhirlwind',
+'Voice': 'SpiritBlobby',
+'Roots': 'SpiritBlobby',
+'Gaze': 'SpiritBlobby',
+'Vigil': 'SpiritBlobby',
+'Behemoth': 'SpiritBlobby',
+'Earthquakes': 'SpiritBlobby',
+'Breath': 'SpiritBlobby',
+'Waters': 'SpiritBlobby',
 }
 
 emoji_to_discord_map = {}
