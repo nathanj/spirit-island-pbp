@@ -435,6 +435,24 @@ def compute_card_thresholds(player):
         card.computed_thresholds = card.thresholds(player.elements)
         player.selection_cards.append(card)
 
+def impend_card(request, player_id, card_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(player.hand, pk=card_id)
+    player.impending.add(card)
+    player.hand.remove(card)
+
+    compute_card_thresholds(player)
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
+def play_from_impending(request, player_id, card_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(player.impending, pk=card_id)
+    player.play.add(card)
+    player.impending.remove(card)
+
+    compute_card_thresholds(player)
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
 def play_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.hand, pk=card_id)

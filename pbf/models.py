@@ -150,6 +150,7 @@ class GamePlayer(models.Model):
     play = models.ManyToManyField(Card, related_name='play', blank=True)
     selection = models.ManyToManyField(Card, related_name='selection', blank=True)
     days = models.ManyToManyField(Card, related_name='days', blank=True)
+    impending = models.ManyToManyField(Card, related_name='impending', blank=True)
     ready = models.BooleanField(default=False)
     paid_this_turn = models.BooleanField(default=False)
     gained_this_turn = models.BooleanField(default=False)

@@ -126,6 +126,9 @@
 	      </div>
 	      <div class="text-center pb-5">
 		<button class="btn" hx-get="{% url 'play_card' player.id card.id %}">Play</button>
+		{% if player.spirit.name == 'Earthquakes' %}
+		<button class="btn" hx-get="{% url 'impend_card' player.id card.id %}">Impend</button>
+		{% endif %}
 		<button class="btn" hx-get="{% url 'discard_card' player.id card.id %}">Discard</button>
 		<button class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure?">Forget</button>
 	      </div>
@@ -136,6 +139,30 @@
       </div>
     </div>
   </ul>
+
+  {% if player.spirit.name == 'Earthquakes' %}
+  <p>
+  <h4>Impending:</h4>
+  <ul>
+    <div class="container-fluid">
+      <div class="row">
+	{% for card in player.impending.all %}
+	<div class="col-auto">
+	  <div class="w-100 w-md-200 mw-full">
+	    <div class="card p-0 m-5 m-md-10">
+	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+	      <div class="text-center pb-5">
+		<button class="btn" hx-get="{% url 'play_from_impending' player.id card.id %}">Play</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	{% endfor %}
+      </div>
+    </div>
+
+  </ul>
+  {% endif %}
 
   <p>
   <h4>Discard:</h4>
