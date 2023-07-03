@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.urls import include, path
+from django.conf import settings
+from django.conf.urls.static import static
 from pbf import views
 from pbf.api import api
 
@@ -46,4 +48,4 @@ urlpatterns = [
     path('game/<int:player_id>/element/<str:element>/remove', views.remove_element, name='remove_element'),
     path('game/<int:player_id>/element-permanent/<str:element>/add', views.add_element_permanent, name='add_element_permanent'),
     path('game/<int:player_id>/element-permanent/<str:element>/remove', views.remove_element_permanent, name='remove_element_permanent'),
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
