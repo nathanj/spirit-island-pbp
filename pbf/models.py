@@ -7,22 +7,21 @@ from django.db import models
 def chunk(str, n):
     return [str[i:i+n] for i in range(0, len(str), n)]
 
-def check_elements(elements, desired):
+def check_elements(elements, desired, equiv_elements=None):
     if type(desired) == type([]):
         return any([check_elements(elements, d) for d in desired])
 
     chunks = chunk(desired, 2)
+    if equiv_elements:
+        threshold = sum(int(c[0]) for c in chunks if c[1] in equiv_elements)
+        in_play = sum(elements[Elements.from_char(e)] for e in equiv_elements)
+        if in_play < threshold: return False
+        chunks = [c for c in chunks if c[1] not in equiv_elements]
+
     for c in chunks:
         amt = int(c[0])
-        e = c[1]
-        if e == 'S' and elements[Elements.Sun] < amt: return False
-        if e == 'M' and elements[Elements.Moon] < amt: return False
-        if e == 'F' and elements[Elements.Fire] < amt: return False
-        if e == 'A' and elements[Elements.Air] < amt: return False
-        if e == 'W' and elements[Elements.Water] < amt: return False
-        if e == 'E' and elements[Elements.Earth] < amt: return False
-        if e == 'P' and elements[Elements.Plant] < amt: return False
-        if e == 'N' and elements[Elements.Animal] < amt: return False
+        e = Elements.from_char(c[1])
+        if e and elements[e] < amt: return False
     return True
 
 
@@ -35,6 +34,18 @@ class Elements(Enum):
     Earth = 6
     Plant = 7
     Animal = 8
+
+    @staticmethod
+    def from_char(c):
+        if c == 'S': return Elements.Sun
+        if c == 'M': return Elements.Moon
+        if c == 'F': return Elements.Fire
+        if c == 'A': return Elements.Air
+        if c == 'W': return Elements.Water
+        if c == 'E': return Elements.Earth
+        if c == 'P': return Elements.Plant
+        if c == 'N': return Elements.Animal
+        return None
 
 class Threshold():
     def __init__(self, x, y, achieved):
@@ -89,10 +100,10 @@ class Card(models.Model):
                 counter[Elements[e]] = 1
         return counter
 
-    def thresholds(self, elements):
+    def thresholds(self, elements, equiv_elements=None):
         thresholds = []
         for t in card_thresholds.get(self.name, []):
-            thresholds.append(Threshold(t[0], t[1], check_elements(elements, t[2])))
+            thresholds.append(Threshold(t[0], t[1], check_elements(elements, t[2], equiv_elements)))
         return thresholds
 
 class Game(models.Model):
@@ -236,6 +247,10 @@ class GamePlayer(models.Model):
             counter += presence.get_elements()
         return defaultdict(int, counter)
 
+    def equiv_elements(self):
+        if self.aspect == 'DarkFire': return "MF"
+        return None
+
     def sun(self): return self.elements[Elements.Sun]
     def moon(self): return self.elements[Elements.Moon]
     def fire(self): return self.elements[Elements.Fire]
@@ -244,6 +259,10 @@ class GamePlayer(models.Model):
     def earth(self): return self.elements[Elements.Earth]
     def plant(self): return self.elements[Elements.Plant]
     def animal(self): return self.elements[Elements.Animal]
+
+    def init_permanent_elements(self):
+        if self.aspect == 'DarkFire':
+            self.permanent_moon += 1
 
     def get_play_cost(self):
         return sum([card.cost for card in self.play.all()])
@@ -264,9 +283,10 @@ class GamePlayer(models.Model):
         name = self.spirit.name
         if self.aspect:
             name = self.aspect + name
+        equiv_elements = self.equiv_elements()
         if name in spirit_thresholds:
             for t in spirit_thresholds[name]:
-                thresholds.append(Threshold(t[0], t[1], check_elements(elements, t[2])))
+                thresholds.append(Threshold(t[0], t[1], check_elements(elements, t[2], equiv_elements)))
         return thresholds
 
 spirit_thresholds = {
@@ -441,6 +461,11 @@ spirit_thresholds = {
             (638, 555, '5M6F6E'),
             ],
         'Shadows': [
+            (365, 440, '2M1F'),
+            (365, 475, '3M2F'),
+            (365, 515, '4M3F2A'),
+            ],
+        'DarkFireShadows': [
             (365, 440, '2M1F'),
             (365, 475, '3M2F'),
             (365, 515, '4M3F2A'),
