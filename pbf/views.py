@@ -206,6 +206,10 @@ spirit_presence = {
                 ),
         }
 
+spirit_additional_cards = {
+    'DarkFireShadows': ['Unquenchable Flames']
+    }
+
 def add_player(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
     colors = ['blue', 'green', 'orange', 'purple', 'red', 'yellow']
@@ -235,6 +239,15 @@ def add_player(request, game_id):
         print(ex)
         pass
     gp.hand.set(Card.objects.filter(spirit=spirit))
+    if gp.full_name() in spirit_additional_cards:
+        additional_starting_cards = spirit_additional_cards[gp.full_name()]
+        for card_name in additional_starting_cards:
+            card = Card.objects.get(name=card_name)
+            gp.hand.add(card)
+            if card.type == Card.MINOR:
+                game.minor_deck.remove(card)
+            elif card.type == Card.MAJOR:
+                game.major_deck.remove(card)
 
     return redirect(reverse('view_game', args=[game.id]))
 

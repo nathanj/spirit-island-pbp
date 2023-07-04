@@ -264,6 +264,12 @@ class GamePlayer(models.Model):
         if self.aspect == 'DarkFire':
             self.permanent_moon += 1
 
+    def full_name(self):
+        name = self.spirit.name
+        if self.aspect:
+            name = self.aspect + name
+        return name
+
     def get_play_cost(self):
         return sum([card.cost for card in self.play.all()])
 
@@ -280,9 +286,7 @@ class GamePlayer(models.Model):
     def thresholds(self):
         elements = self.elements
         thresholds = []
-        name = self.spirit.name
-        if self.aspect:
-            name = self.aspect + name
+        name = self.full_name()
         equiv_elements = self.equiv_elements()
         if name in spirit_thresholds:
             for t in spirit_thresholds[name]:
