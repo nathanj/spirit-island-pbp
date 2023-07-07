@@ -333,6 +333,20 @@ def take_power(request, player_id, type):
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
+def gain_healing(request, player_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    selection = [
+            Card.objects.get(name="Serene Waters"),
+            Card.objects.get(name="Waters Renew"),
+            Card.objects.get(name="Roiling Waters"),
+            Card.objects.get(name="Waters Taste of Ruin")
+            ]
+
+    player.selection.set(selection)
+
+    compute_card_thresholds(player)
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
 def gain_power(request, player_id, type, num):
     player = get_object_or_404(GamePlayer, pk=player_id)
     if type == 'minor':
@@ -399,6 +413,10 @@ def send_days(request, player_id, card_id):
 def choose_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.selection, pk=card_id)
+
+    if card.name in ("Serene Waters", "Waters Renew", "Roiling Waters", "Waters Taste of Ruin"):
+        return choose_healing_card(request, player, card)
+
     player.hand.add(card)
     player.selection.remove(card)
     for discard in player.selection.all():
@@ -406,6 +424,15 @@ def choose_card(request, player_id, card_id):
     player.selection.clear()
 
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {card.name}')
+
+    compute_card_thresholds(player)
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
+def choose_healing_card(request, player, card):
+    player.healing.add(card)
+    player.selection.clear()
+
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} claims {card.name}')
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))

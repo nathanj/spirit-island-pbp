@@ -13,6 +13,17 @@
       {% if player.aspect %}
       <img style="position: absolute; left: {{player.aspect_left}}px; top: {{player.aspect_top}}px;" src="{% static player.aspect_url %}" width="370" height="230" />
       {% endif %}
+      {% if player.spirit.name == 'Waters' %}
+	{% for card in player.healing.all %}
+	  {% if card.name == 'Waters Renew' %}
+            <img style="position: absolute; left: 650px; top: 350px; clip-path: inset(70px 20px 110px 20px);" src="{% static card.url %}" width="320" height="380" />
+	  {% elif card.name == 'Waters Taste of Ruin' %}
+            <img style="position: absolute; left: 350px; top: 350px; clip-path: inset(70px 20px 110px 20px);" src="{% static card.url %}" width="320" height="380" />
+	  {% else %}
+            <img style="position: absolute; left: 10px; top: 10px;" src="{% static card.url %}" width="260" height="350" />
+	  {% endif %}
+	{% endfor %}
+      {% endif %}
       {% for threshold in player.thresholds %}
       {% if threshold.achieved %}
       <img style="position: absolute; left: {{threshold.x}}px; top: {{threshold.y}}px;" src="{% static "pbf/green.png" %}" width="20" height="20" />
@@ -76,6 +87,9 @@
   {% else %}
   <p>Gain Minor: <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}">4 Cards</button> <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '6' %}">6 Cards</button> <button class="btn" hx-get="{% url 'take_power' player.id 'minor' %}">Take Minor Power</button>
   <p>Gain Major: <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}">4 Cards</button> <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards</button> <button class="btn" hx-get="{% url 'take_power' player.id 'major' %}">Take Major Power</button>
+  {% if player.spirit.name == 'Waters' %}
+  <p>Gain Healing Card: <button class="btn" hx-get="{% url 'gain_healing' player.id %}">Gain Healing Card</button>
+  {% endif %}
   {% endif %}
 
   <p>

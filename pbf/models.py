@@ -75,12 +75,14 @@ class Card(models.Model):
     MINOR = 0
     MAJOR = 1
     UNIQUE = 2
+    SPECIAL = 3
 
     name = models.CharField(max_length=255, blank=False)
     TYPES = (
         (MINOR, 'Minor'),
         (MAJOR, 'Major'),
         (UNIQUE, 'Unique'),
+        (SPECIAL, 'Special'),
     )
     type = models.IntegerField(choices=TYPES)
     spirit = models.ForeignKey(Spirit, null=True, on_delete=models.CASCADE)
@@ -162,6 +164,7 @@ class GamePlayer(models.Model):
     selection = models.ManyToManyField(Card, related_name='selection', blank=True)
     days = models.ManyToManyField(Card, related_name='days', blank=True)
     impending = models.ManyToManyField(Card, related_name='impending', blank=True)
+    healing = models.ManyToManyField(Card, related_name='healing', blank=True)
     ready = models.BooleanField(default=False)
     paid_this_turn = models.BooleanField(default=False)
     gained_this_turn = models.BooleanField(default=False)
@@ -288,6 +291,11 @@ class GamePlayer(models.Model):
         thresholds = []
         name = self.full_name()
         equiv_elements = self.equiv_elements()
+        if (name == 'Waters'):
+            if self.healing.all().contains(Card.objects.get(name='Waters Renew')):
+                name += ' - Renew'
+            elif self.healing.all().contains(Card.objects.get(name='Waters Taste of Ruin')):
+                name += ' - Ruin'
         if name in spirit_thresholds:
             for t in spirit_thresholds[name]:
                 thresholds.append(Threshold(t[0], t[1], check_elements(elements, t[2], equiv_elements)))
@@ -662,6 +670,24 @@ spirit_thresholds = {
             (355, 492, '2W'),
             (355, 535, '3W1N'),
             (355, 580, '5W2P2N'),
+            (655, 492, '2N'),
+            (655, 535, '1W3N'),
+            (655, 580, '2F2W5N'),
+            ],
+        'Waters - Renew': [
+            (355, 492, '2W'),
+            (355, 535, '3W1N'),
+            (355, 580, '5W2P2N'),
+            (655, 480, '1W'),
+            (655, 510, '2W1P'),
+            (655, 540, '3W1P'),
+            (655, 570, '1S4W2P'),
+            ],
+        'Waters - Ruin': [
+            (353, 480, '1N'),
+            (353, 510, '1F3N'),
+            (353, 540, '1S2F4N'),
+            (353, 590, '1F2N'),
             (655, 492, '2N'),
             (655, 535, '1W3N'),
             (655, 580, '2F2W5N'),
