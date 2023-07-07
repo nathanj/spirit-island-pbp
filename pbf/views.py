@@ -206,6 +206,9 @@ spirit_presence = {
                 ),
         }
 
+spirit_additional_cards = {
+    'DarkFireShadows': ['Unquenchable Flames']
+    }
 
 def add_player(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
@@ -223,6 +226,7 @@ def add_player(request, game_id):
         spirit_name, aspect = spirit_name.split(' - ')
     spirit = get_object_or_404(Spirit, name=spirit_name)
     gp = GamePlayer(game=game, spirit=spirit, color=colors[0], aspect=aspect, starting_energy=spirit_starting_energy[spirit.name])
+    gp.init_permanent_elements()
     gp.save()
     try:
         for presence in spirit_presence[spirit.name]:
@@ -235,6 +239,15 @@ def add_player(request, game_id):
         print(ex)
         pass
     gp.hand.set(Card.objects.filter(spirit=spirit))
+    if gp.full_name() in spirit_additional_cards:
+        additional_starting_cards = spirit_additional_cards[gp.full_name()]
+        for card_name in additional_starting_cards:
+            card = Card.objects.get(name=card_name)
+            gp.hand.add(card)
+            if card.type == Card.MINOR:
+                game.minor_deck.remove(card)
+            elif card.type == Card.MAJOR:
+                game.major_deck.remove(card)
 
     return redirect(reverse('view_game', args=[game.id]))
 
@@ -263,6 +276,7 @@ def view_game(request, game_id):
     spirits.append('Earth - Might')
     spirits.append('Earth - Resilence')
     spirits.append('Shadows - Amorphous')
+    spirits.append('Shadows - DarkFire')
     spirits.append('Shadows - Foreboding')
     spirits.append('Shadows - Madness')
     spirits.append('Shadows - Reach')
@@ -422,17 +436,18 @@ def create_days(request, player_id, num):
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def compute_card_thresholds(player):
+    equiv_elements = player.equiv_elements()
     player.play_cards = []
     for card in player.play.all():
-        card.computed_thresholds = card.thresholds(player.elements)
+        card.computed_thresholds = card.thresholds(player.elements, equiv_elements)
         player.play_cards.append(card)
     player.hand_cards = []
     for card in player.hand.all():
-        card.computed_thresholds = card.thresholds(player.elements)
+        card.computed_thresholds = card.thresholds(player.elements, equiv_elements)
         player.hand_cards.append(card)
     player.selection_cards = []
     for card in player.selection.all():
-        card.computed_thresholds = card.thresholds(player.elements)
+        card.computed_thresholds = card.thresholds(player.elements, equiv_elements)
         player.selection_cards.append(card)
 
 def impend_card(request, player_id, card_id):
