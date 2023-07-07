@@ -669,6 +669,7 @@ spirit_thresholds = {
         }
 
 card_thresholds = {
+"Unquenchable Flames": [ (35, 78, '2F') ],
 "Accelerated Rot": [ (30, 78, '3S2W3P') ],
 "Angry Bears": [ (35, 76, '2F3N') ],
 "Bargains of Power and Protection": [ (30, 82, '3S2W2E') ],
