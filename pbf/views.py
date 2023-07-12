@@ -207,7 +207,22 @@ spirit_presence = {
         }
 
 spirit_additional_cards = {
-    'DarkFireShadows': ['Unquenchable Flames']
+    'DarkFireShadows': ['Unquenchable Flames'],
+    'NourishingEarth': ['Voracious Growth'],
+    'SparkingLightning': ['Smite the Land with Fulmination'],
+    'TanglesGreen': ['Belligerent and Aggressive Crops'],
+    'ViolenceBringer': ['Bats Scout For Raids By Darkness'],
+    'WarriorThunderspeaker': ['Call to Bloodshed'],
+    'LocusSerpent': ['Pull Beneath the Hungry Earth'],
+    }
+
+spirit_remove_cards = {
+    'NourishingEarth': ['A Year of Perfect Stillness'],
+    'SparkingLightning': ['Raging Storm'],
+    'TanglesGreen': ['Gift of Proliferation'],
+    'ViolenceBringer': ['Dreams of the Dahan'],
+    'WarriorThunderspeaker': ['Manifestation of Power and Glory'],
+    'LocusSerpent': ['Elemental Aegis'],
     }
 
 def add_player(request, game_id):
@@ -248,6 +263,11 @@ def add_player(request, game_id):
                 game.minor_deck.remove(card)
             elif card.type == Card.MAJOR:
                 game.major_deck.remove(card)
+    if gp.full_name() in spirit_remove_cards:
+        remove_cards = spirit_remove_cards[gp.full_name()]
+        for card_name in remove_cards:
+            card = Card.objects.get(name=card_name)
+            card = gp.hand.remove(card)
 
     return redirect(reverse('view_game', args=[game.id]))
 
@@ -273,13 +293,32 @@ def view_game(request, game_id):
     spirits.append('Lightning - Wind')
     spirits.append('River - Sunshine')
     spirits.append('River - Travel')
+    spirits.append('River - Haven')
     spirits.append('Earth - Might')
     spirits.append('Earth - Resilence')
+    spirits.append('Earth - Nourishing')
     spirits.append('Shadows - Amorphous')
     spirits.append('Shadows - DarkFire')
     spirits.append('Shadows - Foreboding')
     spirits.append('Shadows - Madness')
     spirits.append('Shadows - Reach')
+    spirits.append('Fangs - Encircle')
+    spirits.append('Bringer - Enticing')
+    spirits.append('Shifting - Intensify')
+    spirits.append('Shifting - Mentor')
+    spirits.append('Lure - Lair')
+    spirits.append('Green - Regrowth')
+    spirits.append('Lightning - Sparking')
+    spirits.append('Keeper - Spreading Hostility')
+    spirits.append('Mist - Stranded')
+    spirits.append('Thunderspeaker - Tactician')
+    spirits.append('Green - Tangles')
+    spirits.append('Wildfire - Transforming')
+    spirits.append('Fangs - Unconstrained')
+    spirits.append('Bringer - Violence')
+    spirits.append('Thunderspeaker - Warrior')
+    spirits.append('Ocean - Deeps')
+    spirits.append('Serpent - Locus')
     spirits.sort()
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
     return render(request, 'game.html', { 'game': game, 'spirits': spirits, 'logs': logs })
