@@ -71,8 +71,7 @@ def combine_images(filenames):
     images = []
 
     for infile in filenames:
-        images.append(Image.open(infile))
-        images[-1].resize((300, 420))
+        images.append(Image.open(infile).resize((300, 420)))
 
     out = Image.new('RGB', (len(images)*300, 420))
 
@@ -209,6 +208,7 @@ async def logger():
             pass
 
 if __name__ == '__main__':
+    #combine_images(["./pbf/static/pbf/settle_into_huntinggrounds.jpg","./pbf/static/pbf/flocking_redtalons.jpg","./pbf/static/pbf/vigor_of_the_breaking_dawn.jpg","./pbf/static/pbf/vengeance_of_the_dead.jpg"])
     client.loop.create_task(logger())
     client.run(os.environ['DISCORD_KEY'])
 
