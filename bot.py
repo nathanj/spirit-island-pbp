@@ -85,25 +85,34 @@ def combine_images(filenames):
 async def on_ready():
     LOG.msg(f'We have logged in as {client}')
 
-update_channel_regex = re.compile(r'\d+up')
+def match_game_url(s):
+    """
+    Match a game url returning the guid on a match.
+
+    >>> match_game_url('https://si.bitcrafter.net/game/573a76ed-b9ed-45b1-8e14-04bfacb90a21')
+    '573a76ed-b9ed-45b1-8e14-04bfacb90a21'
+    >>> match_game_url('stuff')
+    """
+    match = re.search(r'''si.bitcrafter.net/game/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})''', s)
+    if match is not None:
+        return match[1]
+    return None
 
 @client.event
 async def on_guild_channel_update(before, after):
     LOG.msg(f'channel update #{after.name}')
     if isinstance(before, discord.TextChannel) and isinstance(after, discord.TextChannel):
         LOG.msg(f'id: {after.id}')
-        if update_channel_regex.match(after.name):
-            LOG.msg(f'before topic: {before.topic}')
-            LOG.msg(f'after  topic: {after.topic}')
-            if before.topic != after.topic:
-                match = re.search(r'''[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}''', after.topic)
-                if match is not None:
-                    guid = match[0]
-                    LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
-                    r = requests.post(f'http://localhost:8000/api/game/{guid}/link/{after.id}')
-                    LOG.msg(r)
-                    if r.status_code == 200:
-                        await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
+        LOG.msg(f'before topic: {before.topic}')
+        LOG.msg(f'after  topic: {after.topic}')
+        if before.topic != after.topic:
+            guid = match_game_url(after.topic)
+            if guid is not None:
+                LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
+                r = requests.post(f'http://localhost:8000/api/game/{guid}/link/{after.id}')
+                LOG.msg(r)
+                if r.status_code == 200:
+                    await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
 
 def load_emojis():
     guild = client.get_guild(846580409050857493)
@@ -199,6 +208,7 @@ async def logger():
             LOG.msg(ex)
             pass
 
-client.loop.create_task(logger())
-client.run(os.environ['DISCORD_KEY'])
+if __name__ == '__main__':
+    client.loop.create_task(logger())
+    client.run(os.environ['DISCORD_KEY'])
 
