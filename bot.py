@@ -108,10 +108,9 @@ async def on_guild_channel_update(before, after):
             guid = match_game_url(after.topic)
             if guid is not None:
                 LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
+                await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
                 r = requests.post(f'http://localhost:8000/api/game/{guid}/link/{after.id}')
                 LOG.msg(r)
-                if r.status_code == 200:
-                    await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
 
 def load_emojis():
     guild = client.get_guild(846580409050857493)
