@@ -18,44 +18,44 @@ from dotenv import load_dotenv
 from PIL import Image
 
 spirit_emoji_map = {
+'Behemoth': 'SpiritEmberEyedBehemoth',
+'Breath': 'SpiritBreathOfDarkness',
 'Bringer': 'SpiritBodanBringerDreamsNightmar',
-'Exploratory Bringer':  'SpiritBodanBringerDreamsNightmar',
 'Downpour': 'SpiritDownpourDrenchesWorld',
+'Earthquakes': 'SpiritDancesUpEarthquakes',
 'Earth': 'SpiritVitalStrengthEarth',
+'Exploratory Bringer':  'SpiritBodanBringerDreamsNightmar',
+'Eyes': 'SpiritEyesWatchTrees',
 'Fangs': 'SpiritSharpFangsLeaves',
 'Finder': 'SpiritFinderPathsUnseen',
 'Fractured': 'SpiritFracturedDaysSplitSky',
+'Gaze': 'SpiritRelentlessGaze',
 'Green': 'SpiritSpreadRampantGreen',
+'Heat': 'SpiritRisingHeatStoneSand',
 'Keeper': 'SpiritKeeperForbiddenWilds',
 'Lightning': 'SpiritLightningSwiftStrike',
 'Lure': 'SpiritLureDeepWilderness',
 'Minds': 'SpiritManyMindsMoveOne',
 'Mist': 'SpiritShroudSilentMist',
+'Mud': 'SpiritOtterFathomlessMud',
 'Ocean': 'SpiritOceanHungryGrasp',
 'River': 'SpiritRiverSurgesSunlight',
+'Roots': 'SpiritToweringRoots',
 'Serpent': 'SpiritSnekSerpentSlumbering',
 'Shadows': 'SpiritShadowsFlickerFlame',
 'Shifting': 'SpiritShiftingMemoryAges',
 'Starlight': 'SpiritStarlightSeeksForm',
 'Stone': 'SpiritStoneUnyieldingDefiance',
+'Teeth': 'SpiritChompDevouringTeeth',
 'Thunderspeaker': 'SpiritThunderspeaker',
 'Trickster': 'SpiritGrinningTricksterStirsTrou',
 'Vengeance': 'SpiritVengeanceBurningPlague',
+'Vigil': 'SpiritHearthVigil',
+'Voice': 'SpiritWanderingVoice',
 'Volcano': 'SpiritVolcanoLoomingHigh',
-'Wildfire': 'SpiritHeartWildfire',
-'Teeth': 'SpiritChompDevouringTeeth',
-'Eyes': 'SpiritEyesWatchTrees',
-'Mud': 'SpiritOtterFathomlessMud',
-'Heat': 'SpiritRisingHeatStoneSand',
+'Waters': 'SpiritWoundedWaters',
 'Whirlwind': 'SpiritKittySunBrightWhirlwind',
-#'Voice': 'SpiritBlobby',
-#'Roots': 'SpiritBlobby',
-#'Gaze': 'SpiritBlobby',
-#'Vigil': 'SpiritBlobby',
-#'Behemoth': 'SpiritBlobby',
-#'Earthquakes': 'SpiritBlobby',
-#'Breath': 'SpiritBlobby',
-#'Waters': 'SpiritBlobby',
+'Wildfire': 'SpiritHeartWildfire',
 }
 
 emoji_to_discord_map = {}
@@ -126,7 +126,7 @@ def load_emojis():
 
 def adjust_msg(msg):
     for spirit in spirit_emoji_map:
-        msg = re.sub(f'^(.) {spirit}', '\\1 ' + emoji_to_discord_map[spirit_emoji_map[spirit]], msg)
+        msg = re.sub(f'^(.) {spirit} ', '\\1 ' + emoji_to_discord_map[spirit_emoji_map[spirit]] + ' ', msg)
     match = re.search(r'''(\d+) energy''', msg)
     if match is not None:
         new_msg = ''
