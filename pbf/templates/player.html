@@ -130,8 +130,8 @@
     </div>
   </ul>
   {% else %}
-  <p>Gain Minor: <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}">4 Cards</button> <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '6' %}">6 Cards</button> <button class="btn" hx-get="{% url 'take_power' player.id 'minor' %}">Take Minor Power</button>
-  <p>Gain Major: <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}">4 Cards</button> <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards</button> <button class="btn" hx-get="{% url 'take_power' player.id 'major' %}">Take Major Power</button>
+  <p>Gain Minor: <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}">4 Cards</button> <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '6' %}">6 Cards</button> <button class="btn" hx-get="{% url 'take_power' player.id 'minor' %}">1 Card</button>
+  <p>Gain Major: <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}">4 Cards</button> <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards</button> <button class="btn" hx-get="{% url 'take_power' player.id 'major' %}">1 Card</button>
   {% if player.spirit.name == 'Waters' %}
   <p>Gain Healing Card: <button class="btn" hx-get="{% url 'gain_healing' player.id %}">Gain Healing Card</button>
   {% endif %}
