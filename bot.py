@@ -117,34 +117,34 @@ def load_emojis():
     for e in guild.emojis:
         if e.name in spirit_emoji_map.values():
             emoji_to_discord_map[e.name] = str(e)
-        if e.name == '4Energy1':
+        if e.name == 'Energy1':
             energy_to_discord_map[e.name] = str(e)
-        if e.name == '4Energy2':
+        if e.name == 'Energy2':
             energy_to_discord_map[e.name] = str(e)
-        if e.name == '4Energy3':
+        if e.name == 'Energy3':
             energy_to_discord_map[e.name] = str(e)
 
 def adjust_msg(msg):
-    for spirit in spirit_emoji_map:
-        try:
+    try:
+        for spirit in spirit_emoji_map:
             msg = re.sub(f'^(.) {spirit} ', '\\1 ' + emoji_to_discord_map[spirit_emoji_map[spirit]] + ' ', msg)
-        except KeyError:
-            pass
-    match = re.search(r'''(\d+) energy''', msg)
-    if match is not None:
-        new_msg = ''
-        value = int(match[1])
-        while value >= 3:
-            new_msg += energy_to_discord_map['4Energy3']
-            value -= 3
-        while value >= 2:
-            new_msg += energy_to_discord_map['4Energy2']
-            value -= 2
-        while value >= 1:
-            new_msg += energy_to_discord_map['4Energy1']
-            value -= 1
-        if len(new_msg) > 0:
-            msg = re.sub(r'''(\d+) energy''', new_msg, msg)
+        match = re.search(r'''(\d+) energy''', msg)
+        if match is not None:
+            new_msg = ''
+            value = int(match[1])
+            while value >= 3:
+                new_msg += energy_to_discord_map['Energy3']
+                value -= 3
+            while value >= 2:
+                new_msg += energy_to_discord_map['Energy2']
+                value -= 2
+            while value >= 1:
+                new_msg += energy_to_discord_map['Energy1']
+                value -= 1
+            if len(new_msg) > 0:
+                msg = re.sub(r'''(\d+) energy''', new_msg, msg)
+    except KeyError:
+        pass
     return msg
 
 async def relay_game(channel_id, log):
