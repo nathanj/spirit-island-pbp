@@ -19,7 +19,7 @@ from PIL import Image
 
 spirit_emoji_map = {
 'Behemoth': 'SpiritEmberEyedBehemoth',
-'Breath': 'SpiritBreathOfDarkness',
+'Breath': 'SpiritBreathOfDarknessBoDDYS',
 'Bringer': 'SpiritBodanBringerDreamsNightmar',
 'Downpour': 'SpiritDownpourDrenchesWorld',
 'Earthquakes': 'SpiritDancesUpEarthquakes',
@@ -126,7 +126,10 @@ def load_emojis():
 
 def adjust_msg(msg):
     for spirit in spirit_emoji_map:
-        msg = re.sub(f'^(.) {spirit} ', '\\1 ' + emoji_to_discord_map[spirit_emoji_map[spirit]] + ' ', msg)
+        try:
+            msg = re.sub(f'^(.) {spirit} ', '\\1 ' + emoji_to_discord_map[spirit_emoji_map[spirit]] + ' ', msg)
+        except KeyError:
+            pass
     match = re.search(r'''(\d+) energy''', msg)
     if match is not None:
         new_msg = ''
@@ -203,7 +206,7 @@ async def logger():
             LOG.msg('timeout')
             pass
         except Exception as ex:
-            LOG.msg(ex)
+            LOG.exception(ex)
             pass
 
 if __name__ == '__main__':
