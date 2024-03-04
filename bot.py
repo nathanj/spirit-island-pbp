@@ -29,7 +29,7 @@ spirit_emoji_map = {
 'Fangs': 'SpiritSharpFangsLeaves',
 'Finder': 'SpiritFinderPathsUnseen',
 'Fractured': 'SpiritFracturedDaysSplitSky',
-'Gaze': 'SpiritRelentlessGaze',
+'Gaze': 'SpiritRelentlessGazeOfSun',
 'Green': 'SpiritSpreadRampantGreen',
 'Heat': 'SpiritRisingHeatStoneSand',
 'Keeper': 'SpiritKeeperForbiddenWilds',
@@ -124,14 +124,17 @@ def load_emojis():
             energy_to_discord_map[e.name] = str(e)
         if e.name == 'Energy3':
             energy_to_discord_map[e.name] = str(e)
-    LOG.msg(emoji_to_discord_map)
+    for spirit in spirit_emoji_map:
+        if spirit_emoji_map[spirit] not in emoji_to_discord_map:
+            LOG.warn(f'missing emoji for {spirit}')
 
 def adjust_msg(msg):
     try:
         for spirit in spirit_emoji_map:
-            LOG.msg(f'testing {spirit}')
-            LOG.msg(f'replacing {spirit} with {emoji_to_discord_map[spirit_emoji_map[spirit]]}')
-            msg = re.sub(f'^(.) {spirit} ', '\\1 ' + emoji_to_discord_map[spirit_emoji_map[spirit]] + ' ', msg)
+            try:
+                msg = re.sub(f'^(.) {spirit} ', '\\1 ' + emoji_to_discord_map[spirit_emoji_map[spirit]] + ' ', msg)
+            except KeyError:
+                pass
         match = re.search(r'''(\d+) energy''', msg)
         if match is not None:
             new_msg = ''
