@@ -115,6 +115,7 @@ async def on_guild_channel_update(before, after):
 def load_emojis():
     guild = client.get_guild(846580409050857493)
     for e in guild.emojis:
+        LOG.msg(f'found emoji = {e.name} {str(e)}')
         if e.name in spirit_emoji_map.values():
             emoji_to_discord_map[e.name] = str(e)
         if e.name == 'Energy1':
@@ -123,10 +124,13 @@ def load_emojis():
             energy_to_discord_map[e.name] = str(e)
         if e.name == 'Energy3':
             energy_to_discord_map[e.name] = str(e)
+    LOG.msg(emoji_to_discord_map)
 
 def adjust_msg(msg):
     try:
         for spirit in spirit_emoji_map:
+            LOG.msg(f'testing {spirit}')
+            LOG.msg(f'replacing {spirit} with {emoji_to_discord_map[spirit_emoji_map[spirit]]}')
             msg = re.sub(f'^(.) {spirit} ', '\\1 ' + emoji_to_discord_map[spirit_emoji_map[spirit]] + ' ', msg)
         match = re.search(r'''(\d+) energy''', msg)
         if match is not None:
