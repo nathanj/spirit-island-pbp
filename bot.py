@@ -48,7 +48,7 @@ spirit_emoji_map = {
 'Stone': 'SpiritStoneUnyieldingDefiance',
 'Teeth': 'SpiritChompDevouringTeeth',
 'Thunderspeaker': 'SpiritThunderspeaker',
-'Trickster': 'SpiritGrinningTricksterStirsTrou',
+'Trickster': 'SpiritGrinningTrickster',
 'Vengeance': 'SpiritVengeanceBurningPlague',
 'Vigil': 'SpiritHearthVigil',
 'Voice': 'SpiritWanderingVoice',
