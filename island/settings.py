@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-$1nkg1t+jd(&$u1-!-hejbk)#)!x#m=%ly_i)pgwhg)h0qt!2k
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', '') == 'yes'
 
-ALLOWED_HOSTS = ['localhost', 'si.bitcrafter.net']
+ALLOWED_HOSTS = ['localhost', 'si.bitcrafter.net', '*']
 CSRF_TRUSTED_ORIGINS = ['https://si.bitcrafter.net']
 
 
