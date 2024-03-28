@@ -134,10 +134,6 @@ async def on_message(message):
             \n\nUse `$follow (yourgameurl)` to start"
         await message.channel.send(text)
 
-@client.event
-async def on_thread_update(before, after):
-    await updatethings(before,after)
-
 def load_emojis():
     guild = client.get_guild(846580409050857493)
     for e in guild.emojis:
