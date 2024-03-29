@@ -59,7 +59,6 @@ energy_to_discord_map = {}
 load_dotenv()
 
 intents = discord.Intents.default()
-intents.members = True
 intents.message_content = True
 
 client = discord.Client(intents=intents)
