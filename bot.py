@@ -1,19 +1,14 @@
-import traceback
 import os
 import discord
-import random
 import requests
-import aiohttp
 import asyncio
 import datetime
-import textwrap
 import json
 import structlog
 import asyncio
 import async_timeout
 import aioredis
 import re
-from collections import defaultdict
 from dotenv import load_dotenv
 from PIL import Image
 
@@ -62,7 +57,12 @@ emoji_to_discord_map = {}
 energy_to_discord_map = {}
 
 load_dotenv()
-client = discord.Client()
+
+intents = discord.Intents.default()
+intents.members = True
+intents.message_content = True
+
+client = discord.Client(intents=intents)
 
 LOG = structlog.get_logger()
 debug = os.environ.get('DEBUG', None) == 'yes'
@@ -82,6 +82,8 @@ def combine_images(filenames):
 
 @client.event
 async def on_ready():
+    await asyncio.create_task(logger())
+    #await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, status="a movie"))
     LOG.msg(f'We have logged in as {client}')
 
 def match_game_url(s):
@@ -97,20 +99,40 @@ def match_game_url(s):
         return match[1]
     return None
 
+async def updatethings(after,topic):
+    guid = match_game_url(topic)
+    if guid is not None:
+        LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
+        await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
+        r = requests.post(f'http://localhost:8000/api/game/{guid}/link/{after.id}')
+        LOG.msg(r)
+
 @client.event
 async def on_guild_channel_update(before, after):
     LOG.msg(f'channel update #{after.name}')
-    if isinstance(before, discord.TextChannel) and isinstance(after, discord.TextChannel):
+    if (isinstance(before, discord.TextChannel) and isinstance(after, discord.TextChannel)) or \
+    (isinstance(before, discord.Thread) and isinstance(after, discord.Thread)):
         LOG.msg(f'id: {after.id}')
         LOG.msg(f'before topic: {before.topic}')
         LOG.msg(f'after  topic: {after.topic}')
         if before.topic != after.topic:
-            guid = match_game_url(after.topic)
-            if guid is not None:
-                LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
-                await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
-                r = requests.post(f'http://localhost:8000/api/game/{guid}/link/{after.id}')
-                LOG.msg(r)
+            await updatethings(after, after.topic)
+
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+        return
+    parts = message.content.split()
+    if len(parts) >= 2 and parts[0] == '$follow':
+        argument = parts[1]
+        await message.pin()
+        await updatethings(message.channel, argument)
+    if message.content.startswith('$help'):
+        # The message starts with the specified word
+        LOG.msg(f'$help called')
+        text = "[Github link](<https://github.com/nathanj/spirit-island-pbp>)\
+            \n\nUse `$follow (yourgameurl)` to start"
+        await message.channel.send(text)
 
 def load_emojis():
     guild = client.get_guild(846580409050857493)
@@ -218,6 +240,4 @@ async def logger():
 
 if __name__ == '__main__':
     #combine_images(["./pbf/static/pbf/settle_into_huntinggrounds.jpg","./pbf/static/pbf/flocking_redtalons.jpg","./pbf/static/pbf/vigor_of_the_breaking_dawn.jpg","./pbf/static/pbf/vengeance_of_the_dead.jpg"])
-    client.loop.create_task(logger())
     client.run(os.environ['DISCORD_KEY'])
-
