@@ -21,4 +21,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(load_ni, delete_ni),
     ]
