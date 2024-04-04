@@ -130,8 +130,22 @@ async def on_message(message):
         # The message starts with the specified word
         LOG.msg(f'$help called')
         text = "[Github link](<https://github.com/nathanj/spirit-island-pbp>)\
-            \n\nUse `$follow (yourgameurl)` to start"
+            \n\n- Use `$follow (yourgameurl)` to start\
+            \n- Use `$pin` (reply to message) to pin the message"
         await message.channel.send(text)
+    if message.content.startswith('$pin'):
+        LOG.msg(f'$pin called')
+        if not message.reference:
+            await message.channel.send("You need to reply to a message to use $pin")
+        else:
+            message_to_pin = await message.channel.fetch_message(message.reference.message_id)
+            try:
+                await message_to_pin.pin()
+                await message.channel.send("Message pinned!")
+            except discord.Forbidden:
+                await message.channel.send("I don't have permission to pin messages.")
+            except discord.HTTPException:
+                await message.channel.send("Failed to pin the message due to an HTTP error.")
 
 def load_emojis():
     guild = client.get_guild(846580409050857493)
