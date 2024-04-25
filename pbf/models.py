@@ -134,21 +134,27 @@ class Game(models.Model):
 
 
 colors_to_circle_color_map = {
-        'blue': '#715dff',
+        'blue': '#705dff',
         'green': '#0d9501',
         'orange': '#d15a01',
-        'purple': '#e67bfe',
+        'purple': '#af58ed',
         'red': '#fc3b5a',
         'yellow': '#ffd585',
+        'cyan': '#58edde',
+        'brown': '#cc9054',
+        'pink': '#ed93e4',
         }
 
 colors_to_emoji_map = {
-        'blue': '🔵',
-        'green': '🟢',
-        'orange': '🟠',
-        'purple': '🟣',
-        'red': '🔴',
-        'yellow': '🟡',
+        'blue': '💙',
+        'green': '💚',
+        'orange': '🧡',
+        'purple': '💜',
+        'red': '♥️',
+        'yellow': '💛',
+        'cyan': '🩵',
+        'brown': '🤎',
+        'pink': '🩷',
         }
 
 class GamePlayer(models.Model):
@@ -176,6 +182,9 @@ class GamePlayer(models.Model):
         ('purple', 'purple'),
         ('red', 'red'),
         ('yellow', 'yellow'),
+        ('cyan', 'cyan'),
+        ('brown', 'brown'),
+        ('pink', 'pink'),
     )
     color = models.CharField(max_length=255, blank=True, choices=COLORS)
     temporary_sun = models.IntegerField(default=0)
