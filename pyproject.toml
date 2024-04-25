@@ -3,7 +3,6 @@ name = "spirit-island"
 version = "0.1.0"
 description = ""
 authors = ["Nathan Jones <nathanj439@gmail.com>"]
-package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.8"

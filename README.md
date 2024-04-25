@@ -7,7 +7,7 @@ A website to assist playing Spirit Island over discord in the play by post secti
 Copy `.env.template` to `.env` and fill in the variables
 
 ```
-poetry install
+poetry install --no-root
 poetry run ./manage.py migrate auth
 poetry run ./manage.py migrate pbf 0001
 poetry run ./manage.py seeddb
