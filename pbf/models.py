@@ -150,7 +150,7 @@ colors_to_emoji_map = {
         'green': '💚',
         'orange': '🧡',
         'purple': '💜',
-        'red': '♥️',
+        'red': '❤️',
         'yellow': '💛',
         'cyan': '🩵',
         'brown': '🤎',
