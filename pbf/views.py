@@ -84,11 +84,12 @@ spirit_starting_energy = {
         'Voice': 0,
         'Roots': 1,
         'Gaze': 1,
-        'Vigil': 0,
+        'Vigil': 1,
         'Behemoth': 0,
         'Earthquakes': 1,
         'Breath': 1,
-        'Waters': 0,
+        'Waters': 4,
+        'Violence':1,
         }
 spirit_presence = {
         'Bringer': ((452,155,1.0,'','Air'), (522,155,1.0,'3'), (592,155,1.0,'','Moon'), (662,155,1.0,'4'), (732,155,1.0), (802,155,1.0,'5'),
@@ -236,7 +237,13 @@ def add_player(request, game_id):
     if '-' in spirit_name:
         spirit_name, aspect = spirit_name.split(' - ')
     spirit = get_object_or_404(Spirit, name=spirit_name)
-    gp = GamePlayer(game=game, spirit=spirit, color=colors[0], aspect=aspect, starting_energy=spirit_starting_energy[spirit.name])
+    
+    if aspect in spirit_starting_energy.keys():
+        starting_energy = spirit_starting_energy[aspect]
+    else:
+        starting_energy = spirit_starting_energy[spirit.name]
+
+    gp = GamePlayer(game=game, spirit=spirit, color=colors[0], aspect=aspect, starting_energy=starting_energy)
     gp.init_permanent_elements()
     gp.save()
     try:
