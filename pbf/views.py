@@ -229,7 +229,12 @@ spirit_remove_cards = {
 def add_player(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
     colors = game.available_colors()
-    shuffle(colors)
+    color = request.POST['color']
+    # this automatically handles random by virtue of random not being in colors.
+    # TODO: maybe consider showing an error if they select a color already in use?
+    if color not in colors:
+        shuffle(colors)
+        color = colors[0]
     spirit_name = request.POST['spirit']
     aspect = None
     if '-' in spirit_name:
@@ -241,7 +246,7 @@ def add_player(request, game_id):
     else:
         starting_energy = spirit_starting_energy[spirit.name]
 
-    gp = GamePlayer(game=game, spirit=spirit, color=colors[0], aspect=aspect, starting_energy=starting_energy)
+    gp = GamePlayer(game=game, spirit=spirit, color=color, aspect=aspect, starting_energy=starting_energy)
     gp.init_permanent_elements()
     gp.save()
     try:

@@ -46,6 +46,12 @@
 	    <option value="{{spirit}}">{{spirit}}</option>
 	    {% endfor %}
 	  </select>
+	  <select name="color">
+	    <option value="random">Random color</option>
+	    {% for color in game.available_colors %}
+	    <option value="{{color}}">{{color.capitalize}}</option>
+	    {% endfor %}
+	  </select>
 	  <button type="submit" class="btn" >Add Spirit</button>
 	</form>
 
