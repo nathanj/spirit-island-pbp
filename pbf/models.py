@@ -132,6 +132,12 @@ class Game(models.Model):
     def __str__(self):
         return str(self.id)
 
+    def available_colors(self):
+        colors = ['cyan', 'brown', 'blue', 'red', 'purple', 'orange', 'pink', 'yellow', 'green']
+        for player in self.gameplayer_set.all():
+            colors.remove(player.color)
+        return colors
+
 
 colors_to_circle_color_map = {
         'blue': '#705dff',
