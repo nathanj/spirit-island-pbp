@@ -228,9 +228,7 @@ spirit_remove_cards = {
 
 def add_player(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
-    colors = ['cyan', 'brown', 'blue', 'red', 'purple', 'orange', 'pink', 'yellow', 'green']
-    for player in game.gameplayer_set.all():
-        colors.remove(player.color)
+    colors = game.available_colors()
     shuffle(colors)
     spirit_name = request.POST['spirit']
     aspect = None
