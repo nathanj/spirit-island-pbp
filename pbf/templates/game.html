@@ -51,12 +51,12 @@
 
 	<form method="post" action="{% url 'draw_card' game.id 'minor' %}">
 	  {% csrf_token %}
-	  <button type="submit" class="btn">Draw Minor Power</button>
+	  <button type="submit" class="btn">Draw Minor Power ({{ game.minor_deck.all | length }})</button>
 	</form>
 
 	<form method="post" action="{% url 'draw_card' game.id 'major' %}">
 	  {% csrf_token %}
-	  <button type="submit" class="btn">Draw Major Power</button>
+	  <button type="submit" class="btn">Draw Major Power ({{ game.major_deck.all | length }})</button>
 	</form>
 
       </div>
