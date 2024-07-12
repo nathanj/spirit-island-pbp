@@ -103,6 +103,17 @@ spirit_base_energy_per_turn = {
         'Breath': 1,
         'Waters': 0,
         }
+
+# Note that both spirit and aspect are used in this lookup,
+# so e.g. specifying "River" here will only affect base River.
+spirit_setup_energy = {
+        'River - Sunshine': 1,
+        'Keeper - Spreading Hostility': 1,
+        'Bringer - Violence': 1,
+        'Vigil': 1,
+        'Waters': 4,
+        }
+
 spirit_presence = {
         'Bringer': ((452,155,1.0,'','Air'), (522,155,1.0,'3'), (592,155,1.0,'','Moon'), (662,155,1.0,'4'), (732,155,1.0), (802,155,1.0,'5'),
             (452,255,1.0), (522,255,1.0), (592,255,1.0), (662,255,1.0), (732,255,1.0)),
@@ -245,13 +256,15 @@ def add_player(request, game_id):
         colors.remove(player.color)
     shuffle(colors)
     spirit_name = request.POST['spirit']
+    spirit_and_aspect = spirit_name
     aspect = None
     if '-' in spirit_name:
         spirit_name, aspect = spirit_name.split(' - ')
     spirit = get_object_or_404(Spirit, name=spirit_name)
+    setup_energy = spirit_setup_energy.get(spirit_and_aspect, 0)
     # as noted above in the comment of spirit_base_energy_per_turn,
     # only spirit name (and not aspect) is considered in energy gain per turn.
-    gp = GamePlayer(game=game, spirit=spirit, color=colors[0], aspect=aspect, starting_energy=spirit_base_energy_per_turn[spirit.name])
+    gp = GamePlayer(game=game, spirit=spirit, color=colors[0], aspect=aspect, energy=setup_energy, starting_energy=spirit_base_energy_per_turn[spirit.name])
     gp.init_permanent_elements()
     gp.save()
     try:
