@@ -243,7 +243,8 @@ def add_player(request, game_id):
     else:
         starting_energy = spirit_starting_energy[spirit.name]
 
-    gp = GamePlayer(game=game, spirit=spirit, color=colors[0], aspect=aspect, starting_energy=starting_energy)
+    # energy is intentionally set to starting_energy when adding a new player
+    gp = GamePlayer(game=game, spirit=spirit, color=colors[0], aspect=aspect, energy=starting_energy, starting_energy=starting_energy)
     gp.init_permanent_elements()
     gp.save()
     try:
