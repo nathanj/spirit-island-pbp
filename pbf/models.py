@@ -204,6 +204,12 @@ class GamePlayer(models.Model):
     permanent_plant = models.IntegerField(default=0)
     permanent_animal = models.IntegerField(default=0)
     aspect = models.CharField(max_length=255, default=None, null=True, blank=True)
+    # starting_energy denotes the base energy gain PER TURN,
+    # when no presence has been removed from the tracks.
+    # It DOES NOT denote energy that the spirit starts with at setup
+    # (simply set the energy at creation time for this).
+    # It would be best to rename starting_energy to base_energy_per_turn,
+    # but this will need a database change.
     starting_energy = models.IntegerField(default=0)
 
     def __str__(self):
