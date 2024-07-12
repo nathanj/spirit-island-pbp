@@ -50,7 +50,9 @@ def new_game(request):
     game.major_deck.set(Card.objects.filter(type=Card.MAJOR))
     return redirect(reverse('view_game', args=[game.id]))
 
-spirit_starting_energy = {
+# formerly called starting_energy, renamed to avoid confusion with setup energy
+# note: this is still used to populate the starting_energy w/in the model to avoid any migration
+spirit_base_energy_gain = {
         'Bringer': 2,
         'Exploratory Bringer': 2,
         'Downpour': 1,
@@ -84,12 +86,12 @@ spirit_starting_energy = {
         'Voice': 0,
         'Roots': 1,
         'Gaze': 1,
-        'Vigil': 1,
+        'Vigil': 0,
         'Behemoth': 0,
         'Earthquakes': 1,
         'Breath': 1,
-        'Waters': 4,
-        'Violence':1,
+        'Waters': 0,
+        'Violence': 2,
         }
 spirit_presence = {
         'Bringer': ((452,155,1.0,'','Air'), (522,155,1.0,'3'), (592,155,1.0,'','Moon'), (662,155,1.0,'4'), (732,155,1.0), (802,155,1.0,'5'),
@@ -238,12 +240,12 @@ def add_player(request, game_id):
         spirit_name, aspect = spirit_name.split(' - ')
     spirit = get_object_or_404(Spirit, name=spirit_name)
     
-    if aspect in spirit_starting_energy.keys():
-        starting_energy = spirit_starting_energy[aspect]
+    if aspect in spirit_base_energy_gain.keys():
+        base_energy_gain = spirit_base_energy_gain[aspect]
     else:
-        starting_energy = spirit_starting_energy[spirit.name]
+        base_energy_gain = spirit_base_energy_gain[spirit.name]
 
-    gp = GamePlayer(game=game, spirit=spirit, color=colors[0], aspect=aspect, starting_energy=starting_energy)
+    gp = GamePlayer(game=game, spirit=spirit, color=colors[0], aspect=aspect, starting_energy=base_energy_gain)
     gp.init_permanent_elements()
     gp.save()
     try:
