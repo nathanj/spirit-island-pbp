@@ -84,11 +84,11 @@ spirit_starting_energy = {
         'Voice': 0,
         'Roots': 1,
         'Gaze': 1,
-        'Vigil': 1,
+        'Vigil': 0,
         'Behemoth': 0,
         'Earthquakes': 1,
         'Breath': 1,
-        'Waters': 4,
+        'Waters': 0,
         }
 spirit_presence = {
         'Bringer': ((452,155,1.0,'','Air'), (522,155,1.0,'3'), (592,155,1.0,'','Moon'), (662,155,1.0,'4'), (732,155,1.0), (802,155,1.0,'5'),
