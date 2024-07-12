@@ -50,7 +50,20 @@ def new_game(request):
     game.major_deck.set(Card.objects.filter(type=Card.MAJOR))
     return redirect(reverse('view_game', args=[game.id]))
 
-spirit_starting_energy = {
+# Base energy gain per turn when no presence has been removed from tracks.
+# NOT to be used to indicate how much energy the spirit has at setup;
+# use spirit_setup_energy for that.
+#
+# Note that as of Nature Incarnate, there is no aspect that modifies the tracks.
+# (Immense and Spreading Hostility are handled in get_gain_energy)
+# Therefore, only spirit names are in this dictionary,
+# and code that looks up from this dictionary only uses spirit name,
+# ignoring aspects.
+#
+# If a future expansion adds an aspect that modifies an energy gain track,
+# the code that looks up from this dictionary needs to be modified,
+# so that it can include aspect in its lookup.
+spirit_base_energy_per_turn = {
         'Bringer': 2,
         'Exploratory Bringer': 2,
         'Downpour': 1,
@@ -236,7 +249,9 @@ def add_player(request, game_id):
     if '-' in spirit_name:
         spirit_name, aspect = spirit_name.split(' - ')
     spirit = get_object_or_404(Spirit, name=spirit_name)
-    gp = GamePlayer(game=game, spirit=spirit, color=colors[0], aspect=aspect, starting_energy=spirit_starting_energy[spirit.name])
+    # as noted above in the comment of spirit_base_energy_per_turn,
+    # only spirit name (and not aspect) is considered in energy gain per turn.
+    gp = GamePlayer(game=game, spirit=spirit, color=colors[0], aspect=aspect, starting_energy=spirit_base_energy_per_turn[spirit.name])
     gp.init_permanent_elements()
     gp.save()
     try:
