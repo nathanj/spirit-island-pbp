@@ -286,7 +286,9 @@ class GamePlayer(models.Model):
         return sum([card.cost for card in self.play.all()])
 
     def get_gain_energy(self):
-        amount = max([self.starting_energy] + [p.get_energy() for p in self.presence_set.all()]) + sum([p.get_plus_energy() for p in self.presence_set.all()])
+        highest_energy = max([0] + [p.get_energy() for p in self.presence_set.all()])
+        additional_energy =  + sum([p.get_plus_energy() for p in self.presence_set.all()])
+        amount = highest_energy + additional_energy
         if self.aspect == 'Immense':
             return amount * 2
         elif self.aspect == 'Spreading Hostility':
