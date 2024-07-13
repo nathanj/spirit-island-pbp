@@ -15,3 +15,9 @@ poetry run ./manage.py migrate
 poetry run ./manage.py collectstatic
 poetry run ./manage.py runserver
 ```
+
+## Test
+
+```
+poetry run ./manage.py test
+```
