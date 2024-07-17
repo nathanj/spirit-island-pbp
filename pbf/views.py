@@ -50,7 +50,20 @@ def new_game(request):
     game.major_deck.set(Card.objects.filter(type=Card.MAJOR))
     return redirect(reverse('view_game', args=[game.id]))
 
-spirit_starting_energy = {
+# Base energy gain per turn when no presence has been removed from tracks.
+# NOT to be used to indicate how much energy the spirit has at setup;
+# use spirit_setup_energy for that.
+#
+# Note that as of Nature Incarnate, there is no aspect that modifies the tracks.
+# (Immense and Spreading Hostility are handled in get_gain_energy)
+# Therefore, only spirit names are in this dictionary,
+# and code that looks up from this dictionary only uses spirit name,
+# ignoring aspects.
+#
+# If a future expansion adds an aspect that modifies an energy gain track,
+# the code that looks up from this dictionary needs to be modified,
+# so that it can include aspect in its lookup.
+spirit_base_energy_per_turn = {
         'Bringer': 2,
         'Exploratory Bringer': 2,
         'Downpour': 1,
@@ -84,13 +97,23 @@ spirit_starting_energy = {
         'Voice': 0,
         'Roots': 1,
         'Gaze': 1,
-        'Vigil': 1,
+        'Vigil': 0,
         'Behemoth': 0,
         'Earthquakes': 1,
         'Breath': 1,
-        'Waters': 4,
-        'Violence':1,
+        'Waters': 0,
         }
+
+# Note that both spirit and aspect are used in this lookup,
+# so e.g. specifying "River" here will only affect base River.
+spirit_setup_energy = {
+        'River - Sunshine': 1,
+        'Keeper - Spreading Hostility': 1,
+        'Bringer - Violence': 1,
+        'Vigil': 1,
+        'Waters': 4,
+        }
+
 spirit_presence = {
         'Bringer': ((452,155,1.0,'','Air'), (522,155,1.0,'3'), (592,155,1.0,'','Moon'), (662,155,1.0,'4'), (732,155,1.0), (802,155,1.0,'5'),
             (452,255,1.0), (522,255,1.0), (592,255,1.0), (662,255,1.0), (732,255,1.0)),
@@ -236,17 +259,15 @@ def add_player(request, game_id):
         shuffle(colors)
         color = colors[0]
     spirit_name = request.POST['spirit']
+    spirit_and_aspect = spirit_name
     aspect = None
     if '-' in spirit_name:
         spirit_name, aspect = spirit_name.split(' - ')
     spirit = get_object_or_404(Spirit, name=spirit_name)
-    
-    if aspect in spirit_starting_energy.keys():
-        starting_energy = spirit_starting_energy[aspect]
-    else:
-        starting_energy = spirit_starting_energy[spirit.name]
-
-    gp = GamePlayer(game=game, spirit=spirit, color=color, aspect=aspect, starting_energy=starting_energy)
+    setup_energy = spirit_setup_energy.get(spirit_and_aspect, 0)
+    # as noted above in the comment of spirit_base_energy_per_turn,
+    # only spirit name (and not aspect) is considered in energy gain per turn.
+    gp = GamePlayer(game=game, spirit=spirit, color=color, aspect=aspect, energy=setup_energy, starting_energy=spirit_base_energy_per_turn[spirit.name])
     gp.init_permanent_elements()
     gp.save()
     try:
