@@ -251,10 +251,13 @@ spirit_remove_cards = {
 
 def add_player(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
-    colors = ['cyan', 'brown', 'blue', 'red', 'purple', 'orange', 'pink', 'yellow', 'green']
-    for player in game.gameplayer_set.all():
-        colors.remove(player.color)
-    shuffle(colors)
+    colors = game.available_colors()
+    color = request.POST['color']
+    # this automatically handles random by virtue of random not being in colors.
+    # TODO: maybe consider showing an error if they select a color already in use?
+    if color not in colors:
+        shuffle(colors)
+        color = colors[0]
     spirit_name = request.POST['spirit']
     spirit_and_aspect = spirit_name
     aspect = None
@@ -264,7 +267,7 @@ def add_player(request, game_id):
     setup_energy = spirit_setup_energy.get(spirit_and_aspect, 0)
     # as noted above in the comment of spirit_base_energy_per_turn,
     # only spirit name (and not aspect) is considered in energy gain per turn.
-    gp = GamePlayer(game=game, spirit=spirit, color=colors[0], aspect=aspect, energy=setup_energy, starting_energy=spirit_base_energy_per_turn[spirit.name])
+    gp = GamePlayer(game=game, spirit=spirit, color=color, aspect=aspect, energy=setup_energy, starting_energy=spirit_base_energy_per_turn[spirit.name])
     gp.init_permanent_elements()
     gp.save()
     try:
@@ -443,6 +446,14 @@ def gain_power(request, player_id, type, num):
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
+
+def minor_deck(request, game_id):
+    game = get_object_or_404(Game, pk=game_id)
+    return render(request, 'power_deck.html', {'name': 'Minor', 'cards': game.minor_deck.all()})
+
+def major_deck(request, game_id):
+    game = get_object_or_404(Game, pk=game_id)
+    return render(request, 'power_deck.html', {'name': 'Major', 'cards': game.major_deck.all()})
 
 def discard_pile(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
