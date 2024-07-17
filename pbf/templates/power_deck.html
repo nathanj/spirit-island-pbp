@@ -1,0 +1,17 @@
+{% load static %}
+
+<p>
+<h4>{{ name }} deck ({{ cards | length }} cards):</h4>
+<ul>
+  <div class="container-fluid">
+    <div class="row">
+      {% for card in cards %}
+      <div class="col-auto">
+        <div class="w-md-150">
+          <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</ul>
