@@ -6,7 +6,7 @@ class TestSetupEnergyAndBaseGain(TestCase):
         client = Client()
         game = Game()
         game.save()
-        r = client.post(f"/game/{game.id}/add-player", {"spirit": spirit})
+        r = client.post(f"/game/{game.id}/add-player", {"spirit": spirit, "color": "random"})
         v = game.gameplayer_set.all()
         self.assertEqual(len(v), 1, "didn't find one game player; spirit not created successfully?")
         player = v[0]
