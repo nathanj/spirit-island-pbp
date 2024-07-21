@@ -17,12 +17,32 @@ REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
 redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1)
 
-def add_log_msg(game, text, images=None):
-    game.gamelog_set.create(text=text, images=images)
+def add_log_msg(game, text, images=None, spoiler=False):
+    if spoiler:
+        # We only need to spoiler certain information.
+        # For the things we're spoilering (gain power, take power),
+        # that's just the card names (it's okay not to spoiler who gains the card).
+        #
+        # This is a little dependent on our current implementation,
+        # but currently that's just everything after the colon.
+        #
+        # If our message format ever changes,
+        # we can look into letting callers explicitly specify text and spoiler_text,
+        # but for now splitting on colon is a low-friction way to add spoiler functionality,
+        # not requiring the caller to change the text they specify.
+        before_colon, after_colon = text.split(': ', maxsplit=1)
+        discord_text = f"{before_colon}: ||{after_colon}||"
+        # TODO: Maybe we can do some HTML for this.
+        game.gamelog_set.create(text=f"{before_colon}: (spoiler)", images=images)
+    else:
+        discord_text = text
+        game.gamelog_set.create(text=text, images=images)
     if len(game.discord_channel) > 0:
-        j = {'text': text}
+        j = {'text': discord_text}
         if images is not None:
             j['images'] = images
+        if spoiler:
+            j['spoiler'] = True
         redis_client.publish(f'log-relay:{game.discord_channel}', json.dumps(j))
 
 class GameForm(ModelForm):
@@ -723,13 +743,14 @@ def reshuffle_discard(game, type):
 
 def take_powers(request, player_id, type, num):
     player = get_object_or_404(GamePlayer, pk=player_id)
+    spoiler = request.GET.get('spoiler_power_gain', False)
 
     taken_cards = cards_from_deck(player.game, num, type)
     player.hand.add(*taken_cards)
 
     if num == 1:
         card = taken_cards[0]
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes a {type} power: {card.name}', images='./pbf/static' + card.url())
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes a {type} power: {card.name}', images='./pbf/static' + card.url(), spoiler=spoiler)
     else:
         # There's a bit of tension between the function's name/functionality and game terminology.
         #
@@ -745,7 +766,7 @@ def take_powers(request, player_id, type, num):
         # Either way we have to make some special cases,
         # and doing it here at least matches in mechanism better.
         card_names = ', '.join(card.name for card in taken_cards)
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {num} {type} powers: {card_names}', images=",".join('./pbf/static' + card.url() for card in taken_cards))
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {num} {type} powers: {card_names}', images=",".join('./pbf/static' + card.url() for card in taken_cards), spoiler=spoiler)
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
@@ -766,14 +787,16 @@ def gain_healing(request, player_id):
 
 def gain_power(request, player_id, type, num):
     player = get_object_or_404(GamePlayer, pk=player_id)
+    spoiler = request.GET.get('spoiler_power_gain', False)
 
     selection = cards_from_deck(player.game, num, type)
     player.selection.set(selection)
 
     cards_str = ", ".join([str(card) for card in selection])
     images = ",".join(['./pbf/static' + card.url() for card in selection])
+    # TODO: Should we set a flag on the player, such that when they actually select the card, it is also spoilered?
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains a {type} power. Choices: {cards_str}',
-            images=images)
+            images=images, spoiler=spoiler)
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
