@@ -175,7 +175,8 @@ class GamePlayer(models.Model):
     play = models.ManyToManyField(Card, related_name='play', blank=True)
     selection = models.ManyToManyField(Card, related_name='selection', blank=True)
     days = models.ManyToManyField(Card, related_name='days', blank=True)
-    impending = models.ManyToManyField(Card, related_name='impending', blank=True)
+    # had to rename from "impending" to enable ManyToManyField migration
+    impending_with_energy = models.ManyToManyField(Card, through='GamePlayerImpendingWithEnergy', related_name='impending_with_energy', blank=True)
     healing = models.ManyToManyField(Card, related_name='healing', blank=True)
     ready = models.BooleanField(default=False)
     paid_this_turn = models.BooleanField(default=False)
@@ -323,6 +324,14 @@ class GamePlayer(models.Model):
             for t in spirit_thresholds[name]:
                 thresholds.append(Threshold(t[0], t[1], check_elements(elements, t[2], equiv_elements)))
         return thresholds
+
+class GamePlayerImpendingWithEnergy(models.Model):
+    gameplayer = models.ForeignKey(GamePlayer, on_delete=models.CASCADE)
+    card = models.ForeignKey(Card, on_delete=models.CASCADE)
+    energy = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "pbf_gameplayer_impending_with_energy"
 
 spirit_thresholds = {
         'EnticingBringer': [
