@@ -568,7 +568,7 @@ def add_energy_to_impending(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.impending_with_energy, pk=card_id)
     impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
-    if impending_with_energy.energy < card.cost:
+    if not impending_with_energy.in_play and impending_with_energy.energy < card.cost:
         impending_with_energy.energy += 1
         impending_with_energy.save()
 
@@ -578,7 +578,7 @@ def remove_energy_from_impending(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.impending_with_energy, pk=card_id)
     impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
-    if impending_with_energy.energy > 0:
+    if not impending_with_energy.in_play and impending_with_energy.energy > 0:
         impending_with_energy.energy -= 1
         impending_with_energy.save()
 
@@ -587,8 +587,20 @@ def remove_energy_from_impending(request, player_id, card_id):
 def play_from_impending(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.impending_with_energy, pk=card_id)
-    player.play.add(card)
-    player.impending_with_energy.remove(card)
+    impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
+    if not impending_with_energy.in_play and impending_with_energy.energy >= card.cost:
+        impending_with_energy.in_play = True
+        impending_with_energy.save()
+
+    return render_player_view(request, player)
+
+def unplay_from_impending(request, player_id, card_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(player.impending_with_energy, pk=card_id)
+    impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
+    if impending_with_energy.in_play:
+        impending_with_energy.in_play = False
+        impending_with_energy.save()
 
     return render_player_view(request, player)
 
@@ -645,6 +657,13 @@ def discard_all(request, player_id):
     cards = list(player.play.all())
     for card in cards:
         player.discard.add(card)
+
+    if player.spirit.name == 'Earthquakes':
+        played_impending = GamePlayerImpendingWithEnergy.objects.filter(gameplayer=player, in_play=True)
+        for i in played_impending.all():
+            player.discard.add(i.card)
+        played_impending.delete()
+
     player.play.clear()
     player.ready = False
     player.gained_this_turn = False

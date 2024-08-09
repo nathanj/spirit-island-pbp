@@ -268,6 +268,10 @@ class GamePlayer(models.Model):
         counter[Elements.Animal] += self.temporary_animal + self.permanent_animal
         for card in self.play.all():
             counter += card.get_elements()
+        if self.spirit.name == 'Earthquakes':
+            played_impending = GamePlayerImpendingWithEnergy.objects.filter(gameplayer=self, in_play=True)
+            for i in played_impending.all():
+                counter += i.card.get_elements()
         for presence in self.presence_set.all():
             counter += presence.get_elements()
         return defaultdict(int, counter)
@@ -329,6 +333,7 @@ class GamePlayerImpendingWithEnergy(models.Model):
     gameplayer = models.ForeignKey(GamePlayer, on_delete=models.CASCADE)
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
     energy = models.IntegerField(default=0)
+    in_play = models.BooleanField(default=False)
 
     class Meta:
         db_table = "pbf_gameplayer_impending_with_energy"
