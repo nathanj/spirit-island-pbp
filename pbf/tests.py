@@ -69,3 +69,83 @@ class TestSetupEnergyAndBaseGain(TestCase):
 
     def test_spirit_with_initial_2(self):
         s = self.assert_spirit("Waters", per_turn=0, setup=4)
+
+class TestReshuffleOrNot(TestCase):
+    # NB: Since tests don't seed the DB,
+    # the games created only have the cards added in Nature Incarnate
+    # and any future additions (none as of this writing)
+    MAJORS = 12
+    # shouldn't be necessary to test minors separately from majors;
+    # they use the same logic.
+    #MINORS = 1
+
+    def setup_game(self, cards_in_deck):
+        client = Client()
+
+        client.post("/new")
+        game = Game.objects.last()
+
+        client.post(f"/game/{game.id}/add-player", {"spirit": "Vigil", "color": "random"})
+        v = game.gameplayer_set.all()
+        self.assertEqual(len(v), 1, "didn't find one game player; spirit not created successfully?")
+        player = v[0]
+
+        cards = list(game.major_deck.all())
+        game.major_deck.set(cards[:cards_in_deck])
+        game.discard_pile.add(*cards[cards_in_deck:])
+
+        return (client, game, player)
+
+    def test_not_reshuffle_on_gain(self):
+        arbitrary_cards_in_deck = 7
+        client, game, player = self.setup_game(arbitrary_cards_in_deck)
+
+        remaining = list(game.major_deck.all())
+        discard_before = game.discard_pile.count()
+
+        client.post(f"/game/{player.id}/gain/major/4")
+
+        sel = player.selection.all()
+        self.assertEqual(len(sel), 4)
+        for s in sel:
+            self.assertIn(s, remaining, "game offered a card not from the deck?")
+        self.assertEqual(game.major_deck.count(), arbitrary_cards_in_deck - 4)
+        self.assertEqual(game.discard_pile.count(), discard_before)
+
+    def test_reshuffle_on_gain(self):
+        client, game, player = self.setup_game(2)
+
+        remaining = list(game.major_deck.all())
+
+        client.post(f"/game/{player.id}/gain/major/4")
+
+        sel = player.selection.all()
+        self.assertEqual(len(sel), 4)
+        for rem in remaining:
+            self.assertIn(rem, sel, "card in deck before reshuffle should have been drawn")
+        self.assertEqual(game.major_deck.count(), self.MAJORS - 4)
+        self.assertEqual(game.discard_pile.count(), 0)
+
+    def test_not_reshuffle_on_take(self):
+        arbitrary_cards_in_deck = 7
+        client, game, player = self.setup_game(arbitrary_cards_in_deck)
+
+        discard_before = game.discard_pile.count()
+        majors_before = player.hand.filter(type=Card.MAJOR).count()
+
+        client.post(f"/game/{player.id}/take/major")
+
+        self.assertEqual(player.hand.filter(type=Card.MAJOR).count(), majors_before + 1)
+        self.assertEqual(game.major_deck.count(), arbitrary_cards_in_deck - 1)
+        self.assertEqual(game.discard_pile.count(), discard_before)
+
+    def test_not_reshuffle_on_host_draw(self):
+        arbitrary_cards_in_deck = 7
+        client, game, player = self.setup_game(arbitrary_cards_in_deck)
+
+        discard_before = game.discard_pile.count()
+
+        client.post(f"/game/{game.id}/draw/major")
+
+        self.assertEqual(game.major_deck.count(), arbitrary_cards_in_deck - 1)
+        self.assertEqual(game.discard_pile.count(), discard_before + 1)
