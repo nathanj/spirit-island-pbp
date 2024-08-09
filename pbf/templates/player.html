@@ -219,6 +219,10 @@
 			{% endif %}
 		    <button class="btn" hx-get="{% url 'remove_energy_from_impending' player.id i.card.id %}" {% if i.energy <= 0 %}disabled{% endif %}>-1</button>
 	      </div>
+	      <div class="text-center pb-5">
+		    <button class="btn" hx-get="{% url 'unimpend_card' player.id i.card.id %}">Unimpend</button>
+		    <button class="btn" hx-get="{% url 'forget_card' player.id i.card.id %}">Forget</button>
+	      </div>
 	    </div>
 	  </div>
 	</div>

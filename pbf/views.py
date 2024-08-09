@@ -556,6 +556,14 @@ def impend_card(request, player_id, card_id):
 
     return render_player_view(request, player)
 
+def unimpend_card(request, player_id, card_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(player.impending_with_energy, pk=card_id)
+    player.impending_with_energy.remove(card)
+    player.hand.add(card)
+
+    return render_player_view(request, player)
+
 def add_energy_to_impending(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.impending_with_energy, pk=card_id)
@@ -603,7 +611,7 @@ def unplay_card(request, player_id, card_id):
 def forget_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
 
-    for location in [player.hand, player.play, player.discard]:
+    for location in [player.hand, player.play, player.discard, player.impending_with_energy]:
         try:
             card = location.get(pk=card_id)
             location.remove(card)
