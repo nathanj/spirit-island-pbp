@@ -3,6 +3,12 @@
 from django.db import migrations, models
 import django.db.models.deletion
 
+def migrate_impending(apps, schema_editor):
+    GamePlayer = apps.get_model("pbf", "GamePlayer")
+    GamePlayerImpendingWithEnergy = apps.get_model("pbf", "GamePlayerImpendingWithEnergy")
+    for gp in GamePlayer.objects.all():
+        for card in gp.impending.all():
+            GamePlayerImpendingWithEnergy(gameplayer=gp, card=card).save()
 
 class Migration(migrations.Migration):
 
@@ -11,10 +17,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='gameplayer',
-            name='impending',
-        ),
         migrations.CreateModel(
             name='GamePlayerImpendingWithEnergy',
             fields=[
@@ -32,5 +34,10 @@ class Migration(migrations.Migration):
             model_name='gameplayer',
             name='impending_with_energy',
             field=models.ManyToManyField(blank=True, related_name='impending_with_energy', through='pbf.GamePlayerImpendingWithEnergy', to='pbf.card'),
+        ),
+        migrations.RunPython(migrate_impending),
+        migrations.RemoveField(
+            model_name='gameplayer',
+            name='impending',
         ),
     ]
