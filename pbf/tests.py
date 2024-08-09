@@ -139,6 +139,17 @@ class TestReshuffleOrNot(TestCase):
         self.assertEqual(game.major_deck.count(), arbitrary_cards_in_deck - 1)
         self.assertEqual(game.discard_pile.count(), discard_before)
 
+    def test_reshuffle_on_take(self):
+        client, game, player = self.setup_game(0)
+
+        majors_before = player.hand.filter(type=Card.MAJOR).count()
+
+        client.post(f"/game/{player.id}/take/major")
+
+        self.assertEqual(player.hand.filter(type=Card.MAJOR).count(), majors_before + 1)
+        self.assertEqual(game.major_deck.count(), self.MAJORS - 1)
+        self.assertEqual(game.discard_pile.count(), 0)
+
     def test_not_reshuffle_on_host_draw(self):
         arbitrary_cards_in_deck = 7
         client, game, player = self.setup_game(arbitrary_cards_in_deck)
@@ -149,3 +160,11 @@ class TestReshuffleOrNot(TestCase):
 
         self.assertEqual(game.major_deck.count(), arbitrary_cards_in_deck - 1)
         self.assertEqual(game.discard_pile.count(), discard_before + 1)
+
+    def test_reshuffle_on_host_draw(self):
+        client, game, player = self.setup_game(0)
+
+        client.post(f"/game/{game.id}/draw/major")
+
+        self.assertEqual(game.major_deck.count(), self.MAJORS - 1)
+        self.assertEqual(game.discard_pile.count(), 1)
