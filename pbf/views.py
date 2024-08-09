@@ -846,10 +846,7 @@ def change_name(request, player_id):
 def tab(request, game_id, player_id):
     game = get_object_or_404(Game, pk=game_id)
     player = get_object_or_404(GamePlayer, pk=player_id)
-    if player.spirit.name == 'Earthquakes':
-        impending_with_energy = GamePlayerImpendingWithEnergy.objects.filter(gameplayer=player)
-    compute_card_thresholds(player)
-    return render(request, 'tabs.html', {'game': game, 'player': player, 'impending_with_energy': impending_with_energy})
+    return render_player_view(request, player)
 
 def game_logs(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
