@@ -205,7 +205,7 @@
   <ul>
     <div class="container-fluid">
       <div class="row">
-	{% for i in impending_with_energy.all %}
+	{% for i in player.gameplayerimpendingwithenergy_set.all %}
 	<div class="col-auto">
 	  <div class="w-100 w-md-200 mw-full">
 	    <div class="card p-0 m-5 m-md-10" {% if i.in_play %}style="background-color: #040;"{% endif %}>

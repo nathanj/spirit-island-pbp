@@ -269,9 +269,9 @@ class GamePlayer(models.Model):
         for card in self.play.all():
             counter += card.get_elements()
         if self.spirit.name == 'Earthquakes':
-            played_impending = GamePlayerImpendingWithEnergy.objects.filter(gameplayer=self, in_play=True)
-            for i in played_impending.all():
-                counter += i.card.get_elements()
+            played_impending = self.impending_with_energy.filter(gameplayerimpendingwithenergy__in_play=True)
+            for card in played_impending.all():
+                counter += card.get_elements()
         for presence in self.presence_set.all():
             counter += presence.get_elements()
         return defaultdict(int, counter)
