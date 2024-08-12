@@ -173,7 +173,9 @@ def adjust_msg(msg):
     try:
         for spirit in spirit_emoji_map:
             try:
-                msg = re.sub(f'^(.) {spirit} ', '\\1 ' + emoji_to_discord_map[spirit_emoji_map[spirit]] + ' ', msg)
+                # searches for keys from spirit_emoji_map and replaces with correct Discord emoji
+                # \\S+ matches the emoji representing the spirit; (.) does not successfully match ❤️
+                msg = re.sub(f'^(\\S+) {spirit} ', '\\1 ' + emoji_to_discord_map[spirit_emoji_map[spirit]] + ' ', msg)
             except KeyError:
                 pass
         match = re.search(r'''(\d+) energy''', msg)
