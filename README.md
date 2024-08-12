@@ -21,3 +21,9 @@ poetry run ./manage.py runserver
 ```
 poetry run ./manage.py test
 ```
+
+## Making a new admin account for your instance
+
+```
+poetry run ./manage.py createsuperuser
+```

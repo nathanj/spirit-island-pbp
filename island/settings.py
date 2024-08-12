@@ -32,7 +32,7 @@ DEBUG = os.environ.get('DEBUG', '') == 'yes'
 ALLOWED_HOSTS = ['localhost', 'si.bitcrafter.net']
 
 EXTRA_ALLOWED_HOSTS = os.environ['EXTRA_ALLOWED_HOSTS']
-if EXTRA_ALLOWED_HOSTS is not None:
+if EXTRA_ALLOWED_HOSTS:
     ALLOWED_HOSTS = ALLOWED_HOSTS + [EXTRA_ALLOWED_HOSTS]
 
 CSRF_TRUSTED_ORIGINS = ['https://si.bitcrafter.net']
