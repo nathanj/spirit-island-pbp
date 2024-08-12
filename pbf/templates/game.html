@@ -75,6 +75,12 @@
 	  <button type="submit" class="btn">Draw Major Power ({{ game.major_deck.all | length }})</button>
 	</form>
 
+	<form method="post" action="{% url 'change_game_name' game.id %}">
+	  {% csrf_token %}
+	  <abbr title="Change this to show the game name in the page title.">Game Name</abbr>: <input type="text" name="name" value="{{game.name}}" />
+	  <button type="submit" class="btn">Change</button>
+	</form>
+
       </div>
     </div>
 
