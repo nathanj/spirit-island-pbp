@@ -812,7 +812,7 @@ def remove_element_permanent(request, player_id, element):
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def change_name(request, player_id):
+def change_player_name(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     player.name = request.POST['name']
     player.save()
