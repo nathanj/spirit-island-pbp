@@ -3,3 +3,5 @@ db.sqlite3
 .env
 out.jpg
 static/*
+*.bak
+nohup.out

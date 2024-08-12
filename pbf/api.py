@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from typing import List
 from ninja import NinjaAPI
 from ninja import ModelSchema
-
+import os
 from .models import Game, GameLog
 
 api = NinjaAPI()
@@ -24,8 +24,11 @@ def get_ip(request):
         return request.META["REMOTE_ADDR"]
 
 def ip_whitelist(request):
-    if get_ip(request) == "127.0.0.1":
-        return "127.0.0.1"
+    ip = str(os.environ['OWN_IP'])
+    if ip is None:
+        ip = "127.0.0.1"
+    if get_ip(request) == ip:
+        return ip
 
 @api.get("/ip", auth=ip_whitelist)
 def ip(request):

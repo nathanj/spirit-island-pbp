@@ -5,12 +5,13 @@ import asyncio
 import datetime
 import json
 import structlog
-import asyncio
 import async_timeout
-import aioredis
 import re
 from dotenv import load_dotenv
 from PIL import Image
+from redis import asyncio as aioredis
+import logging
+import sys
 
 spirit_emoji_map = {
 'Behemoth': 'SpiritEmberEyedBehemoth',
@@ -93,7 +94,12 @@ def match_game_url(s):
     '573a76ed-b9ed-45b1-8e14-04bfacb90a21'
     >>> match_game_url('stuff')
     """
-    match = re.search(r'''si.bitcrafter.net/game/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})''', s)
+    GAME_URL = r'''si.bitcrafter.net'''
+    NEW_URL = os.environ['GAME_URL']
+    if NEW_URL is not None:
+        GAME_URL = NEW_URL
+
+    match = re.search(GAME_URL + r'''/game/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})''', s)
     if match is not None:
         return match[1]
     return None
