@@ -8,7 +8,7 @@
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
     <meta name="viewport" content="width=device-width" />
 
-    <title>Spirit Island</title>
+    <title>{% if game %}{{game.name}} - {% endif %}Spirit Island</title>
 
     <link href="{% static 'pbf/halfmoon-variables.min.css' %}" rel="stylesheet" />
 
