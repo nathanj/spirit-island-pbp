@@ -9,7 +9,7 @@ import async_timeout
 import re
 from dotenv import load_dotenv
 from PIL import Image
-from redis import asyncio as aioredis
+import redis
 
 spirit_emoji_map = {
 'Behemoth': 'SpiritEmberEyedBehemoth',
@@ -224,8 +224,8 @@ async def logger():
     await client.wait_until_ready()
     load_emojis()
 
-    redis = await aioredis.from_url("redis://localhost", decode_responses=True)
-    pubsub = redis.pubsub()
+    redis_obj = await redis.asyncio.from_url("redis://localhost", decode_responses=True)
+    pubsub = redis_obj.pubsub()
     await pubsub.psubscribe("log-relay:*")
 
     while True:
