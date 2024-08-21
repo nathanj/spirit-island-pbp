@@ -855,7 +855,33 @@ spirit_thresholds = {
         }
 
 card_thresholds = {
+# Unique
+"Blinding Glare": [ (40, 72, '5S') ],
+"Blooming of the Rocks and Trees": [ (40, 80, '3P') ],
+"Flash-Fires": [ (40, 79, '2A') ],
+"Shape the Self Anew": [ (40, 75, '4M') ],
+"Share Secrets of Survival": [ (40, 79, '3A') ],
+"Swallowed by the Endless Dark": [ (35, 80, '3M3A') ],
+
+# Minor
+"Absorb Corruption": [ (42, 78, '2P') ],
+"Call of the Dahan Ways": [ (40, 76, '2M') ],
+"Carapaced Land": [ (40, 78, '2E') ],
+"Domesticated Animals Go Berserk": [ (40, 77, '3M') ],
+"Drought": [ (40, 79, '3S') ],
+"Favor Of The Sun And Star-Lit Dark": [ (40, 78, '2S') ],
+"Inflame the Fires of Life": [ (40, 79, '3N') ],
+"Nature's Resilience": [ (40, 78, '2W') ],
+"Renewing Rain": [ (40, 78, '3P') ],
+"Sap the Strength of Multitudes": [ (40, 78, '1A') ],
+"Savage Mawbeasts": [ (40, 79, '3N') ],
+"Scour the Land": [ (40, 78, '3A') ],
+"Steam Vents": [ (41, 79, '3E') ],
+"Strong And Constant Currents": [ (40, 80, '2W') ],
 "Unquenchable Flames": [ (35, 78, '2F') ],
+"Visions of Fiery Doom": [ (40, 78, '2F') ],
+
+# Major
 "Accelerated Rot": [ (30, 78, '3S2W3P') ],
 "Angry Bears": [ (35, 76, '2F3N') ],
 "Bargains of Power and Protection": [ (30, 82, '3S2W2E') ],
