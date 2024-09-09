@@ -363,6 +363,10 @@ def draw_card(request, game_id, type):
         deck = game.major_deck
 
     cards = list(deck.all())
+    if not cards:
+        # deck was empty
+        reshuffle_discard(game, type)
+        cards = list(deck.all())
     shuffle(cards)
     card = cards[0]
     deck.remove(card)
@@ -394,6 +398,10 @@ def take_power(request, player_id, type):
         deck = player.game.major_deck
 
     cards = list(deck.all())
+    if not cards:
+        # deck was empty
+        reshuffle_discard(player.game, type)
+        cards = list(deck.all())
     shuffle(cards)
     card = cards[0]
     player.hand.add(card)
