@@ -5,9 +5,9 @@
      hx-swap="outerHTML"
      hx-indicator="#name-spinner">
   <p>
-  <form hx-post="{% url 'change_name' player.id %}">
+  <form hx-post="{% url 'change_player_name' player.id %}">
     <abbr title="Change this to show the player name in the spirit tabs at the top of the page.">Player Name</abbr>: <input type="text" name="name" value="{{player.name}}" />
-    <button class="btn" hx-post="{% url 'change_name' player.id %}">Change</button>
+    <button class="btn" hx-post="{% url 'change_player_name' player.id %}">Change</button>
     {% if success %}Name changed! Reload the page to see.{% endif %}
     <img id="name-spinner" class="htmx-indicator" src="{% static "pbf/bars.svg" %}"/>
   </form>

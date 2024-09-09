@@ -50,6 +50,12 @@ def new_game(request):
     game.major_deck.set(Card.objects.filter(type=Card.MAJOR))
     return redirect(reverse('view_game', args=[game.id]))
 
+def change_game_name(request, game_id):
+    game = get_object_or_404(Game, pk=game_id)
+    game.name = request.POST['name']
+    game.save()
+    return redirect(reverse('view_game', args=[game.id]))
+
 # Base energy gain per turn when no presence has been removed from tracks.
 # NOT to be used to indicate how much energy the spirit has at setup;
 # use spirit_setup_energy for that.
@@ -870,7 +876,7 @@ def remove_element_permanent(request, player_id, element):
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def change_name(request, player_id):
+def change_player_name(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     player.name = request.POST['name']
     player.save()
