@@ -9,13 +9,13 @@
 
 	{% if game.screenshot %}
 	<a href="{{ game.screenshot.url }}">
-	  <img src="{{ game.screenshot.url }}" class="img-fluid" />
+	  <img src="{{ game.screenshot.url }}" class="img-fluid" id="ss1" />
 	</a>
 	{% endif %}
 
 	{% if game.screenshot2 %}
 	<a href="{{ game.screenshot2.url }}">
-	  <img src="{{ game.screenshot2.url }}" class="img-fluid" />
+	  <img src="{{ game.screenshot2.url }}" class="img-fluid" id="ss2" />
 	</a>
 	{% endif %}
 
