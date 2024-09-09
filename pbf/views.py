@@ -807,6 +807,19 @@ def gain_energy(request, player_id):
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
+def change_spirit_specific_resource(request, player_id, amount):
+    amount = int(amount)
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    player.spirit_specific_resource += amount
+    player.save()
+
+    # As of this writing, no resource affects card thresholds.
+    # compute_card_thresholds(player)
+
+    # The spirit-specific resource is displayed in energy.html,
+    # because some of them can change simultaneously with energy (e.g. Rot).
+    return with_log_trigger(render(request, 'energy.html', {'player': player}))
+
 def toggle_presence(request, player_id, left, top):
     player = get_object_or_404(GamePlayer, pk=player_id)
     presence = get_object_or_404(player.presence_set, left=left, top=top)

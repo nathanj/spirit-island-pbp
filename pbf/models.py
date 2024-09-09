@@ -218,9 +218,29 @@ class GamePlayer(models.Model):
     # It would be best to rename starting_energy to base_energy_per_turn,
     # but this will need a database change.
     starting_energy = models.IntegerField(default=0)
+    # A number of spirits have a resource that's specific to them.
+    # Rather than have separate fields + endpoints that can modify each of them,
+    # we'll use a single field for this purpose,
+    # with the main motivation of avoiding repetitive code.
+    # (and a secondary motivation of having fewer columns in the database)
+    #
+    # To see the list of spirits that use this field, see spirit_specific_resource_name below.
+    spirit_specific_resource = models.IntegerField(default=0)
 
     def __str__(self):
         return str(self.game.id) + ' - ' + str(self.spirit.name)
+
+    def spirit_specific_resource_name(self):
+        d = {
+        }
+        return d.get(self.full_name())
+
+    # If true, it makes sense to +1/-1 the spirit-specific resource
+    # Assumed to be true unless a spirit specifically specifies not.
+    def increment_decrement_specific_resource(self):
+        d = {
+        }
+        return d.get(self.full_name(), True)
 
     def aspect_url(self):
         return f'pbf/aspect-{self.aspect.lower()}.jpg'
