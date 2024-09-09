@@ -1,6 +1,7 @@
 #!/bin/sh
 export PYTHONUNBUFFERED=TRUE
-PATH=$PATH:/home/ubuntu/.local/bin
+PATH=/home/ubuntu/.local/bin:$PATH
+poetry --version
 poetry install --no-root
 poetry run python3 ./manage.py collectstatic --noinput
 poetry run python3 ./manage.py migrate
