@@ -205,13 +205,27 @@
   <ul>
     <div class="container-fluid">
       <div class="row">
-	{% for card in player.impending.all %}
+	{% for i in player.gameplayerimpendingwithenergy_set.all %}
 	<div class="col-auto">
 	  <div class="w-100 w-md-200 mw-full">
-	    <div class="card p-0 m-5 m-md-10">
-	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+	    <div class="card p-0 m-5 m-md-10" {% if i.in_play %}style="background-color: #040;"{% endif %}>
+	      <img src="{% static i.card.url %}" class="img-fluid rounded-top" alt="{{i.card.name}}">
 	      <div class="text-center pb-5">
-		<button class="btn" hx-get="{% url 'play_from_impending' player.id card.id %}">Play</button>
+		    <button class="btn" hx-get="{% url 'add_energy_to_impending' player.id i.card.id %}" {% if i.in_play or i.energy >= i.card.cost %}disabled{% endif %}>+1</button>
+			{% if i.energy >= i.card.cost %}
+				{% if i.in_play %}
+					<button class="btn" hx-get="{% url 'unplay_from_impending' player.id i.card.id %}">Unplay</button>
+				{% else %}
+		   			<button class="btn" hx-get="{% url 'play_from_impending' player.id i.card.id %}">Play</button>
+				{% endif %}
+			{% else %}
+				<button class="btn" disabled>{{ i.energy }} / {{ i.card.cost }}</button>
+			{% endif %}
+		    <button class="btn" hx-get="{% url 'remove_energy_from_impending' player.id i.card.id %}" {% if i.in_play or i.energy <= 0 %}disabled{% endif %}>-1</button>
+	      </div>
+	      <div class="text-center pb-5">
+		    <button class="btn" hx-get="{% url 'unimpend_card' player.id i.card.id %}">Unimpend</button>
+		    <button class="btn" hx-get="{% url 'forget_card' player.id i.card.id %}">Forget</button>
 	      </div>
 	    </div>
 	  </div>

@@ -567,17 +567,61 @@ def compute_card_thresholds(player):
 def impend_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.hand, pk=card_id)
-    player.impending.add(card)
+    player.impending_with_energy.add(card)
     player.hand.remove(card)
+
+    compute_card_thresholds(player)
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
+def unimpend_card(request, player_id, card_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(player.impending_with_energy, pk=card_id)
+    player.impending_with_energy.remove(card)
+    player.hand.add(card)
+
+    compute_card_thresholds(player)
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
+def add_energy_to_impending(request, player_id, card_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(player.impending_with_energy, pk=card_id)
+    impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
+    if not impending_with_energy.in_play and impending_with_energy.energy < card.cost:
+        impending_with_energy.energy += 1
+        impending_with_energy.save()
+
+    compute_card_thresholds(player)
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
+def remove_energy_from_impending(request, player_id, card_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(player.impending_with_energy, pk=card_id)
+    impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
+    if not impending_with_energy.in_play and impending_with_energy.energy > 0:
+        impending_with_energy.energy -= 1
+        impending_with_energy.save()
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def play_from_impending(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    card = get_object_or_404(player.impending, pk=card_id)
-    player.play.add(card)
-    player.impending.remove(card)
+    card = get_object_or_404(player.impending_with_energy, pk=card_id)
+    impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
+    if not impending_with_energy.in_play and impending_with_energy.energy >= card.cost:
+        impending_with_energy.in_play = True
+        impending_with_energy.save()
+
+    compute_card_thresholds(player)
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
+def unplay_from_impending(request, player_id, card_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(player.impending_with_energy, pk=card_id)
+    impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
+    if impending_with_energy.in_play:
+        impending_with_energy.in_play = False
+        impending_with_energy.save()
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
@@ -603,7 +647,7 @@ def unplay_card(request, player_id, card_id):
 def forget_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
 
-    for location in [player.hand, player.play, player.discard]:
+    for location in [player.hand, player.play, player.discard, player.impending_with_energy]:
         try:
             card = location.get(pk=card_id)
             location.remove(card)
@@ -640,6 +684,13 @@ def discard_all(request, player_id):
     cards = list(player.play.all())
     for card in cards:
         player.discard.add(card)
+
+    if player.spirit.name == 'Earthquakes':
+        played_impending = GamePlayerImpendingWithEnergy.objects.filter(gameplayer=player, in_play=True)
+        for i in played_impending.all():
+            player.discard.add(i.card)
+        played_impending.delete()
+
     player.play.clear()
     player.ready = False
     player.gained_this_turn = False
