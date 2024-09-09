@@ -54,6 +54,8 @@
 	{% elif player.aspect == 'Locus' %}
           <img style="position: absolute; left: 15px; top: 142px; height: 217px;width: 338px;" src="{% static 'pbf/aspect-locus1.jpg' %}" />
           <img style="position: absolute; left: 379px; top: 380px; height: 235px;width: 277px;" src="{% static 'pbf/aspect-locus2.jpg' %}" />
+	{% elif player.aspect == 'Round Down' %}
+          <img style="position: absolute; left: 10px; top: 470px; height: 40px;width: 338px;" src="{% static 'pbf/aspect-round_down.jpg' %}" />
         {% else %}
           <img style="position: absolute; left: {{player.aspect_left}}px; top: {{player.aspect_top}}px;" src="{% static player.aspect_url %}" width="370" height="230" />
         {% endif %}

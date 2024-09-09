@@ -227,11 +227,16 @@ class GamePlayer(models.Model):
     # To see the list of spirits that use this field, see spirit_specific_resource_name below.
     spirit_specific_resource = models.IntegerField(default=0)
 
+    rot_gained_this_turn = models.BooleanField(default=False)
+    rot_converted_this_turn = models.BooleanField(default=False)
+
     def __str__(self):
         return str(self.game.id) + ' - ' + str(self.spirit.name)
 
     def spirit_specific_resource_name(self):
         d = {
+            'Rot': 'Rot',
+            'Round DownRot': 'Rot',
         }
         return d.get(self.full_name())
 
@@ -330,6 +335,15 @@ class GamePlayer(models.Model):
             return amount // 2 + amount % 2
         else:
             return amount
+
+    def rot_gain(self):
+        return sum(p.rot() for p in self.presence_set.all())
+
+    def rot_loss(self):
+        return (self.spirit_specific_resource + (0 if self.aspect == 'Round Down' else 1)) // 2
+
+    def energy_from_rot(self):
+        return (self.rot_loss() + (0 if self.aspect == 'Round Down' else 1)) // 2
 
     def days_ordered(self):
         return self.days.order_by('type', 'cost')
@@ -893,6 +907,28 @@ spirit_thresholds = {
             (655, 535, '1W3N'),
             (655, 580, '2F2W5N'),
             ],
+        'Rot': [
+            (356, 450, '1M1W2P'),
+            (356, 485, '1E2P'),
+            (356, 530, '3P'),
+            (356, 565, '2W2E4P'),
+            (645, 450, '2M3W1N'),
+            (645, 485, '1M3W1P'),
+            (645, 520, '1M2W'),
+            (645, 555, '2W'),
+            (645, 590, '4W3P'),
+            ],
+        'Round DownRot': [
+            (356, 450, '1M1W2P'),
+            (356, 485, '1E2P'),
+            (356, 530, '3P'),
+            (356, 565, '2W2E4P'),
+            (645, 450, '2M3W1N'),
+            (645, 485, '1M3W1P'),
+            (645, 520, '1M2W'),
+            (645, 555, '2W'),
+            (645, 590, '4W3P'),
+            ],
         }
 
 card_thresholds = {
@@ -1037,9 +1073,19 @@ class Presence(models.Model):
         if self.opacity == 1.0:
             return counter
         for e in self.elements.split(','):
+            # Kind of hacky: storing Rot in the same field as elements.
+            # Making a new field for Rot just seemed sort of wasteful.
+            if e == 'Rot':
+                continue
             if len(e) > 0:
                 counter[Elements[e]] += 1
         return counter
+
+    def rot(self):
+        if self.opacity == 1.0:
+            return 0
+        # no presence grants > 1 rot, so just check `in` rather than count
+        return 1 if 'Rot' in self.elements.split(',') else 0
 
 class GameLog(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)

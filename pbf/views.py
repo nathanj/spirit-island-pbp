@@ -108,6 +108,7 @@ spirit_base_energy_per_turn = {
         'Earthquakes': 1,
         'Breath': 1,
         'Waters': 0,
+        'Rot': 2,
         }
 
 # Note that both spirit and aspect are used in this lookup,
@@ -234,6 +235,10 @@ spirit_presence = {
                 (757,308,1.0),
                 (835,308,1.0),
                 ),
+        'Rot': (
+                (441,158,1.0,'','Water,Rot'), (512,158,1.0,'3'), (582,158,1.0,'','Plant,Rot'), (654,158,1.0,'','Earth,Rot'), (725,158,1.0,'4'),
+                (441,254,1.0), (512,254,1.0,'','Rot'), (582,254,1.0), (654,254,1.0,'','Moon'), (724,254,1.0), (796,254,1.0),
+                ),
         }
 
 spirit_additional_cards = {
@@ -357,6 +362,7 @@ def view_game(request, game_id):
     spirits.append('Thunderspeaker - Warrior')
     spirits.append('Ocean - Deeps')
     spirits.append('Serpent - Locus')
+    spirits.append('Rot - Round Down')
     spirits.sort()
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
     return render(request, 'game.html', { 'game': game, 'spirits': spirits, 'logs': logs })
@@ -709,6 +715,8 @@ def discard_all(request, player_id):
     player.temporary_earth = 0
     player.temporary_plant = 0
     player.temporary_animal = 0
+    player.rot_gained_this_turn = False
+    player.rot_converted_this_turn = False
     player.save()
 
     compute_card_thresholds(player)
@@ -818,6 +826,25 @@ def change_spirit_specific_resource(request, player_id, amount):
 
     # The spirit-specific resource is displayed in energy.html,
     # because some of them can change simultaneously with energy (e.g. Rot).
+    return with_log_trigger(render(request, 'energy.html', {'player': player}))
+
+def gain_rot(request, player_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    player.spirit_specific_resource += player.rot_gain()
+    player.rot_gained_this_turn = True
+    player.save()
+
+    return with_log_trigger(render(request, 'energy.html', {'player': player}))
+
+def convert_rot(request, player_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    # be sure to change energy before rot,
+    # because energy gain is based on rot.
+    player.energy += player.energy_from_rot()
+    player.spirit_specific_resource -= player.rot_loss()
+    player.rot_converted_this_turn = True
+    player.save()
+
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
 def toggle_presence(request, player_id, left, top):
