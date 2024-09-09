@@ -153,7 +153,7 @@ async def on_message(message):
 def load_emojis():
     guild = client.get_guild(846580409050857493)
     for e in guild.emojis:
-        LOG.msg(f'found emoji = {e.name} {str(e)}')
+        #LOG.msg(f'found emoji = {e.name} {str(e)}')
         if e.name in spirit_emoji_map.values():
             emoji_to_discord_map[e.name] = str(e)
         if e.name == 'Energy1':
