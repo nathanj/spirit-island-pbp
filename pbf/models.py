@@ -292,6 +292,8 @@ class GamePlayer(models.Model):
     def init_permanent_elements(self):
         if self.aspect == 'DarkFire':
             self.permanent_moon += 1
+        elif self.aspect == 'Intensify':
+            self.permanent_moon += 1
 
     def full_name(self):
         name = self.spirit.name
