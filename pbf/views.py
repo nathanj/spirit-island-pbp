@@ -277,6 +277,11 @@ def add_player(request, game_id):
             try: elements = presence[4]
             except: elements = ''
             gp.presence_set.create(left=presence[0], top=presence[1], opacity=presence[2], energy=energy, elements=elements)
+
+        # remove 1 presence from top track for Serpent Locus setup
+        if aspect == 'Locus':
+            bonus_presence = spirit_presence[spirit.name][0]
+            toggle_presence(request, player_id=gp.pk, left=bonus_presence[0], top=bonus_presence[1])
     except Exception as ex:
         print(ex)
         pass
