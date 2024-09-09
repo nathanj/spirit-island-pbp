@@ -3,10 +3,10 @@
 unset GIT_DIR
 
 cd /home/ubuntu/spirit-island
-git fetch origin
-git reset --hard origin/master
+sudo -u si git fetch origin
+sudo -u si git reset --hard origin/master
 
-sudo systemctl daemon-reload
+#sudo systemctl daemon-reload
 
 echo Restarting services
 

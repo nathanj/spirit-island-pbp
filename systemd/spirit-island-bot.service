@@ -1,9 +1,10 @@
 [Unit]
 Description=Spirit Island discord bot
+Wants=redis-server.service
 
 [Service]
-User=ubuntu
-Group=ubuntu
+User=si
+Group=si
 WorkingDirectory=/home/ubuntu/spirit-island/
 ExecStart=/home/ubuntu/spirit-island/run-bot.sh
 
