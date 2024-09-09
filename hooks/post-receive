@@ -15,5 +15,5 @@ sudo systemctl restart spirit-island-bot
 
 sleep 5
 
-systemctl status spirit-island
-systemctl status spirit-island-bot
+systemctl status spirit-island -n 50
+systemctl status spirit-island-bot -n 50
