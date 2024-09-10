@@ -163,6 +163,11 @@ colors_to_emoji_map = {
         'pink': '🩷',
         }
 
+# eight elements to fit in a 32-bit integer: each element can have four bits
+# (so can store values from 0 to 15 inclusive)
+ELEMENT_WIDTH = 4
+ELEMENT_MASK = (1 << ELEMENT_WIDTH) - 1
+
 class GamePlayer(models.Model):
     class Meta:
         ordering = ('-id', )
@@ -232,11 +237,41 @@ class GamePlayer(models.Model):
 
     def spirit_specific_resource_name(self):
         d = {
+            'Shifting': 'Prepared Elements',
+            'IntensifyShifting': 'Prepared Elements',
+            'MentorShifting': 'Prepared Elements',
+            'Waters': 'Healing Markers',
         }
         return d.get(self.full_name())
 
+    # these spirits use the spirit-specific resource field to store a number of markers of each element.
+    # since the integer field is only guaranteed to be 32 bits wide and there are eight elements,
+    # we can use four bits per element (a max of 15 of each).
+    def spirit_specific_resource_elements(self):
+        d = {
+            'Shifting': ('sun', 'moon', 'fire', 'air', 'water', 'earth', 'plant', 'animal'),
+            'Waters': ('water', 'animal'),
+        }
+        # Currently doesn't change based on aspect, so just uses spirit name instead of spirit + aspect
+        elts = d.get(self.spirit.name)
+        if not elts:
+            return elts
+        # for each element return a 4-tuple:
+        # amount to add to spirit_specific_resource to increment the count of that element
+        # same but for decrementing
+        # current amount of that element
+        # the element's name
+        # (have to do it this way because it's not clear how to make the template perform these calculations)
+        return [(
+            1 << i,
+            -(1 << i),
+            (self.spirit_specific_resource >> i) & ELEMENT_MASK,
+            e,
+        ) for (i, e) in zip(range(0, ELEMENT_WIDTH * len(elts), ELEMENT_WIDTH), elts)]
+
     # If true, it makes sense to +1/-1 the spirit-specific resource
     # Assumed to be true unless a spirit specifically specifies not.
+    # (also has no effect for spirits using spirit_specific_resource_elements)
     def increment_decrement_specific_resource(self):
         d = {
         }
@@ -312,6 +347,10 @@ class GamePlayer(models.Model):
     def init_permanent_elements(self):
         if self.aspect == 'DarkFire':
             self.permanent_moon += 1
+        elif self.spirit.name == "Shifting":
+            for e in (Elements.Moon, Elements.Air, Elements.Earth):
+                # Prepare one of each.
+                self.spirit_specific_resource += 1 << (ELEMENT_WIDTH * (e.value - 1))
 
     def full_name(self):
         name = self.spirit.name
