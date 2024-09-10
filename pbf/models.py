@@ -232,6 +232,7 @@ class GamePlayer(models.Model):
 
     def spirit_specific_resource_name(self):
         d = {
+            'Covets': 'Metal',
         }
         return d.get(self.full_name())
 
@@ -892,6 +893,22 @@ spirit_thresholds = {
             (655, 492, '2N'),
             (655, 535, '1W3N'),
             (655, 580, '2F2W5N'),
+            ],
+        'Covets': [
+            (356, 487, '1E'),
+            (356, 522, '1S2E2N'),
+            (356, 557, '1F2A2E'),
+            (620, 502, '2S2F3E'),
+            (620, 537, '4E'),
+            (667, 750, '1F1E'),
+            (667, 779, '2F2E'),
+            (667, 807, '3F2A3E'),
+            (667, 902, '1A1E1N'),
+            (667, 931, '2A1E2N'),
+            (667, 960, '3A3E3N'),
+            (667, 1052, '1S1E1N'),
+            (667, 1081, '2S1E2N'),
+            (667, 1110, '3S2E3N'),
             ],
         }
 
