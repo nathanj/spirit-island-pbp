@@ -78,7 +78,7 @@
       <img style="position: absolute; left: {{threshold.x}}px; top: {{threshold.y}}px;" src="{% static "pbf/red.svg" %}" width="20" height="20" />
       {% endif %}
       {% endfor %}
-      <img src="{% static player.spirit.url %}" width="957" height="630" />
+      <img src="{% static player.spirit.url %}" width="957" height="{% if player.spirit.name == "Covets" %}1260{% else %}630{% endif %}" />
     </div>
   </div>
 
