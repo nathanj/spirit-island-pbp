@@ -237,6 +237,7 @@ class GamePlayer(models.Model):
 
     def spirit_specific_resource_name(self):
         d = {
+            'UnconstrainedFangs': 'Prepared Beasts',
             'Shifting': 'Prepared Elements',
             'IntensifyShifting': 'Prepared Elements',
             'MentorShifting': 'Prepared Elements',
