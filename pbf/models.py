@@ -290,8 +290,7 @@ class GamePlayer(models.Model):
     def animal(self): return self.elements[Elements.Animal]
 
     def init_permanent_elements(self):
-        if self.aspect == 'DarkFire':
-            self.permanent_moon += 1
+        pass
 
     def full_name(self):
         name = self.spirit.name

@@ -288,6 +288,11 @@ def add_player(request, game_id):
         if aspect == 'Locus':
             bonus_presence = spirit_presence[spirit.name][0]
             toggle_presence(request, player_id=gp.pk, left=bonus_presence[0], top=bonus_presence[1])
+        elif aspect == 'DarkFire':
+            # Permanent moon
+            # (the presence is positioned such that it would be at the circled spot on the aspect card,
+            # but the aspect card is actually on top of it so it's unclickable and therefore permanent)
+            gp.presence_set.create(left=273, top=495, opacity=0.0, energy='', elements='Moon')
     except Exception as ex:
         print(ex)
         pass
