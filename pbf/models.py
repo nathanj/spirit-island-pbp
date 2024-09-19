@@ -231,6 +231,17 @@ class GamePlayer(models.Model):
     #
     # To see the list of spirits that use this field, see spirit_specific_resource_name below.
     spirit_specific_resource = models.IntegerField(default=0)
+    # some spirits allow you to do something to their spirit-specific resource,
+    # but only once per turn.
+    # again, to reduce some repetitive code, we'll use one field for all of these.
+    spirit_specific_per_turn_flags = models.PositiveIntegerField(default=0)
+
+    # Meanings for specific bits in the spirit-specific per-turn flags:
+    # It's okay for different spirits to assign different meanings to the same bits.
+    # But do note that no spirit should assign a different meaning to these generic ones:
+    # (these can be useful for e.g. Unconstrained Sharp Fangs Behind the Leaves)
+    SPIRIT_SPECIFIC_INCREMENTED_THIS_TURN = 1 << 0
+    SPIRIT_SPECIFIC_DECREMENTED_THIS_TURN = 1 << 1
 
     def __str__(self):
         return str(self.game.id) + ' - ' + str(self.spirit.name)

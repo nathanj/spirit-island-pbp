@@ -737,6 +737,7 @@ def discard_all(request, player_id):
     player.temporary_earth = 0
     player.temporary_plant = 0
     player.temporary_animal = 0
+    player.spirit_specific_per_turn_flags = 0
     player.save()
 
     compute_card_thresholds(player)
@@ -839,6 +840,10 @@ def change_spirit_specific_resource(request, player_id, amount):
     amount = int(amount)
     player = get_object_or_404(GamePlayer, pk=player_id)
     player.spirit_specific_resource += amount
+    if amount > 0:
+        player.spirit_specific_per_turn_flags |= GamePlayer.SPIRIT_SPECIFIC_INCREMENTED_THIS_TURN
+    elif amount < 0:
+        player.spirit_specific_per_turn_flags |= GamePlayer.SPIRIT_SPECIFIC_DECREMENTED_THIS_TURN
     player.save()
 
     # As of this writing, no resource affects card thresholds.
