@@ -48,6 +48,19 @@
           <button class="btn" hx-get="{% url 'change_spirit_specific_resource' player.id '-1' %}">-1</button>
         {% endif %}
       {% endfor %}
+
+      {% if player.spirit.name == 'Rot' %}
+        {% if player.rot_gained_this_turn %}
+          Gained!
+        {% else %}
+          <button class="btn" hx-get="{% url 'gain_rot' player.id %}">Gain Rot ({{player.rot_gain}})</button>
+        {% endif %}
+        {% if player.rot_converted_this_turn %}
+          Converted!
+        {% else %}
+          <button class="btn" hx-get="{% url 'convert_rot' player.id %}">Convert Rot (-{{player.rot_loss}} Rot, +{{player.energy_from_rot}} Energy)</button>
+        {% endif %}
+      {% endif %}
         </p>
   {% endif %}
 </div>

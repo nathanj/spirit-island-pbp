@@ -168,3 +168,48 @@ class TestReshuffleOrNot(TestCase):
 
         self.assertEqual(game.major_deck.count(), self.MAJORS - 1)
         self.assertEqual(game.discard_pile.count(), 1)
+
+class TestRot(TestCase):
+    def assert_rot(self, rot, expected_rot_loss, expected_energy_gain, round_down=False):
+        client = Client()
+        game = Game()
+        game.save()
+        r = client.post(f"/game/{game.id}/add-player", {"spirit": "Rot" + (" - Round Down" if round_down else ""), "color": "random"})
+        v = game.gameplayer_set.all()
+        self.assertEqual(len(v), 1, "didn't find one game player; spirit not created successfully?")
+        player = v[0]
+
+        # give them some energy to ensure that energy is being incremented by the gain, not set to the gain.
+        player.energy = 10
+        player.spirit_specific_resource = rot
+        player.save()
+
+        client.get(f"/game/{player.id}/rot/convert")
+        player.refresh_from_db()
+
+        self.assertEqual(player.spirit_specific_resource, rot - expected_rot_loss)
+        self.assertEqual(player.energy, 10 + expected_energy_gain)
+
+    def test_round_up_odd_even(self):
+        self.assert_rot(7, 4, 2)
+
+    def test_round_up_even_even(self):
+        self.assert_rot(8, 4, 2)
+
+    def test_round_up_odd_odd(self):
+        self.assert_rot(9, 5, 3)
+
+    def test_round_up_even_odd(self):
+        self.assert_rot(10, 5, 3)
+
+    def test_round_down_odd_odd(self):
+        self.assert_rot(7, 3, 1, round_down=True)
+
+    def test_round_down_even_even(self):
+        self.assert_rot(8, 4, 2, round_down=True)
+
+    def test_round_down_odd_even(self):
+        self.assert_rot(9, 4, 2, round_down=True)
+
+    def test_round_down_even_odd(self):
+        self.assert_rot(10, 5, 2, round_down=True)

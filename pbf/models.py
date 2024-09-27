@@ -231,12 +231,35 @@ class GamePlayer(models.Model):
     #
     # To see the list of spirits that use this field, see spirit_specific_resource_name below.
     spirit_specific_resource = models.IntegerField(default=0)
+    # some spirits allow you to do something to their spirit-specific resource,
+    # but only once per turn.
+    # again, to reduce some repetitive code, we'll use one field for all of these.
+    spirit_specific_per_turn_flags = models.PositiveIntegerField(default=0)
+
+    # Meanings for specific bits in the spirit-specific per-turn flags:
+    # It's okay for different spirits to assign different meanings to the same bits.
+    # But do note that no spirit should assign a different meaning to these generic ones:
+    # (these can be useful for e.g. Unconstrained Sharp Fangs Behind the Leaves)
+    SPIRIT_SPECIFIC_INCREMENTED_THIS_TURN = 1 << 0
+    SPIRIT_SPECIFIC_DECREMENTED_THIS_TURN = 1 << 1
+    # Spirit-specific bits:
+    # Spreading Rot Renews the Earth:
+    ROT_GAINED_THIS_TURN = 1 << 2 # Whether they've gained from their track (NOT incrementing using the +1 button)
+    ROT_CONVERTED_THIS_TURN = 1 << 3
+
+    def rot_gained_this_turn(self):
+        return self.spirit_specific_per_turn_flags & GamePlayer.ROT_GAINED_THIS_TURN
+
+    def rot_converted_this_turn(self):
+        return self.spirit_specific_per_turn_flags & GamePlayer.ROT_CONVERTED_THIS_TURN
 
     def __str__(self):
         return str(self.game.id) + ' - ' + str(self.spirit.name)
 
     def spirit_specific_resource_name(self):
         d = {
+            'Rot': 'Rot',
+            'Round DownRot': 'Rot',
             'Covets': 'Metal',
             'UnconstrainedFangs': 'Prepared Beasts',
             'Shifting': 'Prepared Elements',
@@ -371,6 +394,15 @@ class GamePlayer(models.Model):
             return amount // 2 + amount % 2
         else:
             return amount
+
+    def rot_gain(self):
+        return sum(p.rot() for p in self.presence_set.all())
+
+    def rot_loss(self):
+        return (self.spirit_specific_resource + (0 if self.aspect == 'Round Down' else 1)) // 2
+
+    def energy_from_rot(self):
+        return (self.rot_loss() + (0 if self.aspect == 'Round Down' else 1)) // 2
 
     def days_ordered(self):
         return self.days.order_by('type', 'cost')
@@ -934,6 +966,28 @@ spirit_thresholds = {
             (655, 535, '1W3N'),
             (655, 580, '2F2W5N'),
             ],
+        'Rot': [
+            (356, 450, '1M1W2P'),
+            (356, 485, '1E2P'),
+            (356, 530, '3P'),
+            (356, 565, '2W2E4P'),
+            (645, 450, '2M3W1N'),
+            (645, 485, '1M3W1P'),
+            (645, 520, '1M2W'),
+            (645, 555, '2W'),
+            (645, 590, '4W3P'),
+            ],
+        'Round DownRot': [
+            (356, 450, '1M1W2P'),
+            (356, 485, '1E2P'),
+            (356, 530, '3P'),
+            (356, 565, '2W2E4P'),
+            (645, 450, '2M3W1N'),
+            (645, 485, '1M3W1P'),
+            (645, 520, '1M2W'),
+            (645, 555, '2W'),
+            (645, 590, '4W3P'),
+            ],
         'Covets': [
             (356, 487, '1E'),
             (356, 522, '1S2E2N'),
@@ -1094,9 +1148,19 @@ class Presence(models.Model):
         if self.opacity == 1.0:
             return counter
         for e in self.elements.split(','):
+            # Kind of hacky: storing Rot in the same field as elements.
+            # Making a new field for Rot just seemed sort of wasteful.
+            if e == 'Rot':
+                continue
             if len(e) > 0:
                 counter[Elements[e]] += 1
         return counter
+
+    def rot(self):
+        if self.opacity == 1.0:
+            return 0
+        # no presence grants > 1 rot, so just check `in` rather than count
+        return 1 if 'Rot' in self.elements.split(',') else 0
 
 class GameLog(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
