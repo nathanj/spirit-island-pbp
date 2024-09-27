@@ -527,9 +527,22 @@ def choose_card(request, player_id, card_id):
 
     player.hand.add(card)
     player.selection.remove(card)
-    for discard in player.selection.all():
-        player.game.discard_pile.add(discard)
-    player.selection.clear()
+    # if there are 5 cards left in their selection,
+    # we assume this was a Boon of Reimagining (draw 6 and gain 2)
+    # so we do not send the cards to the discard in that case.
+    # Otherwise, we do.
+    #
+    # For now it works to make this decision solely based on the number of cards drawn.
+    # If there's ever another effect that does draw 6 gain N with N != 2,
+    # we would have to redo this in some way,
+    # perhaps by adding a field to GamePlayer indicating the number of cards that are to be gained.
+    #
+    # TODO: Mentor Shifting Memory of Ages receiving a Boon of Reimagining:
+    # They should draw 4 and gain 3 of them.
+    if player.selection.count() != 5:
+        for discard in player.selection.all():
+            player.game.discard_pile.add(discard)
+        player.selection.clear()
 
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {card.name}')
 
