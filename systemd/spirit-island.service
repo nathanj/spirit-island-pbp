@@ -1,12 +1,15 @@
 [Unit]
 Description=Spirit Island web site
 Wants=redis-server.service
+StartLimitBurst=2
+StartLimitIntervalSec=30
 
 [Service]
 User=si
 Group=si
 WorkingDirectory=/home/ubuntu/spirit-island/
 ExecStart=/home/ubuntu/spirit-island/run.sh
+Restart=on-failure
 
 [Install]
 WantedBy=default.target
