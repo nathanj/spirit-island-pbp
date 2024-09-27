@@ -1095,6 +1095,9 @@ class Presence(models.Model):
             return counter
         for e in self.elements.split(','):
             if len(e) > 0:
+                # There exists at least one spirit that has a track space that gives two of the same element
+                # (Downpour Drenches the World with its 2 Water space)
+                # therefore, += is correct and necessary here.
                 counter[Elements[e]] += 1
         return counter
 
