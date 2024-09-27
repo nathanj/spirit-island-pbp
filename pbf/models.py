@@ -99,6 +99,9 @@ class Card(models.Model):
         counter = Counter()
         for e in self.elements.split(','):
             if len(e) > 0:
+                # As of Nature Incarnate, there is no card published that has more than one of any element.
+                # By default, this fact is checked on startup (in apps.py) to avoid any data entry error.
+                # If there were to be one in the future, this code will need to change to accept it.
                 counter[Elements[e]] = 1
         return counter
 
