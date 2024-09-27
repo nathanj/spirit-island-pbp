@@ -18,5 +18,17 @@
     <button class="btn" hx-get="{% url 'pay_energy' player.id %}">Pay Cost ({{player.get_play_cost}})</button>
   {% endif %}
   <span id="energy-spinner"><img src="{% static "pbf/bars.svg" %}" /></span>
+
+  {% if player.spirit_specific_resource_name %}
+    <div>
+      {{player.spirit_specific_resource_name}}:
+
+        {{player.spirit_specific_resource}}
+        {% if player.increment_decrement_specific_resource %}
+          <button class="btn" hx-get="{% url 'change_spirit_specific_resource' player.id '1' %}">+1</button>
+          <button class="btn" hx-get="{% url 'change_spirit_specific_resource' player.id '-1' %}">-1</button>
+        {% endif %}
+    </div>
+  {% endif %}
 </div>
 

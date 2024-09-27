@@ -108,6 +108,7 @@ spirit_base_energy_per_turn = {
         'Earthquakes': 1,
         'Breath': 1,
         'Waters': 0,
+        'Covets': 0,
         }
 
 # Note that both spirit and aspect are used in this lookup,
@@ -233,6 +234,20 @@ spirit_presence = {
                 (682,308,1.0),
                 (757,308,1.0),
                 (835,308,1.0),
+                ),
+        'Covets': (
+                (441,158,1.0,'1'), (512,123,1.0,'','Fire'), (512,193,1.0,'','Animal'), (582,158,1.0,'2'), (654,158,1.0,'','Earth'), (725,158,1.0), (796,158,1.0,'4'),
+                (441,279,1.0,'','Air'), (512,279,1.0,''), (582,279,1.0,'','Sun'), (654,244,1.0,'','Fire'), (654,314,1.0,'','Animal'), (724,279,1.0),
+                # hoard one-time bonuses
+                (176,700,0.0), (176,815,0.0),
+                # hoard forms (passive bonuses)
+                (332,700,0.0), (332,815,0.0), (332,950,0.0),
+                # hoard innates
+                (605,700,0.0), (605,855,0.0), (605,1005,0.0),
+                # hoard any element spaces
+                (11,991,0.0), (11,1061,0.0), (159,991,0.0), (159,1061,0.0), (307,1061,0.0),
+                # hoard treasure
+                (13,1146,1.0), (83,1146,1.0), (153,1146,1.0), (223,1146,1.0), (293,1146,1.0), (363,1146,1.0), (433,1146,1.0), (503,1146,1.0), (573,1146,1.0), (643,1146,1.0), (713,1146,1.0), (783,1146,1.0), (853,1146,1.0),
                 ),
         }
 
@@ -805,6 +820,19 @@ def gain_energy(request, player_id):
     player.save()
 
     compute_card_thresholds(player)
+    return with_log_trigger(render(request, 'energy.html', {'player': player}))
+
+def change_spirit_specific_resource(request, player_id, amount):
+    amount = int(amount)
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    player.spirit_specific_resource += amount
+    player.save()
+
+    # As of this writing, no resource affects card thresholds.
+    # compute_card_thresholds(player)
+
+    # The spirit-specific resource is displayed in energy.html,
+    # because some of them can change simultaneously with energy (e.g. Rot).
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
 def toggle_presence(request, player_id, left, top):

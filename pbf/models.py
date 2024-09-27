@@ -218,9 +218,30 @@ class GamePlayer(models.Model):
     # It would be best to rename starting_energy to base_energy_per_turn,
     # but this will need a database change.
     starting_energy = models.IntegerField(default=0)
+    # A number of spirits have a resource that's specific to them.
+    # Rather than have separate fields + endpoints that can modify each of them,
+    # we'll use a single field for this purpose,
+    # with the main motivation of avoiding repetitive code.
+    # (and a secondary motivation of having fewer columns in the database)
+    #
+    # To see the list of spirits that use this field, see spirit_specific_resource_name below.
+    spirit_specific_resource = models.IntegerField(default=0)
 
     def __str__(self):
         return str(self.game.id) + ' - ' + str(self.spirit.name)
+
+    def spirit_specific_resource_name(self):
+        d = {
+            'Covets': 'Metal',
+        }
+        return d.get(self.full_name())
+
+    # If true, it makes sense to +1/-1 the spirit-specific resource
+    # Assumed to be true unless a spirit specifically specifies not.
+    def increment_decrement_specific_resource(self):
+        d = {
+        }
+        return d.get(self.full_name(), True)
 
     def aspect_url(self):
         return f'pbf/aspect-{self.aspect.lower()}.jpg'
@@ -872,6 +893,22 @@ spirit_thresholds = {
             (655, 492, '2N'),
             (655, 535, '1W3N'),
             (655, 580, '2F2W5N'),
+            ],
+        'Covets': [
+            (356, 487, '1E'),
+            (356, 522, '1S2E2N'),
+            (356, 557, '1F2A2E'),
+            (620, 502, '2S2F3E'),
+            (620, 537, '4E'),
+            (667, 750, '1F1E'),
+            (667, 779, '2F2E'),
+            (667, 807, '3F2A3E'),
+            (667, 902, '1A1E1N'),
+            (667, 931, '2A1E2N'),
+            (667, 960, '3A3E3N'),
+            (667, 1052, '1S1E1N'),
+            (667, 1081, '2S1E2N'),
+            (667, 1110, '3S2E3N'),
             ],
         }
 

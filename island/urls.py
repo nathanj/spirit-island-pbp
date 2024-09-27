@@ -50,6 +50,7 @@ urlpatterns = [
     path('game/<int:player_id>/energy/pay', views.pay_energy, name='pay_energy'),
     path('game/<int:player_id>/energy/gain', views.gain_energy, name='gain_energy'),
     path('game/<int:player_id>/energy/<str:amount>', views.change_energy, name='change_energy'),
+    path('game/<int:player_id>/spirit_specific_resource/<str:amount>', views.change_spirit_specific_resource, name='change_spirit_specific_resource'),
     path('game/<int:player_id>/presence/<int:left>/<int:top>', views.toggle_presence, name='toggle_presence'),
     path('game/<int:player_id>/ready', views.ready, name='ready'),
     path('game/<int:player_id>/element/<str:element>/add', views.add_element, name='add_element'),
