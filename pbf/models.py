@@ -101,8 +101,9 @@ class Card(models.Model):
             if len(e) > 0:
                 # As of Nature Incarnate, there is no card published that has more than one of any element.
                 # By default, this fact is checked on startup (in apps.py) to avoid any data entry error.
-                # If there were to be one in the future, this code will need to change to accept it.
-                counter[Elements[e]] = 1
+                # Environment variable DOUBLE_ELEMENT_CARDS can be used to disable this check.
+                # This code already supports it as well, so as to not require changes on any future content that might do this.
+                counter[Elements[e]] += 1
         return counter
 
     def thresholds(self, elements, equiv_elements=None):
