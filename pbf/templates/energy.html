@@ -4,23 +4,25 @@
      hx-target="#spirit-energy-{{player.id}}"
      hx-swap="outerHTML"
      hx-indicator="#energy-spinner">
-  Energy: {{ player.energy }} 
-  <button class="btn" hx-get="{% url 'change_energy' player.id '1' %}">+1</button>
-  <button class="btn" hx-get="{% url 'change_energy' player.id '-1' %}">-1</button>
-  {% if player.gained_this_turn %}
-    Gained!
-  {% else %}
-    <button class="btn" hx-get="{% url 'gain_energy' player.id %}">Gain Energy ({{player.get_gain_energy}})</button>
-  {% endif %}
-  {% if player.paid_this_turn %}
-    Paid!
-  {% else %}
-    <button class="btn" hx-get="{% url 'pay_energy' player.id %}">Pay Cost ({{player.get_play_cost}})</button>
-  {% endif %}
-  <span id="energy-spinner"><img src="{% static "pbf/bars.svg" %}" /></span>
+  <p>
+    Energy: {{ player.energy }} 
+    <button class="btn" hx-get="{% url 'change_energy' player.id '1' %}">+1</button>
+    <button class="btn" hx-get="{% url 'change_energy' player.id '-1' %}">-1</button>
+    {% if player.gained_this_turn %}
+      Gained!
+    {% else %}
+      <button class="btn" hx-get="{% url 'gain_energy' player.id %}">Gain Energy ({{player.get_gain_energy}})</button>
+    {% endif %}
+    {% if player.paid_this_turn %}
+      Paid!
+    {% else %}
+      <button class="btn" hx-get="{% url 'pay_energy' player.id %}">Pay Cost ({{player.get_play_cost}})</button>
+    {% endif %}
+    <span id="energy-spinner"><img src="{% static "pbf/bars.svg" %}" /></span>
+  </p>
 
   {% if player.spirit_specific_resource_name %}
-    <div>
+    <p>
       {{player.spirit_specific_resource_name}}:
 
       {% for plus, minus, current, elt in player.spirit_specific_resource_elements %}
@@ -36,7 +38,7 @@
         {% endif %}
 
         {% if current > 0 %}
-          <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'change_spirit_specific_resource' player.id minus %}">(--)</a>
+          <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'change_spirit_specific_resource' player.id minus %}">(-1)</a>
         {% endif %}
         <span style="padding-right: 1em"></span>
       {% empty %}
@@ -46,7 +48,7 @@
           <button class="btn" hx-get="{% url 'change_spirit_specific_resource' player.id '-1' %}">-1</button>
         {% endif %}
       {% endfor %}
-    </div>
+        </p>
   {% endif %}
 </div>
 
