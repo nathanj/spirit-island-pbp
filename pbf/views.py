@@ -417,8 +417,6 @@ def view_game(request, game_id):
             ('Exploratory Bringer', 'Bringer of Dreams and Nightmares [Exploratory]', ()),
         ],
     }
-    for spirits in spirits_by_expansion.values():
-        spirits.sort()
     spirits_present = [spirit for (expansion, spirits) in spirits_by_expansion.items() for (spirit, _, _) in spirits]
     spirits = [s.name for s in Spirit.objects.order_by('name').all()]
 

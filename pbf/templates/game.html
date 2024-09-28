@@ -56,9 +56,9 @@
       {% for expansion, spirits in spirits_by_expansion.items %}
       <optgroup label="{{expansion}}">
         {% for spirit in spirits %}
-        <option value="{{spirit.0}}">{{spirit.0}}</option>
+        <option value="{{spirit.0}}">{{spirit.1}}</option>
         {% for aspect in spirit.2 %}
-        <option value="{{spirit.0}} - {{aspect}}">{{spirit.0}} [{{aspect}}]</option>
+        <option value="{{spirit.0}} - {{aspect}}">{{spirit.1}} [{{aspect}}]</option>
         {% endfor %}
         {% endfor %}
       </optgroup>
