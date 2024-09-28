@@ -247,6 +247,12 @@ class GamePlayer(models.Model):
     ROT_GAINED_THIS_TURN = 1 << 2 # Whether they've gained from their track (NOT incrementing using the +1 button)
     ROT_CONVERTED_THIS_TURN = 1 << 3
 
+    def spirit_specific_incremented_this_turn(self):
+        return self.spirit_specific_per_turn_flags & GamePlayer.SPIRIT_SPECIFIC_INCREMENTED_THIS_TURN
+
+    def spirit_specific_decremented_this_turn(self):
+        return self.spirit_specific_per_turn_flags & GamePlayer.SPIRIT_SPECIFIC_DECREMENTED_THIS_TURN
+
     def rot_gained_this_turn(self):
         return self.spirit_specific_per_turn_flags & GamePlayer.ROT_GAINED_THIS_TURN
 

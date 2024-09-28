@@ -49,6 +49,17 @@
         {% endif %}
       {% endfor %}
 
+      {% if player.aspect == 'Unconstrained' %}
+        {# intentionally do not block the player from making changes (in case of mistakes) #}
+        {# just show the indicators #}
+        {% if player.spirit_specific_incremented_this_turn %}
+          Prepared this turn!
+        {% endif %}
+        {% if player.spirit_specific_decremented_this_turn %}
+          Added to board this turn!
+        {% endif %}
+      {% endif %}
+
       {% if player.spirit.name == 'Rot' %}
         {% if player.rot_gained_this_turn %}
           Gained!
