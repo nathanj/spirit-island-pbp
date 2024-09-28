@@ -51,11 +51,19 @@
 
 	<form method="post" action="{% url 'add_player' game.id %}">
 	  {% csrf_token %}
-	  <select name="spirit">
-	    {% for spirit in spirits %}
-	    <option value="{{spirit}}">{{spirit}}</option>
-	    {% endfor %}
-	  </select>
+
+    <select name="spirit">
+      {% for expansion, spirits in spirits_by_expansion.items %}
+      <optgroup label="{{expansion}}">
+        {% for spirit in spirits %}
+        <option value="{{spirit.0}}">{{spirit.0}}</option>
+        {% for aspect in spirit.2 %}
+        <option value="{{spirit.0}} - {{aspect}}">{{spirit.0}} [{{aspect}}]</option>
+        {% endfor %}
+        {% endfor %}
+      </optgroup>
+      {% endfor %}
+    </select>
 	  <select name="color">
 	    <option value="random">Random color</option>
 	    {% for color in game.available_colors %}
