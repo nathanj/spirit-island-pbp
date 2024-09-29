@@ -52,7 +52,7 @@
 	<form method="post" action="{% url 'add_player' game.id %}">
 	  {% csrf_token %}
 
-    <select name="spirit">
+    <select name="spirit" is="ms-dropdown" data-visible-rows="12" style="width: 450px">
       {% for expansion, spirits in spirits_by_expansion.items %}
       <optgroup label="{{expansion}}">
         {% for spirit in spirits %}
