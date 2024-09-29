@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% load static %}
+
 {% block main %}
 
 <div class="container-fluid">
@@ -49,17 +51,19 @@
 	  <button type="submit" class="btn">Upload Screenshot 2</button>
 	</form>
 
-	<form method="post" action="{% url 'add_player' game.id %}">
+	<form id="add-spirit-form" method="post" action="{% url 'add_player' game.id %}">
 	  {% csrf_token %}
 
     <select name="spirit" is="ms-dropdown" data-visible-rows="12" style="width: 450px">
       {% for expansion, spirits in spirits_by_expansion.items %}
       <optgroup label="{{expansion}}">
         {% for spirit in spirits %}
-        <option value="{{spirit.0}}">{{spirit.1}}</option>
+        {% with "pbf/spirit-icon-"|add:spirit.0|add:".png" as spirit_icon %}
+        <option value="{{spirit.0}}" data-image="{% static spirit_icon %}">{{spirit.1}}</option>
         {% for aspect in spirit.2 %}
-        <option value="{{spirit.0}} - {{aspect}}">{{spirit.1}} [{{aspect}}]</option>
+        <option value="{{spirit.0}} - {{aspect}}" data-image="{% static spirit_icon %}">{{spirit.1}} [{{aspect}}]</option>
         {% endfor %}
+        {% endwith %}
         {% endfor %}
       </optgroup>
       {% endfor %}
