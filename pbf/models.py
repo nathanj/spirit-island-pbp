@@ -118,6 +118,7 @@ class Game(models.Model):
     discard_pile = models.ManyToManyField(Card, related_name='discard_pile', blank=True)
     screenshot = models.ImageField(upload_to='screenshot', blank=True)
     screenshot2 = models.ImageField(upload_to='screenshot', blank=True)
+    scenario = models.CharField(max_length=255, blank=True)
     #CHANNELS = (
     #    ('957389286834057306', '#pbp1-updates'),
     #    ('883019769937268816', '#pbp2-updates'),
