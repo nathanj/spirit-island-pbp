@@ -89,6 +89,10 @@ class Card(models.Model):
     cost = models.IntegerField()
     elements = models.CharField(max_length=255, blank=False)
 
+    FAST = 1
+    SLOW = 2
+    speed = models.IntegerField(choices=[(0, 'Unknown'), (FAST, 'Fast'), (SLOW, 'Slow')])
+
     def __str__(self):
         return self.name
 

@@ -36,8 +36,8 @@ class TestSetupEnergyAndBaseGain(TestCase):
         Spirit(name="Bringer").save()
         # have to create the cards added/removed by the aspect,
         # otherwise the spirit can't be added to the game
-        Card(name="Bats Scout For Raids By Darkness", cost=1, type=0).save()
-        Card(name="Dreams of the Dahan", cost=0, type=2).save()
+        Card(name="Bats Scout For Raids By Darkness", cost=1, type=0, speed=1).save()
+        Card(name="Dreams of the Dahan", cost=0, type=2, speed=1).save()
         s = self.assert_spirit("Bringer - Violence", per_turn=2, setup=1)
 
     def test_aspect_modifying_nothing2(self):
