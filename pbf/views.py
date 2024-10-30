@@ -676,6 +676,7 @@ def add_energy_to_impending(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.impending_with_energy, pk=card_id)
     impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
+    # TODO: cost needs to be adjusted for fast cards in Blitz
     if not impending_with_energy.in_play and impending_with_energy.energy < card.cost:
         impending_with_energy.energy += 1
         impending_with_energy.save()
@@ -698,6 +699,7 @@ def play_from_impending(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.impending_with_energy, pk=card_id)
     impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
+    # TODO: cost needs to be adjusted for fast cards in Blitz
     if not impending_with_energy.in_play and impending_with_energy.energy >= card.cost:
         impending_with_energy.in_play = True
         impending_with_energy.save()

@@ -395,7 +395,8 @@ class GamePlayer(models.Model):
         return name
 
     def get_play_cost(self):
-        return sum([card.cost for card in self.play.all()])
+        blitz = self.game.scenario == 'Blitz'
+        return sum([card.cost - (1 if blitz and card.speed == Card.FAST else 0) for card in self.play.all()])
 
     def get_gain_energy(self):
         amount = max([self.starting_energy] + [p.get_energy() for p in self.presence_set.all()]) + sum([p.get_plus_energy() for p in self.presence_set.all()])

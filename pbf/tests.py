@@ -1,5 +1,5 @@
 from django.test import Client, TestCase
-from .models import Card, Game, Spirit
+from .models import Card, Game, GamePlayer, Spirit
 
 class TestSetupEnergyAndBaseGain(TestCase):
     def assert_spirit(self, spirit, per_turn=0, setup=0):
@@ -213,3 +213,25 @@ class TestRot(TestCase):
 
     def test_round_down_even_odd(self):
         self.assert_rot(10, 5, 2, round_down=True)
+
+class TestPlayCost(TestCase):
+    def assert_cost(self, card_names, expected_cost, scenario=''):
+        game = Game(scenario=scenario)
+        game.save()
+        player = GamePlayer(game=game, spirit=Spirit.objects.get(name='Vigil'))
+        player.save()
+        cards = [Card.objects.get(name=name) for name in card_names]
+        player.play.set(cards)
+        self.assertEqual(player.get_play_cost(), expected_cost)
+
+    def test_fast_not_blitz(self):
+        self.assert_cost(['Favors of Story and Season'], 1)
+
+    def test_slow_not_blitz(self):
+        self.assert_cost(['Call to Vigilance'], 2)
+
+    def test_fast_blitz(self):
+        self.assert_cost(['Favors of Story and Season'], 0, scenario='Blitz')
+
+    def test_slow_blitz(self):
+        self.assert_cost(['Call to Vigilance'], 2, scenario='Blitz')

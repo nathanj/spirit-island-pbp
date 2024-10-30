@@ -214,6 +214,7 @@
 	      <img src="{% static i.card.url %}" class="img-fluid rounded-top" alt="{{i.card.name}}">
 	      <div class="text-center pb-5">
 		    <button class="btn" hx-get="{% url 'add_energy_to_impending' player.id i.card.id %}" {% if i.in_play or i.energy >= i.card.cost %}disabled{% endif %}>+1</button>
+        {# TODO: cost needs to be adjusted for fast cards in Blitz #}
 			{% if i.energy >= i.card.cost %}
 				{% if i.in_play %}
 					<button class="btn" hx-get="{% url 'unplay_from_impending' player.id i.card.id %}">Unplay</button>
