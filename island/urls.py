@@ -54,6 +54,7 @@ urlpatterns = [
     path('game/<int:player_id>/rot/gain', views.gain_rot, name='gain_rot'),
     path('game/<int:player_id>/rot/convert', views.convert_rot, name='convert_rot'),
     path('game/<int:player_id>/presence/<int:left>/<int:top>', views.toggle_presence, name='toggle_presence'),
+    path('game/<int:player_id>/undo-gain-card', views.undo_gain_card, name='undo_gain_card'),
     path('game/<int:player_id>/ready', views.ready, name='ready'),
     path('game/<int:player_id>/element/<str:element>/add', views.add_element, name='add_element'),
     path('game/<int:player_id>/element/<str:element>/remove', views.remove_element, name='remove_element'),
