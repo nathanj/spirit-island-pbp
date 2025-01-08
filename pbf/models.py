@@ -89,6 +89,10 @@ class Card(models.Model):
     cost = models.IntegerField()
     elements = models.CharField(max_length=255, blank=False)
 
+    FAST = 1
+    SLOW = 2
+    speed = models.IntegerField(choices=[(0, 'Unknown'), (FAST, 'Fast'), (SLOW, 'Slow')])
+
     def __str__(self):
         return self.name
 
@@ -118,6 +122,7 @@ class Game(models.Model):
     discard_pile = models.ManyToManyField(Card, related_name='discard_pile', blank=True)
     screenshot = models.ImageField(upload_to='screenshot', blank=True)
     screenshot2 = models.ImageField(upload_to='screenshot', blank=True)
+    scenario = models.CharField(max_length=255, blank=True)
     #CHANNELS = (
     #    ('957389286834057306', '#pbp1-updates'),
     #    ('883019769937268816', '#pbp2-updates'),
@@ -390,7 +395,8 @@ class GamePlayer(models.Model):
         return name
 
     def get_play_cost(self):
-        return sum([card.cost for card in self.play.all()])
+        blitz = self.game.scenario == 'Blitz'
+        return sum([card.cost - (1 if blitz and card.speed == Card.FAST else 0) for card in self.play.all()])
 
     def get_gain_energy(self):
         amount = max([self.starting_energy] + [p.get_energy() for p in self.presence_set.all()]) + sum([p.get_plus_energy() for p in self.presence_set.all()])

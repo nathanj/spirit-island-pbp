@@ -94,6 +94,15 @@
 	  <button type="submit" class="btn">Change</button>
 	</form>
 
+	<form method="post" action="{% url 'change_scenario' game.id %}">
+	  {% csrf_token %}
+	  <select name="scenario">
+	    <option value="">No scenario</option>
+	    <option value="Blitz" {% if game.scenario == 'Blitz' %}selected{% endif %}>Blitz</option>
+	  </select>
+	  <button type="submit" class="btn">Change scenario</button>
+	</form>
+
       </div>
     </div>
 

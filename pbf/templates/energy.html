@@ -18,6 +18,11 @@
     {% else %}
       <button class="btn" hx-get="{% url 'pay_energy' player.id %}">Pay Cost ({{player.get_play_cost}})</button>
     {% endif %}
+
+    {% if player.game.scenario == "Blitz" %}
+      (costs adjusted for Blitz)
+    {% endif %}
+
     <span id="energy-spinner"><img src="{% static "pbf/bars.svg" %}" /></span>
   </p>
 
