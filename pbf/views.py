@@ -612,6 +612,30 @@ def choose_card(request, player_id, card_id):
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
+def undo_gain_card(request, player_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    game = player.game
+
+    to_remove = []
+    for sel in player.selection.all():
+        if sel.type == Card.MINOR:
+            game.minor_deck.add(sel)
+            # we don't remove from player.selection immediately,
+            # as that would modify the selection we're iterating over.
+            to_remove.append(sel)
+        elif sel.type == Card.MAJOR:
+            game.major_deck.add(sel)
+            to_remove.append(sel)
+        elif sel.name in ("Serene Waters", "Waters Renew", "Roiling Waters", "Waters Taste of Ruin"):
+            to_remove.append(sel)
+        # If it's not any of these types, we'll leave it in selection, as something's gone wrong.
+
+    for rem in to_remove:
+        player.selection.remove(rem)
+
+    compute_card_thresholds(player)
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
 def choose_healing_card(request, player, card):
     player.healing.add(card)
     player.selection.clear()
