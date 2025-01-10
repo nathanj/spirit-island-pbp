@@ -50,7 +50,7 @@ class GamePlayerSchema(ModelSchema):
 class GameSchema(ModelSchema):
     class Config:
         model = Game
-        model_fields = ['id', 'turn', 'name', 'discord_channel']
+        model_fields = ['id', 'name', 'discord_channel', 'scenario']
 
 class GameDetailSchema(ModelSchema):
     players: List[GamePlayerSchema] = Field([], alias="gameplayer_set")
