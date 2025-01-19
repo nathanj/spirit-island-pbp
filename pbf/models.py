@@ -138,7 +138,7 @@ class Game(models.Model):
         return str(self.id)
 
     def available_colors(self):
-        colors = ['cyan', 'brown', 'blue', 'red', 'purple', 'orange', 'pink', 'yellow', 'green']
+        colors = ['cyan', 'brown', 'blue', 'red', 'purple', 'orange', 'pink', 'yellow', 'green', 'white']
         for player in self.gameplayer_set.all():
             colors.remove(player.color)
         return colors
@@ -154,6 +154,7 @@ colors_to_circle_color_map = {
         'cyan': '#58edde',
         'brown': '#cc9054',
         'pink': '#ed93e4',
+        'white': '#eaeaeb',
         }
 
 colors_to_emoji_map = {
@@ -166,6 +167,7 @@ colors_to_emoji_map = {
         'cyan': '🩵',
         'brown': '🤎',
         'pink': '🩷',
+        'white': '🤍',
         }
 
 # eight elements to fit in a 32-bit integer: each element can have four bits
@@ -202,6 +204,7 @@ class GamePlayer(models.Model):
         ('cyan', 'cyan'),
         ('brown', 'brown'),
         ('pink', 'pink'),
+        ('white', 'white'),
     )
     color = models.CharField(max_length=255, blank=True, choices=COLORS)
     temporary_sun = models.IntegerField(default=0)
