@@ -544,13 +544,17 @@ def gain_power(request, player_id, type, num):
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
+def deck_elements(deck):
+    cards = deck.all()
+    return [(elt.name.lower(), sum(elt.name in card.elements for card in cards)) for elt in Elements]
+
 def minor_deck(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
-    return render(request, 'power_deck.html', {'name': 'Minor', 'cards': game.minor_deck.all()})
+    return render(request, 'power_deck.html', {'name': 'Minor', 'cards': game.minor_deck.all(), 'elements': deck_elements(game.minor_deck)})
 
 def major_deck(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
-    return render(request, 'power_deck.html', {'name': 'Major', 'cards': game.major_deck.all()})
+    return render(request, 'power_deck.html', {'name': 'Major', 'cards': game.major_deck.all(), 'elements': deck_elements(game.major_deck)})
 
 def discard_pile(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)

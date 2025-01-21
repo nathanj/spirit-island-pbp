@@ -2,6 +2,14 @@
 
 <p>
 <h4>{{ name }} deck ({{ cards | length }} cards):</h4>
+
+{% for elt, count in elements %}
+  {% with "pbf/element-"|add:elt|add:".png" as elt_img %}
+    <img src="{% static elt_img %}" alt="{{elt}}" style="width: 1.8em; height: 1.8em" />
+  {% endwith %}
+  <span style="font-size: 2em;">{{ count }}</span>
+{% endfor %}
+
 <ul>
   <div class="container-fluid">
     <div class="row">
