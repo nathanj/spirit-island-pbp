@@ -432,6 +432,18 @@ class GamePlayer(models.Model):
                 name += ' - Renew'
             elif self.healing.all().contains(Card.objects.get(name='Waters Taste of Ruin')):
                 name += ' - Ruin'
+        if name == 'Earthquakes':
+            # Show additional threshold indicators for whether enough cards are in play.
+            #
+            # We are keeping these separate from the elements threshold indicators to avoid surprise:
+            # Most other threshold indicators are only counting elements,
+            # so it would be too surprising if the ones for Earth Shudders, Buildings Fall also counted card plays.
+            #
+            # Therefore, it seems the least-surprising thing is just to show separate indicators.
+            # They are placed right over the icon for card plays.
+            cards_in_play = self.play.count() + self.impending_with_energy.filter(gameplayerimpendingwithenergy__in_play=True).count()
+            for (y, n) in ((475, 3), (525, 5), (580, 7)):
+                thresholds.append(Threshold(737, y, cards_in_play >= n))
         if name in spirit_thresholds:
             for t in spirit_thresholds[name]:
                 thresholds.append(Threshold(t[0], t[1], check_elements(elements, t[2], equiv_elements)))
