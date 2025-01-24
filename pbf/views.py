@@ -779,6 +779,8 @@ def forget_card(request, player_id, card_id):
         except:
             pass
 
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} forgets {card.name}')
+
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
