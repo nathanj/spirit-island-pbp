@@ -22,6 +22,7 @@ class TestSetupEnergyAndBaseGain(TestCase):
 
     def test_aspect_modifying_setup_energy(self):
         Spirit(name="River").save()
+        Card(name="Boon of Vigor", cost=0, type=2, speed=1).save()
         s = self.assert_spirit("River - Sunshine", per_turn=1, setup=1)
 
     def test_aspect_modifying_nothing(self):

@@ -279,6 +279,7 @@ spirit_remove_cards = {
     'ViolenceBringer': ['Dreams of the Dahan'],
     'WarriorThunderspeaker': ['Manifestation of Power and Glory'],
     'LocusSerpent': ['Elemental Aegis'],
+    'SunshineRiver': ['Boon of Vigor'],
     }
 
 def add_player(request, game_id):
