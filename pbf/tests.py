@@ -17,52 +17,36 @@ class TestSetupEnergyAndBaseGain(TestCase):
     # so they're missing some spirits that we have to manually create below.
 
     def test_base_spirit_with_aspect(self):
-        Spirit(name="River").save()
         s = self.assert_spirit("River", per_turn=1)
 
     def test_aspect_modifying_setup_energy(self):
-        Spirit(name="River").save()
-        Card(name="Boon of Vigor", cost=0, type=2, speed=1).save()
         s = self.assert_spirit("River - Sunshine", per_turn=1, setup=1)
 
     def test_aspect_modifying_nothing(self):
-        Spirit(name="River").save()
         s = self.assert_spirit("River - Haven", per_turn=1)
 
     def test_base_spirit_with_aspect2(self):
-        Spirit(name="Bringer").save()
         s = self.assert_spirit("Bringer", per_turn=2)
 
     def test_aspect_modifying_setup_energy2(self):
-        Spirit(name="Bringer").save()
-        # have to create the cards added/removed by the aspect,
-        # otherwise the spirit can't be added to the game
-        Card(name="Bats Scout For Raids By Darkness", cost=1, type=0, speed=1).save()
-        Card(name="Dreams of the Dahan", cost=0, type=2, speed=1).save()
         s = self.assert_spirit("Bringer - Violence", per_turn=2, setup=1)
 
     def test_aspect_modifying_nothing2(self):
-        Spirit(name="Bringer").save()
         s = self.assert_spirit("Bringer - Enticing", per_turn=2)
 
     def test_base_spirit_with_aspect3(self):
-        Spirit(name="Lightning").save()
         s = self.assert_spirit("Lightning", per_turn=1)
 
     def test_aspect_modifying_nothing3(self):
-        Spirit(name="Lightning").save()
         s = self.assert_spirit("Lightning - Wind", per_turn=1)
 
     def test_aspect_multiplying_gain(self):
-        Spirit(name="Lightning").save()
         s = self.assert_spirit("Lightning - Immense", per_turn=2)
 
     def test_base_spirit_with_aspect4(self):
-        Spirit(name="Keeper").save()
         s = self.assert_spirit("Keeper", per_turn=2)
 
     def test_aspect_modifying_setup_and_base_gain(self):
-        Spirit(name="Keeper").save()
         s = self.assert_spirit("Keeper - Spreading Hostility", per_turn=1, setup=1)
 
     def test_spirit_with_initial(self):
@@ -72,14 +56,6 @@ class TestSetupEnergyAndBaseGain(TestCase):
         s = self.assert_spirit("Waters", per_turn=0, setup=4)
 
 class TestReshuffleOrNot(TestCase):
-    # NB: Since tests don't seed the DB,
-    # the games created only have the cards added in Nature Incarnate
-    # and any future additions (none as of this writing)
-    MAJORS = 12
-    # shouldn't be necessary to test minors separately from majors;
-    # they use the same logic.
-    #MINORS = 1
-
     def setup_game(self, cards_in_deck):
         client = Client()
 
@@ -117,6 +93,7 @@ class TestReshuffleOrNot(TestCase):
         client, game, player = self.setup_game(2)
 
         remaining = list(game.major_deck.all())
+        available_cards = game.major_deck.count() + game.discard_pile.count()
 
         client.post(f"/game/{player.id}/gain/major/4")
 
@@ -124,7 +101,7 @@ class TestReshuffleOrNot(TestCase):
         self.assertEqual(len(sel), 4)
         for rem in remaining:
             self.assertIn(rem, sel, "card in deck before reshuffle should have been drawn")
-        self.assertEqual(game.major_deck.count(), self.MAJORS - 4)
+        self.assertEqual(game.major_deck.count(), available_cards - 4)
         self.assertEqual(game.discard_pile.count(), 0)
 
     def test_not_reshuffle_on_take(self):
@@ -144,11 +121,12 @@ class TestReshuffleOrNot(TestCase):
         client, game, player = self.setup_game(0)
 
         majors_before = player.hand.filter(type=Card.MAJOR).count()
+        available_cards = game.major_deck.count() + game.discard_pile.count()
 
         client.post(f"/game/{player.id}/take/major")
 
         self.assertEqual(player.hand.filter(type=Card.MAJOR).count(), majors_before + 1)
-        self.assertEqual(game.major_deck.count(), self.MAJORS - 1)
+        self.assertEqual(game.major_deck.count(), available_cards - 1)
         self.assertEqual(game.discard_pile.count(), 0)
 
     def test_not_reshuffle_on_host_draw(self):
@@ -164,10 +142,11 @@ class TestReshuffleOrNot(TestCase):
 
     def test_reshuffle_on_host_draw(self):
         client, game, player = self.setup_game(0)
+        available_cards = game.major_deck.count() + game.discard_pile.count()
 
         client.post(f"/game/{game.id}/draw/major")
 
-        self.assertEqual(game.major_deck.count(), self.MAJORS - 1)
+        self.assertEqual(game.major_deck.count(), available_cards - 1)
         self.assertEqual(game.discard_pile.count(), 1)
 
 class TestRot(TestCase):
