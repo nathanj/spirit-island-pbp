@@ -1,5 +1,6 @@
+from collections import Counter
 from django.test import Client, TestCase
-from .models import Card, Game, GamePlayer, Spirit
+from .models import Card, Elements, Game, GamePlayer, Spirit
 
 class TestSetupEnergyAndBaseGain(TestCase):
     def assert_spirit(self, spirit, per_turn=0, setup=0):
@@ -257,3 +258,59 @@ class TestPlayCost(TestCase):
 
     def test_slow_blitz(self):
         self.assert_cost(['Call to Vigilance'], 2, scenario='Blitz')
+
+class TestElements(TestCase):
+    def setup_game(self, card_names):
+        game = Game()
+        game.save()
+        player = GamePlayer(game=game, spirit=Spirit.objects.get(name='River'))
+        player.save()
+        cards = [Card.objects.get(name=name) for name in card_names]
+        player.play.set(cards)
+
+        return player
+
+    def assert_elements(self, player, expected_elements):
+        # we can just compare the entire counter,
+        # but the error message for a mismatch is not great.
+        #self.assertEqual(player.elements, expected_elements)
+        self.assertEqual(len(player.elements), len(expected_elements))
+        for e in player.elements.keys():
+            self.assertEqual(player.elements[e], expected_elements[e])
+
+    def test_no_elements(self):
+        expected_elements = Counter()
+
+        player = self.setup_game(["Elemental Boon"])
+        self.assert_elements(player, expected_elements)
+
+    def test_elements_single_card(self):
+        expected_elements = Counter()
+        expected_elements[Elements.Sun] = 1
+        expected_elements[Elements.Water] = 1
+        expected_elements[Elements.Plant] = 1
+
+        player = self.setup_game(["Boon of Vigor"])
+        self.assert_elements(player, expected_elements)
+
+    def test_elements_multiple_cards(self):
+        expected_elements = Counter()
+        expected_elements[Elements.Sun] = 2
+        expected_elements[Elements.Air] = 2
+        expected_elements[Elements.Water] = 2
+        expected_elements[Elements.Animal] = 2
+
+        player = self.setup_game(["River's Bounty", "Call to Isolation", "Flow like Water, Reach like Air"])
+        self.assert_elements(player, expected_elements)
+
+    def test_elements_with_temporary(self):
+        expected_elements = Counter()
+        expected_elements[Elements.Air] = 1
+        expected_elements[Elements.Water] = 3
+        expected_elements[Elements.Earth] = 1
+        expected_elements[Elements.Plant] = 2
+        expected_elements[Elements.Animal] = 2
+
+        player = self.setup_game(["Wash Away", "Flow Downriver, Blow Downwind", "Ravaged Undergrowth Slithers Back to Life"])
+        player.temporary_animal += 1
+        self.assert_elements(player, expected_elements)
