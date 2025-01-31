@@ -215,6 +215,48 @@ class TestRot(TestCase):
     def test_round_down_even_odd(self):
         self.assert_rot(10, 5, 2, round_down=True)
 
+class TestChooseCard(TestCase):
+    def cards_gained(self, card_type, draw):
+        # Note that the tests don't seed the DB, only migrate,
+        # so the only minor they create is Roiling Bog and Snagging Thorn.
+        # We'll need to create some minors so that the tests have enough to work with.
+        if card_type == 'minor':
+            for i in range(6):
+                Card(name=f"Minor {i}", cost=0, type=Card.MINOR, speed=Card.FAST).save()
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        client.post(f"/game/{game.id}/add-player", {"spirit": "Waters", "color": "random"})
+        v = game.gameplayer_set.all()
+        self.assertEqual(len(v), 1, "didn't find one game player; spirit not created successfully?")
+        player = v[0]
+        client.post(f"/game/{player.id}/gain/{card_type}/{draw}")
+        player.refresh_from_db()
+        selected = 0
+        while player.selection.exists():
+            client.post(f"/game/{player.id}/choose/{player.selection.first().id}")
+            selected += 1
+            player.refresh_from_db()
+        return selected
+
+    def assert_cards_gained(self, card_type, draw, should_gain):
+        self.assertEqual(self.cards_gained(card_type, draw), should_gain)
+
+    def test_regular_minor(self):
+        self.assert_cards_gained('minor', 4, 1)
+
+    def test_boon_of_reimagining(self):
+        self.assert_cards_gained('minor', 6, 2)
+
+    def test_regular_major(self):
+        self.assert_cards_gained('major', 4, 1)
+
+    def test_unlock_the_gates_major(self):
+        self.assert_cards_gained('major', 2, 1)
+
+    def test_covets_major(self):
+        self.assert_cards_gained('major', 6, 1)
+
 class TestPlayCost(TestCase):
     def assert_cost(self, card_names, expected_cost, scenario=''):
         game = Game(scenario=scenario)

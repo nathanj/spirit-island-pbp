@@ -591,10 +591,11 @@ def choose_card(request, player_id, card_id):
 
     player.hand.add(card)
     player.selection.remove(card)
-    # if there are 5 cards left in their selection,
+    # if there are 5 minor cards left in their selection,
     # we assume this was a Boon of Reimagining (draw 6 and gain 2)
     # so we do not send the cards to the discard in that case.
     # Otherwise, we do.
+    # (It has to be minors because Covets Gleaming Shards of Earth can draw 6 majors)
     #
     # For now it works to make this decision solely based on the number of cards drawn.
     # If there's ever another effect that does draw 6 gain N with N != 2,
@@ -603,7 +604,7 @@ def choose_card(request, player_id, card_id):
     #
     # TODO: Mentor Shifting Memory of Ages receiving a Boon of Reimagining:
     # They should draw 4 and gain 3 of them.
-    if player.selection.count() != 5:
+    if card.type != Card.MINOR or player.selection.count() != 5:
         for discard in player.selection.all():
             player.game.discard_pile.add(discard)
         player.selection.clear()
