@@ -247,12 +247,12 @@ spirit_presence = {
                 (441,254,1.0), (512,254,1.0,'','Rot'), (582,254,1.0), (654,254,1.0,'','Moon'), (724,254,1.0), (796,254,1.0),
                 ),
         'Covets': (
-                (441,158,1.0,'1'), (512,123,1.0,'','Fire'), (512,193,1.0,'','Animal'), (582,158,1.0,'2'), (654,158,1.0,'','Earth'), (725,158,1.0), (796,158,1.0,'4'),
+                (441,158,1.0,'1'), (512,158,1.0), (582,158,1.0,'3'), (654,158,1.0,'','Earth'), (725,158,1.0,'','Fire,Animal'), (796,158,1.0,'5'),
                 (441,279,1.0,'','Air'), (512,279,1.0,''), (582,279,1.0,'','Sun'), (654,244,1.0,'','Fire'), (654,314,1.0,'','Animal'), (724,279,1.0),
                 # hoard one-time bonuses
                 (176,700,0.0), (176,815,0.0),
                 # hoard forms (passive bonuses)
-                (332,700,0.0), (332,815,0.0), (332,950,0.0),
+                (368,700,0.0), (332,815,0.0), (332,950,0.0),
                 # hoard innates
                 (605,700,0.0), (605,855,0.0), (605,1005,0.0),
                 # hoard any element spaces
@@ -414,7 +414,7 @@ def view_game(request, game_id):
             ('Waters', 'Wounded Waters Bleeding', ()),
         ],
         'Apocrypha': [
-            ('Covets', 'Covets Gleaming Shards of Earth [Apocrypha]', ()),
+            ('Covets', 'Covets Gleaming Shards of Earth v1.2.1 [Apocrypha]', ()),
             ('Rot', 'Spreading Rot Renews the Earth [Apocrypha]', ('Round Down',)),
         ],
         'Exploratory Testing': [
