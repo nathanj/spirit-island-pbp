@@ -3,7 +3,7 @@
      class="content"
      hx-target="#spirit-image-{{player.id}}"
      hx-swap="outerHTML">
-  <div class="spirit-image">
+  <div class="spirit-image spirit-image{% if player.spirit.name == 'Covets' %}-double{% else %}-single{% endif %}">
     <div style="position: relative">
       {% for presence in player.presence_set.all %}
       <a style="cursor: pointer" hx-post="{% url 'toggle_presence' player.id presence.left presence.top %}">
