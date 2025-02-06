@@ -247,12 +247,12 @@ spirit_presence = {
                 (441,254,1.0), (512,254,1.0,'','Rot'), (582,254,1.0), (654,254,1.0,'','Moon'), (724,254,1.0), (796,254,1.0),
                 ),
         'Covets': (
-                (441,158,1.0,'1'), (512,123,1.0,'','Fire'), (512,193,1.0,'','Animal'), (582,158,1.0,'2'), (654,158,1.0,'','Earth'), (725,158,1.0), (796,158,1.0,'4'),
+                (441,158,1.0,'1'), (512,158,1.0), (582,158,1.0,'3'), (654,158,1.0,'','Earth'), (725,158,1.0,'','Fire,Animal'), (796,158,1.0,'5'),
                 (441,279,1.0,'','Air'), (512,279,1.0,''), (582,279,1.0,'','Sun'), (654,244,1.0,'','Fire'), (654,314,1.0,'','Animal'), (724,279,1.0),
                 # hoard one-time bonuses
                 (176,700,0.0), (176,815,0.0),
                 # hoard forms (passive bonuses)
-                (332,700,0.0), (332,815,0.0), (332,950,0.0),
+                (368,700,0.0), (332,815,0.0), (332,950,0.0),
                 # hoard innates
                 (605,700,0.0), (605,855,0.0), (605,1005,0.0),
                 # hoard any element spaces
@@ -414,7 +414,7 @@ def view_game(request, game_id):
             ('Waters', 'Wounded Waters Bleeding', ()),
         ],
         'Apocrypha': [
-            ('Covets', 'Covets Gleaming Shards of Earth [Apocrypha]', ()),
+            ('Covets', 'Covets Gleaming Shards of Earth v1.2.1 [Apocrypha]', ()),
             ('Rot', 'Spreading Rot Renews the Earth [Apocrypha]', ('Round Down',)),
         ],
         'Exploratory Testing': [
@@ -591,10 +591,11 @@ def choose_card(request, player_id, card_id):
 
     player.hand.add(card)
     player.selection.remove(card)
-    # if there are 5 cards left in their selection,
+    # if there are 5 minor cards left in their selection,
     # we assume this was a Boon of Reimagining (draw 6 and gain 2)
     # so we do not send the cards to the discard in that case.
     # Otherwise, we do.
+    # (It has to be minors because Covets Gleaming Shards of Earth can draw 6 majors)
     #
     # For now it works to make this decision solely based on the number of cards drawn.
     # If there's ever another effect that does draw 6 gain N with N != 2,
@@ -603,7 +604,7 @@ def choose_card(request, player_id, card_id):
     #
     # TODO: Mentor Shifting Memory of Ages receiving a Boon of Reimagining:
     # They should draw 4 and gain 3 of them.
-    if player.selection.count() != 5:
+    if card.type != Card.MINOR or player.selection.count() != 5:
         for discard in player.selection.all():
             player.game.discard_pile.add(discard)
         player.selection.clear()
