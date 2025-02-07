@@ -1,6 +1,7 @@
 import uuid
 from enum import Enum
 from collections import Counter, defaultdict
+import sys
 
 from django.db import models
 
@@ -91,7 +92,14 @@ class Card(models.Model):
 
     FAST = 1
     SLOW = 2
-    speed = models.IntegerField(choices=[(0, 'Unknown'), (FAST, 'Fast'), (SLOW, 'Slow')])
+
+    if 'seeddb' in sys.argv and any('manage.py' in s for s in sys.argv):
+        # Don't include the speed field during seeding,
+        # because seeding is run on a DB that doesn't have the speed field.
+        # intended to be a temporary solution to https://github.com/nathanj/spirit-island-pbp/issues/90
+        pass
+    else:
+        speed = models.IntegerField(choices=[(0, 'Unknown'), (FAST, 'Fast'), (SLOW, 'Slow')])
 
     def __str__(self):
         return self.name
