@@ -361,7 +361,7 @@ class GamePlayer(models.Model):
         counter[Elements.Plant] += self.temporary_plant + self.permanent_plant
         counter[Elements.Animal] += self.temporary_animal + self.permanent_animal
 
-        if self.aspect == 'DarkFire':
+        if self.aspect in ('DarkFire', 'Intensify'):
             counter[Elements.Moon] += 1
 
         for card in self.play.all():
