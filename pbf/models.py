@@ -360,6 +360,10 @@ class GamePlayer(models.Model):
         counter[Elements.Earth] += self.temporary_earth + self.permanent_earth
         counter[Elements.Plant] += self.temporary_plant + self.permanent_plant
         counter[Elements.Animal] += self.temporary_animal + self.permanent_animal
+
+        if self.aspect == 'DarkFire':
+            counter[Elements.Moon] += 1
+
         for card in self.play.all():
             counter += card.get_elements()
         if self.spirit.name == 'Earthquakes':
@@ -384,9 +388,7 @@ class GamePlayer(models.Model):
     def animal(self): return self.elements[Elements.Animal]
 
     def init_permanent_elements(self):
-        if self.aspect == 'DarkFire':
-            self.permanent_moon += 1
-        elif self.spirit.name == "Shifting":
+        if self.spirit.name == "Shifting":
             for e in (Elements.Moon, Elements.Air, Elements.Earth):
                 # Prepare one of each.
                 self.spirit_specific_resource += 1 << (ELEMENT_WIDTH * (e.value - 1))
