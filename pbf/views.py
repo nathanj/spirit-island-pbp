@@ -302,7 +302,7 @@ def add_player(request, game_id):
     # as noted above in the comment of spirit_base_energy_per_turn,
     # only spirit name (and not aspect) is considered in energy gain per turn.
     gp = GamePlayer(game=game, name=name, spirit=spirit, color=color, aspect=aspect, energy=setup_energy, starting_energy=spirit_base_energy_per_turn[spirit.name])
-    gp.init_permanent_elements()
+    gp.init_spirit()
     gp.save()
     try:
         for presence in spirit_presence[spirit.name]:

@@ -360,6 +360,10 @@ class GamePlayer(models.Model):
         counter[Elements.Earth] += self.temporary_earth + self.permanent_earth
         counter[Elements.Plant] += self.temporary_plant + self.permanent_plant
         counter[Elements.Animal] += self.temporary_animal + self.permanent_animal
+
+        if self.aspect in ('DarkFire', 'Intensify'):
+            counter[Elements.Moon] += 1
+
         for card in self.play.all():
             counter += card.get_elements()
         if self.spirit.name == 'Earthquakes':
@@ -383,10 +387,13 @@ class GamePlayer(models.Model):
     def plant(self): return self.elements[Elements.Plant]
     def animal(self): return self.elements[Elements.Animal]
 
-    def init_permanent_elements(self):
-        if self.aspect == 'DarkFire':
-            self.permanent_moon += 1
-        elif self.spirit.name == "Shifting":
+    # Any code that creates a GamePlayer is expected to (manually) call this function once after creating it,
+    # (currently add_player in views)
+    # so it is suitable for any one-time setup.
+    # why not override __init__? Django docs indicate doing so is *not* preferred:
+    # https://docs.djangoproject.com/en/5.1/ref/models/instances/
+    def init_spirit(self):
+        if self.spirit.name == "Shifting":
             for e in (Elements.Moon, Elements.Air, Elements.Earth):
                 # Prepare one of each.
                 self.spirit_specific_resource += 1 << (ELEMENT_WIDTH * (e.value - 1))
