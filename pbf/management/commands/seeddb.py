@@ -275,7 +275,7 @@ cards = (
         # Uniques,
         ["Trickster", "Unexpected Tigers", 0, [Elements.Moon, Elements.Fire, Elements.Animal]],
         ["Trickster", "Impersonate Authority", 0, [Elements.Sun, Elements.Air, Elements.Animal]],
-        ["Trickster", "Incite the Mob", 1, [Elements.Moon, Elements.Fire, Elements.Air]],
+        ["Trickster", "Incite the Mob", 1, [Elements.Moon, Elements.Fire, Elements.Air, Elements.Animal]],
         ["Trickster", "Overenthusiastic Arson", 1, [Elements.Fire, Elements.Air]],
         ["Volcano", "Rain of Ash", 2, [Elements.Fire, Elements.Air, Elements.Earth]],
         ["Volcano", "Lava Flows", 1, [Elements.Fire, Elements.Earth]],
