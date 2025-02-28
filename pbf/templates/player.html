@@ -7,7 +7,7 @@
     <div style="position: relative">
       {% for presence in player.presence_set.all %}
       <a style="cursor: pointer" hx-post="{% url 'toggle_presence' player.id presence.left presence.top %}">
-	<img style="position: absolute; left: {{presence.left}}px; top: {{presence.top}}px; opacity: {{presence.opacity}};" src="{% static player.disk_url %}" width="90" height="90" />
+	<img style="position: absolute; left: {{presence.left}}px; top: {{presence.top}}px; opacity: {{presence.opacity}}; z-index: 2" src="{% static player.disk_url %}" width="90" height="90" />
       </a>
       {% endfor %}
       {% if player.aspect %}
