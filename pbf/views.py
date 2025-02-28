@@ -1,4 +1,5 @@
 import json
+import itertools
 from random import shuffle
 
 from django.db import transaction
@@ -334,6 +335,111 @@ def add_player(request, game_id):
         for card_name in remove_cards:
             card = Card.objects.get(name=card_name)
             card = gp.hand.remove(card)
+
+    return redirect(reverse('view_game', args=[game.id]))
+
+def import_game(request):
+    def cards_with_name(cards):
+        return Card.objects.filter(name__in={card['name'] for card in cards})
+
+    # The general strategy of the importer is that it will allow most fields to be optional,
+    # using a reasonable default for any field not defined.
+    #
+    # Really, this should be unnecessary for games that were exported from the API,
+    # as they should have all the fields,
+    # but it doesn't seem to hurt to be permissive here.
+
+    to_import = json.load(request.FILES['json'])
+    game = Game(
+            name=to_import.get('name', 'Untitled Imported Game'),
+            scenario=to_import.get('scenario', ''),
+            )
+    # we are not importing the discord_channel,
+    # because it's not yet been proven to be desirable to automatically do this.
+    game.save()
+
+    if 'discard_pile' in to_import:
+        game.discard_pile.set(cards_with_name(to_import['discard_pile']))
+    if 'minor_deck' in to_import:
+        game.minor_deck.set(cards_with_name(to_import['minor_deck']))
+    else:
+        # if someone imports a discard pile and not a minor deck, we exclude discarded cards
+        # TODO: We should also exclude cards in any player's hand, discard, play, selection, days, impending
+        game.minor_deck.set(Card.objects.filter(type=Card.MINOR).exclude(name__in={card['name'] for card in to_import.get('discard_pile', [])}))
+    if 'major_deck' in to_import:
+        game.major_deck.set(cards_with_name(to_import['major_deck']))
+    else:
+        # if someone imports a discard pile and not a major deck, we exclude discarded cards
+        # TODO: We should also exclude cards in any player's hand, discard, play, selection, days, impending
+        game.major_deck.set(Card.objects.filter(type=Card.MAJOR).exclude(name__in={card['name'] for card in to_import.get('discard_pile', [])}))
+
+    # if any player doesn't have colour defined,
+    # we need to assign an unused colour,
+    # not duplicating a player that does have a colour defined
+    colours = {'cyan', 'brown', 'blue', 'red', 'purple', 'orange', 'pink', 'yellow', 'green', 'white'}
+    used_colours = {player.get('color', '') for player in to_import.get('players', [])}
+    available_colours = colours - used_colours
+
+    for player in to_import.get('players', []):
+        elts = (temp_or_perm + "_" + elt for temp_or_perm in ("temporary", "permanent") for elt in ("sun", "moon", "fire", "air", "water", "earth", "plant", "animal"))
+        # if these basic attributes aren't set, we'll rely on the database defaults
+        basic_attrs = {attr: player[attr] for attr in (
+            'name', 'aspect', 'energy',
+            'ready', 'paid_this_turn', 'gained_this_turn',
+            'spirit_specific_resource', 'spirit_specific_per_turn_flags',
+            *elts,
+            ) if attr in player}
+
+        # we'll error if they don't have a spirit defined.
+        spirit_name = player['spirit']['name']
+        gp = GamePlayer(
+                game=game,
+                **basic_attrs,
+                color=player.get('color', next(iter(available_colours))),
+                spirit=Spirit.objects.get(name=spirit_name),
+                starting_energy=spirit_base_energy_per_turn[spirit_name],
+                )
+        if gp.color in available_colours:
+            available_colours.remove(gp.color)
+        gp.save()
+
+        for (import_presence, expected_presence) in zip(itertools.chain(player.get('presence', []), itertools.repeat(None)), spirit_presence[spirit_name]):
+            expected_energy = expected_presence[3] if 3 < len(expected_presence) else ''
+            expected_elements = expected_presence[4] if 4 < len(expected_presence) else ''
+
+            if import_presence:
+                # limitation: This will cause the import to fail if we change the order of spirits' presences.
+                # maybe it's better to also import the top/left coordinates.
+                # we aren't doing this yet because the API doesn't export them.
+                if import_presence['energy'] != expected_energy:
+                    raise ValueError(f"presence at {expected_presence[0]}, {expected_presence[1]} should have {expected_energy} energy but had {import_presence['energy']}")
+                if import_presence['elements'] != expected_elements:
+                    raise ValueError(f"presence at {expected_presence[0]}, {expected_presence[1]} should have {expected_elements} elements but had {import_presence['elements']}")
+                gp.presence_set.create(left=expected_presence[0], top=expected_presence[1], opacity=import_presence['opacity'], energy=import_presence['energy'], elements=import_presence['elements'])
+            else:
+                # limitation: if someone imports without presence for Locus, the fire presence doesn't get removed
+                gp.presence_set.create(left=expected_presence[0], top=expected_presence[1], opacity=expected_presence[2], energy=expected_energy, elements=expected_elements)
+
+        if 'hand' in player:
+            gp.hand.set(cards_with_name(player['hand']))
+        else:
+            # TODO: aspect add/remove cards
+            # probably move the code in add_player to a function
+            gp.hand.set(Card.objects.filter(spirit=Spirit.objects.get(name=spirit_name)))
+
+        if 'discard' in player: gp.discard.set(cards_with_name(player['discard']))
+        if 'play' in player: gp.play.set(cards_with_name(player['play']))
+        if 'selection' in player: gp.selection.set(cards_with_name(player['selection']))
+        if 'days' in player: gp.days.set(cards_with_name(player['days']))
+        if 'healing' in player: gp.healing.set(cards_with_name(player['healing']))
+        if 'impending' in player:
+            for impending in player['impending']:
+                GamePlayerImpendingWithEnergy(
+                        gameplayer=gp,
+                        card=Card.objects.get(name=impending['card']['name']),
+                        in_play=impending.get('in_play', False),
+                        energy=impending.get('energy', 0),
+                        ).save()
 
     return redirect(reverse('view_game', args=[game.id]))
 
