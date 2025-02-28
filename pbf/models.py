@@ -414,6 +414,8 @@ class GamePlayer(models.Model):
             return amount * 2
         elif self.aspect == 'Spreading Hostility':
             return amount // 2 + amount % 2
+        elif self.aspect == 'Exploratory' and self.spirit.name == 'Shadows':
+            return amount + 1
         else:
             return amount
 
@@ -775,6 +777,11 @@ spirit_thresholds = {
             (-5, 525, '1M'),
             (-5, 560, '2F'),
             (-5, 580, '2M4A'),
+            ],
+        'ExploratoryShadows': [
+            (365, 440, '2M1F'),
+            (365, 475, '3M2F'),
+            (365, 515, '4M3F2A'),
             ],
         'IntensifyShifting': [
             (365, 430, '2E'),

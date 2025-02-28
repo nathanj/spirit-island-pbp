@@ -418,6 +418,7 @@ def view_game(request, game_id):
             # Note that the template has logic to not show the base spirit for this category,
             # because the base spirit is assumed to be in a different expansion.
             # In other words, this category only shows aspects.
+            ('Shadows', 'Shadows Flicker Like Flame', ('Exploratory', )),
             ('Bringer', 'Bringer of Dreams and Nightmares', ('Exploratory', )),
         ],
     }

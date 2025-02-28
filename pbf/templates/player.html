@@ -59,6 +59,9 @@
 	{% elif player.aspect == 'Exploratory' %}
     {% if player.spirit.name == 'Bringer' %}
       <img style="position: absolute; left: 450px; top: 255px; height: 95px" src="{% static 'pbf/exploratory-bringer-cardplays.jpg' %}" />
+    {% elif player.spirit.name == 'Shadows' %}
+      <img style="position: absolute; left: 387px; top: 159px; height: 85px" src="{% static 'pbf/exploratory-shadows-energy.jpg' %}" />
+      <img style="position: absolute; left: 588px; top: 254px; width: 72px" src="{% static 'pbf/exploratory-shadows-reclaim1.jpg' %}" />
     {% endif %}
         {% else %}
           <img style="position: absolute; left: {{player.aspect_left}}px; top: {{player.aspect_top}}px;" src="{% static player.aspect_url %}" width="370" height="230" />
