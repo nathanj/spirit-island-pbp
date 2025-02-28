@@ -77,7 +77,6 @@ def change_scenario(request, game_id):
 # so that it can include aspect in its lookup.
 spirit_base_energy_per_turn = {
         'Bringer': 2,
-        'Exploratory Bringer': 2,
         'Downpour': 1,
         'Earth': 2,
         'Fangs': 1,
@@ -130,8 +129,6 @@ spirit_setup_energy = {
 
 spirit_presence = {
         'Bringer': ((452,155,1.0,'','Air'), (522,155,1.0,'3'), (592,155,1.0,'','Moon'), (662,155,1.0,'4'), (732,155,1.0), (802,155,1.0,'5'),
-            (452,255,1.0), (522,255,1.0), (592,255,1.0), (662,255,1.0), (732,255,1.0)),
-        'Exploratory Bringer': ((452,155,1.0,'','Air'), (522,155,1.0,'3'), (592,155,1.0,'','Moon'), (662,155,1.0,'4'), (732,155,1.0), (802,155,1.0,'5'),
             (452,255,1.0), (522,255,1.0), (592,255,1.0), (662,255,1.0), (732,255,1.0)),
         'Downpour': ((434,205,1.0,'','Water'), (506,205,1.0,'','Plant'), (578,205,1.0,'','Water'), (650,205,1.0,'2','Air'), (720,205,1.0,'','Water'), (790,205,1.0,'','Earth'), (860,205,1.0,'','Water,Water'),
             (430,295,1.0), (500,295,1.0,'','Water'), (575,295,1.0), (645,295,1.0), (720,295,1.0)),
@@ -418,11 +415,11 @@ def view_game(request, game_id):
             ('Rot', 'Spreading Rot Renews the Earth [Apocrypha]', ('Round Down',)),
         ],
         'Exploratory Testing': [
-            # If this changes to become an aspect of Bringer of Dreams and Nightmares,
-            # the template will need a slight change, because base Bringer should not be shown.
-            # That can be dealt with by a conditional in the template
-            # (don't show the base spirit if the category is Exploratory Testing)
-            ('Exploratory Bringer', 'Bringer of Dreams and Nightmares [Exploratory]', ()),
+            # Note that the template has logic to not show the base spirit for this category,
+            # because the base spirit is assumed to be in a different expansion.
+            # In other words, this category only shows aspects.
+            ('Shadows', 'Shadows Flicker Like Flame', ('Exploratory', )),
+            ('Bringer', 'Bringer of Dreams and Nightmares', ('Exploratory', )),
         ],
     }
     spirits_present = [spirit for (expansion, spirits) in spirits_by_expansion.items() for (spirit, _, _) in spirits]
