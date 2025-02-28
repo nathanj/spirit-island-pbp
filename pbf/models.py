@@ -486,7 +486,7 @@ spirit_thresholds = {
             (650, 490, '2M1A1N'),
             (650, 530, '3M2A1N'),
             ],
-        'Exploratory Bringer': [
+        'ExploratoryBringer': [
             (360, 450, '2M2A'),
             (360, 535, '3M'),
             (650, 450, '1M1A'),
