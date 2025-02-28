@@ -415,10 +415,9 @@ def view_game(request, game_id):
             ('Rot', 'Spreading Rot Renews the Earth [Apocrypha]', ('Round Down',)),
         ],
         'Exploratory Testing': [
-            # If this changes to become an aspect of Bringer of Dreams and Nightmares,
-            # the template will need a slight change, because base Bringer should not be shown.
-            # That can be dealt with by a conditional in the template
-            # (don't show the base spirit if the category is Exploratory Testing)
+            # Note that the template has logic to not show the base spirit for this category,
+            # because the base spirit is assumed to be in a different expansion.
+            # In other words, this category only shows aspects.
             ('Bringer', 'Bringer of Dreams and Nightmares', ('Exploratory', )),
         ],
     }
