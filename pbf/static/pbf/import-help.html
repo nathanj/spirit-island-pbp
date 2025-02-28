@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Import Help - Spirit Island</title>
+</head>
+
+<body>
+<main>
+
+<h1>Import</h1>
+
+<p>
+The importer will create a new game from a JSON file.
+This allows games to be transferred between instances of the site,
+or creating a game with specific initial conditions (e.g. Destiny Unfolds).
+</p>
+
+<p>
+You can find an example of the expected format from the <strong>Game Data</strong> link at the bottom of each game.
+</p>
+
+<p>
+The game is initially not linked to any Discord channel (even if the <code>discord_channel</code> is present in the imported data),
+so you will need to separately set that up after importing.
+Screenshots are also not transferred.
+</p>
+
+<p>
+Useful things to know if you are creating a file from scratch or modifying one:
+</p>
+
+<ul>
+  <li>Even though the export data includes an <code>id</code> for cards and spirits, the importer ignores this ID and only uses the name.</li>
+  <li>As shorthand for the <code>{"name": "Call to Isolation"}</code> object used to reference a card or spirit, simply the string <code>"Call to Isolation"</code> will also be accepted.</li>
+  <li>Capitalisation in card names doesn't need to be exact (<code>"call to isolation"</code> will still be accepted), but punctuation and spacing must be exact.</li>
+  <li>Including a list of players is optional, but if there are any players, the <code>spirit</code> for each is required.</li>
+  <li>All other fields are optional and will use reasonable defaults if the key is not present in the imported data. Examples of such defaults:
+    <ul>
+      <li>A spirit's hand: The hand that spirit would start the game with.</li>
+      <li>Major and minor decks: All power cards of that type, except any card that's anywhere else in the game.</li>
+    </ul>
+    Of course, if you want these to be empty instead of the defaults, include the key with the value of an empty array.
+  </li>
+</ul>
+
+</main>
+</body>
+</html>

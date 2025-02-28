@@ -1,4 +1,5 @@
 import json
+import itertools
 from random import sample, shuffle
 import os
 
@@ -439,6 +440,146 @@ def make_initial_hand(gp, remove_from_decks=True):
         for card_name in remove_cards:
             card = Card.objects.get(name=card_name)
             card = gp.hand.remove(card)
+
+def import_game(request):
+    def cards_with_name(cards):
+        # Cards can be specified as either:
+        # - just their name as a string
+        # - or a dict with key "name"
+        # (it is an error to provide something other than a string or dict)
+        names = {(card if isinstance(card, str) else card['name']) for card in cards}
+        exact_name_matches = Card.objects.filter(name__in=names)
+        if exact_name_matches.count() == len(cards):
+            return exact_name_matches
+
+        # TODO: Is there a way to do a case-insensitive match on a set?
+        # maybe not: https://stackoverflow.com/questions/2667524/django-query-case-insensitive-list-match
+        remaining_names_needed = names - {card.name for card in exact_name_matches}
+        remaining_cards = [Card.objects.get(name__iexact=name) for name in remaining_names_needed]
+        if len(remaining_cards) == len(remaining_names_needed):
+            return list(exact_name_matches) + remaining_cards
+        # TODO: This feedback needs to be shown in UI
+        still_not_matched = remaining_names_needed - {card.name for card in remaining_cards}
+        raise ValueError(f"Couldn't find cards {still_not_matched}")
+
+    # The general strategy of the importer is that it will allow most fields to be optional,
+    # using a reasonable default for any field not defined.
+    #
+    # Really, this should be unnecessary for games that were exported from the API,
+    # as they should have all the fields,
+    # but it doesn't seem to hurt to be permissive here.
+
+    to_import = json.load(request.FILES['json'])
+    game = Game(
+            name=to_import.get('name', 'Untitled Imported Game'),
+            scenario=to_import.get('scenario', ''),
+            )
+    # we are not importing the discord_channel,
+    # because it's not yet been proven to be desirable to automatically do this.
+    game.save()
+
+    if 'discard_pile' in to_import:
+        game.discard_pile.set(discards := cards_with_name(to_import['discard_pile']))
+        cards_in_game = {card.id for card in discards}
+    else:
+        cards_in_game = set()
+
+    # set minor/major decks after we've imported players,
+    # because we may want to exclude cards players are holding.
+
+    # if any player doesn't have colour defined,
+    # we need to assign an unused colour,
+    # not duplicating a player that does have a colour defined
+    colours = {color for (color, _) in GamePlayer.COLORS}
+    used_colours = {player.get('color', '') for player in to_import.get('players', [])}
+    available_colours = colours - used_colours
+    if not available_colours:
+        available_colours = colours
+
+    # the API shows the last-added player first, as does the UI (last-added player farthest to the left).
+    # to preserve the right ordering we have to import players in the reverse order!
+    for player in reversed(to_import.get('players', [])):
+        elts = (temp_or_perm + "_" + elt for temp_or_perm in ("temporary", "permanent") for elt in ("sun", "moon", "fire", "air", "water", "earth", "plant", "animal"))
+        # if these basic attributes aren't set, we'll rely on the database defaults
+        basic_attrs = {attr: player[attr] for attr in (
+            'name', 'aspect', 'energy',
+            'ready', 'paid_this_turn', 'gained_this_turn',
+            'spirit_specific_resource', 'spirit_specific_per_turn_flags',
+            *elts,
+            ) if attr in player}
+
+        # Spirit can be specified as either:
+        # - just their name as a string
+        # - or a dict with key "name"
+        # Error if they don't have a spirit defined.
+        spirit_name = player['spirit'] if isinstance(player['spirit'], str) else player['spirit']['name']
+        gp = GamePlayer(
+                game=game,
+                **basic_attrs,
+                color=player.get('color', next(iter(available_colours))),
+                spirit=Spirit.objects.get(name__iexact=spirit_name),
+                starting_energy=spirit_base_energy_per_turn[spirit_name],
+                )
+        if gp.color in available_colours:
+            available_colours.remove(gp.color)
+            # if there are no colours left, we'll just have to repopulate.
+            if not available_colours:
+                available_colours = {color for (color, _) in GamePlayer.COLORS}
+        gp.save()
+
+        for (i, (expected_presence, import_presence)) in enumerate(zip(spirit_presence[spirit_name], itertools.chain(player.get('presence', []), itertools.repeat(None)))):
+            expected_energy = expected_presence[3] if 3 < len(expected_presence) else ''
+            expected_elements = expected_presence[4] if 4 < len(expected_presence) else ''
+
+            if import_presence:
+                # limitation: This will cause the import to fail if we change the order of spirits' presences.
+                # maybe it's better to also import the top/left coordinates.
+                # we aren't doing this yet because the API doesn't export them.
+                if import_presence['energy'] != expected_energy:
+                    raise ValueError(f"presence at {expected_presence[0]}, {expected_presence[1]} should have {expected_energy} energy but had {import_presence['energy']}")
+                if import_presence['elements'] != expected_elements:
+                    raise ValueError(f"presence at {expected_presence[0]}, {expected_presence[1]} should have {expected_elements} elements but had {import_presence['elements']}")
+                gp.presence_set.create(left=expected_presence[0], top=expected_presence[1], opacity=import_presence['opacity'], energy=import_presence['energy'], elements=import_presence['elements'])
+            else:
+                expected_opacity = 0.0 if gp.aspect == 'Locus' and i == 0 else expected_presence[2]
+                gp.presence_set.create(left=expected_presence[0], top=expected_presence[1], opacity=expected_opacity, energy=expected_energy, elements=expected_elements)
+
+        if 'hand' in player:
+            gp.hand.set(hand := cards_with_name(player['hand']))
+            cards_in_game |= {card.id for card in hand}
+        else:
+            # We haven't made the major/minor decks yet
+            # (because we need to know what cards to exclude from it)
+            # so we should not remove cards from it yet,
+            # only record the cards so that we remove them when the decks are made.
+            make_initial_hand(gp, remove_from_decks=False)
+            if gp.full_name() in spirit_additional_cards:
+                cards_in_game |= {Card.objects.get(name=card).id for card in spirit_additional_cards[gp.full_name()]}
+
+        for name in ('discard', 'play', 'selection', 'days', 'healing'):
+            if name in player:
+                getattr(gp, name).set(cards := cards_with_name(player[name]))
+                cards_in_game |= {card.id for card in cards}
+        if 'impending' in player:
+            for impending in player['impending']:
+                card = Card.objects.get(name__iexact=impending['card'] if isinstance(impending['card'], str) else impending['card']['name'])
+                GamePlayerImpendingWithEnergy(
+                        gameplayer=gp,
+                        card=card,
+                        **{attr: impending[attr] for attr in ('in_play', 'energy', 'this_turn') if attr in impending},
+                        ).save()
+                cards_in_game.add(card.id)
+
+    for (name, type) in (('minor_deck', Card.MINOR), ('major_deck', Card.MAJOR)):
+        deck = getattr(game, name)
+        if name in to_import:
+            deck.set(cards_with_name(to_import[name]))
+        else:
+            # if someone imports a discard pile and not a major/minor deck,
+            # exclude discarded cards and cards being held by any player
+            deck.set(Card.objects.filter(type=type).exclude(id__in=cards_in_game))
+
+    return redirect(reverse('view_game', args=[game.id]))
 
 def view_game(request, game_id, spirit_spec=None):
     game = get_object_or_404(Game, pk=game_id)
