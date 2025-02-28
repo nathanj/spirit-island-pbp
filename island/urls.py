@@ -13,6 +13,7 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('screenshot/<str:filename>', views.view_screenshot, name='view_screenshot'),
     path('new', views.new_game, name='new_game'),
+    path('import', views.import_game, name='import_game'),
     path('game/<str:game_id>', views.view_game, name='view_game'),
     path('game/<str:game_id>/spirit/<path:spirit_spec>', views.view_game, name='view_game'),
     path('game/<str:game_id>/setup', views.game_setup, name='game_setup'),
