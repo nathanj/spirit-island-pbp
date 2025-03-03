@@ -102,7 +102,7 @@ uniques = (
         # Jagged Earth,
         ["Trickster", "Unexpected Tigers", 0, "Moon,Fire,Animal"],
         ["Trickster", "Impersonate Authority", 0, "Sun,Air,Animal"],
-        ["Trickster", "Incite the Mob", 1, "Moon,Fire,Air"],
+        ["Trickster", "Incite the Mob", 1, "Moon,Fire,Air,Animal"],
         ["Trickster", "Overenthusiastic Arson", 1, "Fire,Air"],
         ["Volcano", "Rain of Ash", 2, "Fire,Air,Earth"],
         ["Volcano", "Lava Flows", 1, "Fire,Earth"],
