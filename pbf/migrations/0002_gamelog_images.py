@@ -6,9 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        # Seeding the db was originally done in a separate command, but now that it is a migration, it still needs
-        # to be applied as early as possible.
-        ('pbf', '0043_seed_db'),
+        ('pbf', '0001_initial'),
     ]
 
     operations = [
