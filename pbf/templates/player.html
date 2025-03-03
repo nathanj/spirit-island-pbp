@@ -3,11 +3,11 @@
      class="content"
      hx-target="#spirit-image-{{player.id}}"
      hx-swap="outerHTML">
-  <div class="spirit-image">
+  <div class="spirit-image spirit-image{% if player.spirit.name == 'Covets' %}-double{% else %}-single{% endif %}">
     <div style="position: relative">
       {% for presence in player.presence_set.all %}
       <a style="cursor: pointer" hx-post="{% url 'toggle_presence' player.id presence.left presence.top %}">
-	<img style="position: absolute; left: {{presence.left}}px; top: {{presence.top}}px; opacity: {{presence.opacity}};" src="{% static player.disk_url %}" width="90" height="90" />
+	<img style="position: absolute; left: {{presence.left}}px; top: {{presence.top}}px; opacity: {{presence.opacity}}; z-index: 2" src="{% static player.disk_url %}" width="90" height="90" />
       </a>
       {% endfor %}
       {% if player.aspect %}
@@ -44,6 +44,7 @@
           <img style="position: absolute; left: 660px; top: 366px; height: 212px;width: 274px;" src="{% static 'pbf/aspect-transforming.jpg' %}" />
 	{% elif player.aspect == 'Unconstrained' %}
           <img style="position: absolute; left: 23px; top: 517px; height: 93px;width: 350px;" src="{% static 'pbf/aspect-unconstrained.jpg' %}" />
+          <img style="position: absolute; left: 545px; top: 399px; width: 86px;" src="{% static 'pbf/aspect-unconstrained-any.jpg' %}" />
 	{% elif player.aspect == 'Violence' %}
           <img style="position: absolute; left: 379px; top: 384px; height: 226px;width: 277px;" src="{% static 'pbf/aspect-violence.jpg' %}" />
 	{% elif player.aspect == 'Warrior' %}
@@ -56,6 +57,13 @@
           <img style="position: absolute; left: 379px; top: 380px; height: 235px;width: 277px;" src="{% static 'pbf/aspect-locus2.jpg' %}" />
 	{% elif player.aspect == 'Round Down' %}
           <img style="position: absolute; left: 10px; top: 470px; height: 40px;width: 338px;" src="{% static 'pbf/aspect-round_down.jpg' %}" />
+	{% elif player.aspect == 'Exploratory' %}
+    {% if player.spirit.name == 'Bringer' %}
+      <img style="position: absolute; left: 450px; top: 255px; height: 95px" src="{% static 'pbf/exploratory-bringer-cardplays.jpg' %}" />
+    {% elif player.spirit.name == 'Shadows' %}
+      <img style="position: absolute; left: 387px; top: 159px; height: 85px" src="{% static 'pbf/exploratory-shadows-energy.jpg' %}" />
+      <img style="position: absolute; left: 588px; top: 254px; width: 72px" src="{% static 'pbf/exploratory-shadows-reclaim1.jpg' %}" />
+    {% endif %}
         {% else %}
           <img style="position: absolute; left: {{player.aspect_left}}px; top: {{player.aspect_top}}px;" src="{% static player.aspect_url %}" width="370" height="230" />
         {% endif %}
@@ -134,7 +142,7 @@
   <button class="btn" hx-get="{% url 'undo_gain_card' player.id %}" hx-confirm="Are you sure?">Oops! Undo gain card</button>
   {% else %}
   <p>Gain Minor ({{ player.game.minor_deck.all | length }} in deck): <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}">4 Cards</button> <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '6' %}">6 Cards</button> <button class="btn" hx-get="{% url 'take_power' player.id 'minor' %}">1 Card</button>
-  <p>Gain Major ({{ player.game.major_deck.all | length }} in deck): <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}">4 Cards</button> <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards</button> <button class="btn" hx-get="{% url 'take_power' player.id 'major' %}">1 Card</button>
+  <p>Gain Major ({{ player.game.major_deck.all | length }} in deck): <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}">4 Cards</button> {% if player.spirit.name == 'Covets' %} <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '6' %}">6 Cards</button> {% endif %} <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards</button> <button class="btn" hx-get="{% url 'take_power' player.id 'major' %}">1 Card</button>
   {% if player.spirit.name == 'Waters' %}
   <p>Gain Healing Card: <button class="btn" hx-get="{% url 'gain_healing' player.id %}">Gain Healing Card</button>
   {% endif %}

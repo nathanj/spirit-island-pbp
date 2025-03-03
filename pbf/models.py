@@ -360,6 +360,10 @@ class GamePlayer(models.Model):
         counter[Elements.Earth] += self.temporary_earth + self.permanent_earth
         counter[Elements.Plant] += self.temporary_plant + self.permanent_plant
         counter[Elements.Animal] += self.temporary_animal + self.permanent_animal
+
+        if self.aspect in ('DarkFire', 'Intensify'):
+            counter[Elements.Moon] += 1
+
         for card in self.play.all():
             counter += card.get_elements()
         if self.spirit.name == 'Earthquakes':
@@ -383,10 +387,13 @@ class GamePlayer(models.Model):
     def plant(self): return self.elements[Elements.Plant]
     def animal(self): return self.elements[Elements.Animal]
 
-    def init_permanent_elements(self):
-        if self.aspect == 'DarkFire':
-            self.permanent_moon += 1
-        elif self.spirit.name == "Shifting":
+    # Any code that creates a GamePlayer is expected to (manually) call this function once after creating it,
+    # (currently add_player in views)
+    # so it is suitable for any one-time setup.
+    # why not override __init__? Django docs indicate doing so is *not* preferred:
+    # https://docs.djangoproject.com/en/5.1/ref/models/instances/
+    def init_spirit(self):
+        if self.spirit.name == "Shifting":
             for e in (Elements.Moon, Elements.Air, Elements.Earth):
                 # Prepare one of each.
                 self.spirit_specific_resource += 1 << (ELEMENT_WIDTH * (e.value - 1))
@@ -407,6 +414,8 @@ class GamePlayer(models.Model):
             return amount * 2
         elif self.aspect == 'Spreading Hostility':
             return amount // 2 + amount % 2
+        elif self.aspect == 'Exploratory' and self.spirit.name == 'Shadows':
+            return amount + 1
         else:
             return amount
 
@@ -479,7 +488,7 @@ spirit_thresholds = {
             (650, 490, '2M1A1N'),
             (650, 530, '3M2A1N'),
             ],
-        'Exploratory Bringer': [
+        'ExploratoryBringer': [
             (360, 450, '2M2A'),
             (360, 535, '3M'),
             (650, 450, '1M1A'),
@@ -769,6 +778,11 @@ spirit_thresholds = {
             (-5, 560, '2F'),
             (-5, 580, '2M4A'),
             ],
+        'ExploratoryShadows': [
+            (365, 440, '2M1F'),
+            (365, 475, '3M2F'),
+            (365, 515, '4M3F2A'),
+            ],
         'IntensifyShifting': [
             (365, 430, '2E'),
             (365, 465, '1A2E'),
@@ -1016,19 +1030,19 @@ spirit_thresholds = {
             (645, 590, '4W3P'),
             ],
         'Covets': [
-            (356, 487, '1E'),
-            (356, 522, '1S2E2N'),
-            (356, 557, '1F2A2E'),
-            (620, 502, '2S2F3E'),
-            (620, 537, '4E'),
+            (360, 487, '1E'),
+            (360, 522, '1F2A2E'),
+            (360, 580, '2S2F3E'),
+            (638, 501, '2S2E2N'),
+            (638, 560, '4E'),
             (667, 750, '1F1E'),
-            (667, 779, '2F2E'),
+            (667, 779, '3F2E'),
             (667, 807, '3F2A3E'),
             (667, 902, '1A1E1N'),
-            (667, 931, '2A1E2N'),
+            (667, 931, '3A1E2N'),
             (667, 960, '3A3E3N'),
             (667, 1052, '1S1E1N'),
-            (667, 1081, '2S1E2N'),
+            (667, 1081, '3S1E2N'),
             (667, 1110, '3S2E3N'),
             ],
         }
