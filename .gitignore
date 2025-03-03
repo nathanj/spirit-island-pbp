@@ -6,3 +6,5 @@ static/*
 *.bak
 nohup.out
 screenshot/*
+env/*
+.vs/
