@@ -8,6 +8,12 @@
     <button type="submit" class="btn btn-primary">Create a New Game</button>
   </form>
 
+  <form enctype="multipart/form-data" method="post" action="{% url 'import_game' %}">
+    {% csrf_token %}
+    <input type="file" name="json" accept="application/json" id="id_json">
+    <button type="submit" class="btn">Import Game</button>
+  </form>
+
   <p>All images copyright Greater Than Games.</p>
 
   <p><a href="https://github.com/nathanj/spirit-island-pbp">Source Code</a></p>
