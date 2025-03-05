@@ -139,9 +139,8 @@ class Game(models.Model):
 
     def available_colors(self):
         colors = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'pink', 'brown', 'white']
-        for player in self.gameplayer_set.all():
-            colors.remove(player.color)
-        return colors
+        player_colors = set(self.gameplayer_set.values_list('color', flat=True))
+        return [c for c in colors if c not in player_colors]
 
 
 colors_to_circle_color_map = {
