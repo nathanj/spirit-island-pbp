@@ -14,9 +14,6 @@ class TestSetupEnergyAndBaseGain(TestCase):
         self.assertEqual(player.get_gain_energy(), per_turn, "per turn energy incorrect")
         self.assertEqual(player.energy, setup, "setup energy incorrect")
 
-    # Note that the tests don't seed the DB, only migrate,
-    # so they're missing some spirits that we have to manually create below.
-
     def test_base_spirit_with_aspect(self):
         s = self.assert_spirit("River", per_turn=1)
 
@@ -197,12 +194,6 @@ class TestRot(TestCase):
 
 class TestChooseCard(TestCase):
     def cards_gained(self, card_type, draw):
-        # Note that the tests don't seed the DB, only migrate,
-        # so the only minor they create is Roiling Bog and Snagging Thorn.
-        # We'll need to create some minors so that the tests have enough to work with.
-        if card_type == 'minor':
-            for i in range(6):
-                Card(name=f"Minor {i}", cost=0, type=Card.MINOR, speed=Card.FAST).save()
         client = Client()
         client.post("/new")
         game = Game.objects.last()
