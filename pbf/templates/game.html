@@ -71,10 +71,12 @@
       </optgroup>
       {% endfor %}
     </select>
-	  <select name="color">
+	  <select name="color" onChange="this.style.backgroundColor = this.options[this.selectedIndex].style.backgroundColor">
 	    <option value="random">Random color</option>
-	    {% for color in game.available_colors %}
-	    <option value="{{color}}">{{color.capitalize}}</option>
+	    {% for color, code in game.available_colors %}
+	    {# Setting the option's background colour doesn't seem to work for all browsers. #}
+	    {# but we'll do it for the ones that do support it. #}
+	    <option style="background-color: {{ code }};" value="{{color}}">{{color.capitalize}}</option>
 	    {% endfor %}
 	  </select>
 	  <input type="text" name="name" placeholder="player name">
