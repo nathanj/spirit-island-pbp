@@ -317,7 +317,7 @@ class GamePlayer(models.Model):
         return d.get(self.full_name(), True)
 
     def aspect_url(self):
-        return f'pbf/aspect-{self.aspect.lower()}.jpg'
+        return f'pbf/aspect-{self.aspect.replace(" ", "_").lower()}.jpg'
 
     def aspect_left(self):
         if self.aspect == 'Immense':
@@ -361,7 +361,7 @@ class GamePlayer(models.Model):
         counter[Elements.Plant] += self.temporary_plant + self.permanent_plant
         counter[Elements.Animal] += self.temporary_animal + self.permanent_animal
 
-        if self.aspect in ('DarkFire', 'Intensify'):
+        if self.aspect in ('Dark Fire', 'Intensify'):
             counter[Elements.Moon] += 1
 
         for card in self.play.all():
@@ -375,7 +375,7 @@ class GamePlayer(models.Model):
         return defaultdict(int, counter)
 
     def equiv_elements(self):
-        if self.aspect == 'DarkFire': return "MF"
+        if self.aspect == 'Dark Fire': return "MF"
         return None
 
     def sun(self): return self.elements[Elements.Sun]
@@ -749,7 +749,7 @@ spirit_thresholds = {
             (365, 475, '3M2F'),
             (365, 515, '4M3F2A'),
             ],
-        'DarkFireShadows': [
+        'Dark FireShadows': [
             (365, 440, '2M1F'),
             (365, 475, '3M2F'),
             (365, 515, '4M3F2A'),

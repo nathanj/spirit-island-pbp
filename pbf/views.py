@@ -260,7 +260,7 @@ spirit_presence = {
         }
 
 spirit_additional_cards = {
-    'DarkFireShadows': ['Unquenchable Flames'],
+    'Dark FireShadows': ['Unquenchable Flames'],
     'NourishingEarth': ['Voracious Growth'],
     'SparkingLightning': ['Smite the Land with Fulmination'],
     'TanglesGreen': ['Belligerent and Aggressive Crops'],
@@ -366,7 +366,7 @@ def view_game(request, game_id):
             ('Lightning', "Lightning's Swift Strike", ('Immense', 'Pandemonium', 'Sparking', 'Wind')),
             ('Ocean', "Ocean's Hungry Grasp", ('Deeps',)),
             ('River', 'River Surges in Sunlight', ('Haven', 'Sunshine', 'Travel')),
-            ('Shadows', 'Shadows Flicker Like Flame', ('Amorphous', 'DarkFire', 'Foreboding', 'Madness', 'Reach')),
+            ('Shadows', 'Shadows Flicker Like Flame', ('Amorphous', 'Dark Fire', 'Foreboding', 'Madness', 'Reach')),
             ('Green', 'A Spread of Rampant Green', ('Regrowth', 'Tangles')),
             ('Thunderspeaker', 'Thunderspeaker', ('Tactician', 'Warrior')),
             ('Earth', 'Vital Strength of the Earth', ('Might', 'Resilience', 'Nourishing')),
