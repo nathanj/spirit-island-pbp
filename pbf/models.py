@@ -138,7 +138,7 @@ class Game(models.Model):
         return str(self.id)
 
     def available_colors(self):
-        colors = ['cyan', 'brown', 'blue', 'red', 'purple', 'orange', 'pink', 'yellow', 'green', 'white']
+        colors = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'pink', 'brown', 'white']
         for player in self.gameplayer_set.all():
             colors.remove(player.color)
         return colors
