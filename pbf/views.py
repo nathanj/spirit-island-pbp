@@ -264,7 +264,7 @@ spirit_additional_cards = {
     'NourishingEarth': ['Voracious Growth'],
     'SparkingLightning': ['Smite the Land with Fulmination'],
     'TanglesGreen': ['Belligerent and Aggressive Crops'],
-    'ViolenceBringer': ['Bats Scout For Raids By Darkness'],
+    'ViolenceBringer': ['Bats Scout for Raids by Darkness'],
     'WarriorThunderspeaker': ['Call to Bloodshed'],
     'LocusSerpent': ['Pull Beneath the Hungry Earth'],
     }
