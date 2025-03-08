@@ -416,7 +416,14 @@ def add_player(request, game_id):
     except Exception as ex:
         print(ex)
         pass
-    gp.hand.set(Card.objects.filter(spirit=spirit))
+
+    make_initial_hand(gp)
+
+    return redirect(reverse('game_setup', args=[game.id]))
+
+def make_initial_hand(gp):
+    game = gp.game
+    gp.hand.set(Card.objects.filter(spirit=gp.spirit))
     if gp.full_name() in spirit_additional_cards:
         additional_starting_cards = spirit_additional_cards[gp.full_name()]
         for card_name in additional_starting_cards:
@@ -431,8 +438,6 @@ def add_player(request, game_id):
         for card_name in remove_cards:
             card = Card.objects.get(name=card_name)
             card = gp.hand.remove(card)
-
-    return redirect(reverse('game_setup', args=[game.id]))
 
 def view_game(request, game_id, spirit_spec=None):
     game = get_object_or_404(Game, pk=game_id)
