@@ -281,7 +281,7 @@ spirit_remove_cards = {
 
 def add_player(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
-    colors = [c for (c, _) in game.available_colors()]
+    colors = [c for (c, freq, _) in game.color_freq() if freq == 0]
     color = request.POST['color']
     # this automatically handles random by virtue of random not being in colors.
     # TODO: maybe consider showing an error if they select a color already in use?
