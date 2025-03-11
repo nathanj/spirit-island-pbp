@@ -137,10 +137,10 @@ class Game(models.Model):
     def __str__(self):
         return str(self.id)
 
-    def available_colors(self):
+    def color_freq(self):
         colors = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'pink', 'brown', 'white']
-        player_colors = set(self.gameplayer_set.values_list('color', flat=True))
-        return [(c, colors_to_circle_color_map[c]) for c in colors if c not in player_colors]
+        player_colors = Counter(self.gameplayer_set.values_list('color', flat=True))
+        return [(c, player_colors[c], colors_to_circle_color_map[c]) for c in colors]
 
 
 colors_to_circle_color_map = {
