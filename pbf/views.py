@@ -421,7 +421,7 @@ def add_player(request, game_id):
 
     return redirect(reverse('game_setup', args=[game.id]))
 
-def make_initial_hand(gp):
+def make_initial_hand(gp, remove_from_decks=True):
     game = gp.game
     gp.hand.set(Card.objects.filter(spirit=gp.spirit))
     if gp.full_name() in spirit_additional_cards:
@@ -429,10 +429,11 @@ def make_initial_hand(gp):
         for card_name in additional_starting_cards:
             card = Card.objects.get(name=card_name)
             gp.hand.add(card)
-            if card.type == Card.MINOR:
-                game.minor_deck.remove(card)
-            elif card.type == Card.MAJOR:
-                game.major_deck.remove(card)
+            if remove_from_decks:
+                if card.type == Card.MINOR:
+                    game.minor_deck.remove(card)
+                elif card.type == Card.MAJOR:
+                    game.major_deck.remove(card)
     if gp.full_name() in spirit_remove_cards:
         remove_cards = spirit_remove_cards[gp.full_name()]
         for card_name in remove_cards:
