@@ -465,6 +465,7 @@ class GamePlayerImpendingWithEnergy(models.Model):
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
     energy = models.IntegerField(default=0)
     in_play = models.BooleanField(default=False)
+    this_turn = models.BooleanField(default=True)
 
     class Meta:
         db_table = "pbf_gameplayer_impending_with_energy"

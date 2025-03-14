@@ -319,6 +319,16 @@ class TestImpending(TestCase):
     def assert_impending_energy(self, player, expected):
         self.assertEqual(list(player.gameplayerimpendingwithenergy_set.values_list('energy', flat=True)), expected)
 
+    def test_this_turn_doesnt_gain_energy(self):
+        client, player = self.setup_players()
+
+        cards = [card.id for card in player.hand.all() if card.cost != 0]
+
+        client.post(f"/game/{player.id}/impend/{cards[0]}")
+        self.assert_impending_energy(player, [0])
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player, [0])
+
     def test_previous_turn_does_gain_energy(self):
         client, player = self.setup_players()
 
@@ -329,6 +339,21 @@ class TestImpending(TestCase):
         client.post(f"/game/{player.id}/discard/all")
         client.post(f"/game/{player.id}/gain_energy_on_impending")
         self.assert_impending_energy(player, [1])
+
+    def test_two_of_each(self):
+        client, player = self.setup_players()
+
+        cards = [card.id for card in player.hand.all() if card.cost != 0]
+
+        client.post(f"/game/{player.id}/impend/{cards[0]}")
+        client.post(f"/game/{player.id}/impend/{cards[1]}")
+        self.assert_impending_energy(player, [0, 0])
+        client.post(f"/game/{player.id}/discard/all")
+        client.post(f"/game/{player.id}/impend/{cards[2]}")
+        client.post(f"/game/{player.id}/impend/{cards[3]}")
+        self.assert_impending_energy(player, [0, 0, 0, 0])
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player, [1, 1, 0, 0])
 
     def test_energy_gain_different_players(self):
         client, player1, player2 = self.setup_players(2)

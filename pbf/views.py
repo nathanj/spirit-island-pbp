@@ -688,6 +688,9 @@ def gain_energy_on_impending(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     to_gain = player.impending_energy()
     for impending in player.gameplayerimpendingwithenergy_set.all():
+        if impending.this_turn:
+            # You only gain energy on cards made impending on previous turns.
+            continue
         # Let's cap the energy at the cost of the card.
         # There's no real harm in letting it exceed the cost
         # (the UI will still let you play it),
@@ -831,6 +834,7 @@ def discard_all(request, player_id):
         for i in played_impending.all():
             player.discard.add(i.card)
         played_impending.delete()
+        player.gameplayerimpendingwithenergy_set.update(this_turn=False)
 
     player.play.clear()
     player.ready = False
