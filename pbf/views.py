@@ -1093,7 +1093,7 @@ def discard_all(request, player_id):
         player.discard.add(card)
 
     if player.spirit.name == 'Earthquakes':
-        played_impending = GamePlayerImpendingWithEnergy.objects.filter(gameplayer=player, in_play=True)
+        played_impending = player.gameplayerimpendingwithenergy_set.filter(in_play=True)
         for i in played_impending.all():
             player.discard.add(i.card)
         played_impending.delete()
