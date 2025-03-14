@@ -1167,7 +1167,7 @@ class Presence(models.Model):
         if self.opacity == 1.0:
             return 0
         try:
-            if self.energy[0] != '+':
+            if self.energy[0].isdigit():
                 return int(self.energy)
         except:
             pass
