@@ -418,6 +418,9 @@ class GamePlayer(models.Model):
         else:
             return amount
 
+    def impending_energy(self):
+        return max(1, max(p.impending_energy() for p in self.presence_set.all()))
+
     def rot_gain(self):
         return sum(p.rot() for p in self.presence_set.all())
 
@@ -1181,6 +1184,13 @@ class Presence(models.Model):
                 return int(self.energy)
         except:
             pass
+        return 0
+
+    def impending_energy(self):
+        if self.opacity == 1.0:
+            return 0
+        if self.energy and self.energy.startswith("Impend"):
+            return int(self.energy[6:])
         return 0
 
     def get_elements(self):

@@ -209,7 +209,7 @@ spirit_presence = {
                 (445,303,1.0),(522,303,1.0),(599,303,1.0,'','Moon'),(676,303,1.0),(753,303,1.0,'','Air'),
                 ),
         'Earthquakes': (
-                (445,147,1.0),(522,147,1.0,'2'),(599,147,1.0),(676,147,1.0,'3'),(753,147,1.0),(830,147,1.0,'4'),
+                (445,147,1.0),(522,147,1.0,'2'),(599,147,1.0),(676,147,1.0,'3'),(753,147,1.0,'Impend2'),(830,147,1.0,'4'),
                 (445,246,1.0),(522,246,1.0,'','Moon,Fire'),(599,246,1.0),(676,246,1.0,'','Earth'),(753,246,1.0),(833,246,1.0),
                 ),
         'Gaze': (
@@ -683,6 +683,23 @@ def compute_card_thresholds(player):
     for card in player.selection.all():
         card.computed_thresholds = card.thresholds(player.elements, equiv_elements)
         player.selection_cards.append(card)
+
+def gain_energy_on_impending(request, player_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    to_gain = player.impending_energy()
+    for impending in player.gameplayerimpendingwithenergy_set.all():
+        # Let's cap the energy at the cost of the card.
+        # There's no real harm in letting it exceed the cost
+        # (the UI will still let you play it),
+        # it's just that undoing it will require extra clicks on the -1.
+        # TODO: cost needs to be adjusted for fast cards in Blitz
+        impending.energy = min(impending.energy + to_gain, impending.card.cost)
+        impending.save()
+    player.spirit_specific_per_turn_flags |= GamePlayer.SPIRIT_SPECIFIC_INCREMENTED_THIS_TURN
+    player.save()
+
+    compute_card_thresholds(player)
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def impend_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
