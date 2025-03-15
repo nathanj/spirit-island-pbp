@@ -213,6 +213,13 @@
   {% if player.spirit.name == 'Earthquakes' %}
   <p>
   <h4>Impending:</h4>
+
+    {% if player.spirit_specific_incremented_this_turn %}
+      Gained all this turn!
+    {% else %}
+      <button class="btn" hx-get="{% url 'gain_energy_on_impending' player.id %}">+{{player.impending_energy}} to all cards made impending on previous turns</button>
+    {% endif %}
+
   <ul>
     <div class="container-fluid">
       <div class="row">

@@ -41,6 +41,7 @@ urlpatterns = [
     path('game/<int:player_id>/remove_energy_from_impending/<int:card_id>', views.remove_energy_from_impending, name='remove_energy_from_impending'),
     path('game/<int:player_id>/play_from_impending/<int:card_id>', views.play_from_impending, name='play_from_impending'),
     path('game/<int:player_id>/unplay_from_impending/<int:card_id>', views.unplay_from_impending, name='unplay_from_impending'),
+    path('game/<int:player_id>/gain_energy_on_impending', views.gain_energy_on_impending, name='gain_energy_on_impending'),
     path('game/<int:player_id>/impend/<int:card_id>', views.impend_card, name='impend_card'),
     path('game/<int:player_id>/unimpend/<int:card_id>', views.unimpend_card, name='unimpend_card'),
     path('game/<int:player_id>/unplay/<int:card_id>', views.unplay_card, name='unplay_card'),

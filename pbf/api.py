@@ -21,7 +21,7 @@ class ImpendingSchema(ModelSchema):
     card: CardSchema = None
     class Config:
         model = GamePlayerImpendingWithEnergy
-        model_fields = ['energy', 'in_play']
+        model_fields = ['energy', 'in_play', 'this_turn']
 
 class PresenceSchema(ModelSchema):
     class Config:

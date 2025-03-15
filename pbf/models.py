@@ -418,6 +418,9 @@ class GamePlayer(models.Model):
         else:
             return amount
 
+    def impending_energy(self):
+        return max(1, max(p.impending_energy() for p in self.presence_set.all()))
+
     def rot_gain(self):
         return sum(p.rot() for p in self.presence_set.all())
 
@@ -462,6 +465,7 @@ class GamePlayerImpendingWithEnergy(models.Model):
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
     energy = models.IntegerField(default=0)
     in_play = models.BooleanField(default=False)
+    this_turn = models.BooleanField(default=True)
 
     class Meta:
         db_table = "pbf_gameplayer_impending_with_energy"
@@ -1167,7 +1171,7 @@ class Presence(models.Model):
         if self.opacity == 1.0:
             return 0
         try:
-            if self.energy[0] != '+':
+            if self.energy[0].isdigit():
                 return int(self.energy)
         except:
             pass
@@ -1181,6 +1185,13 @@ class Presence(models.Model):
                 return int(self.energy)
         except:
             pass
+        return 0
+
+    def impending_energy(self):
+        if self.opacity == 1.0:
+            return 0
+        if self.energy and self.energy.startswith("Impend"):
+            return int(self.energy[6:])
         return 0
 
     def get_elements(self):

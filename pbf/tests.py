@@ -305,3 +305,112 @@ class TestElements(TestCase):
         player = self.setup_game(["Wash Away", "Flow Downriver, Blow Downwind", "Ravaged Undergrowth Slithers Back to Life"])
         player.temporary_animal += 1
         self.assert_elements(player, expected_elements)
+
+class TestImpending(TestCase):
+    def setup_players(self, n=1):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        for i in range(n):
+            client.post(f"/game/{game.id}/add-player", {"spirit": "Earthquakes", "color": "random"})
+            self.assertEqual(game.gameplayer_set.count(), i + 1, "didn't find correct number of players; spirit not created successfully?")
+        return (client, *game.gameplayer_set.all())
+
+    def assert_impending_energy(self, player, expected):
+        self.assertEqual(list(player.gameplayerimpendingwithenergy_set.values_list('energy', flat=True)), expected)
+
+    def test_this_turn_doesnt_gain_energy(self):
+        client, player = self.setup_players()
+
+        cards = [card.id for card in player.hand.all() if card.cost != 0]
+
+        client.post(f"/game/{player.id}/impend/{cards[0]}")
+        self.assert_impending_energy(player, [0])
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player, [0])
+
+    def test_previous_turn_does_gain_energy(self):
+        client, player = self.setup_players()
+
+        cards = [card.id for card in player.hand.all() if card.cost != 0]
+
+        client.post(f"/game/{player.id}/impend/{cards[0]}")
+        self.assert_impending_energy(player, [0])
+        client.post(f"/game/{player.id}/discard/all")
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player, [1])
+
+    def test_two_of_each(self):
+        client, player = self.setup_players()
+
+        cards = [card.id for card in player.hand.all() if card.cost != 0]
+
+        client.post(f"/game/{player.id}/impend/{cards[0]}")
+        client.post(f"/game/{player.id}/impend/{cards[1]}")
+        self.assert_impending_energy(player, [0, 0])
+        client.post(f"/game/{player.id}/discard/all")
+        client.post(f"/game/{player.id}/impend/{cards[2]}")
+        client.post(f"/game/{player.id}/impend/{cards[3]}")
+        self.assert_impending_energy(player, [0, 0, 0, 0])
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player, [1, 1, 0, 0])
+
+    def test_energy_gain_different_players(self):
+        client, player1, player2 = self.setup_players(2)
+
+        cards = [card.id for card in player1.hand.all() if card.cost != 0]
+
+        client.post(f"/game/{player1.id}/impend/{cards[0]}")
+        self.assert_impending_energy(player1, [0])
+        client.post(f"/game/{player2.id}/impend/{cards[0]}")
+        self.assert_impending_energy(player2, [0])
+        client.post(f"/game/{player1.id}/discard/all")
+        client.post(f"/game/{player2.id}/discard/all")
+        client.post(f"/game/{player1.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player1, [1])
+        self.assert_impending_energy(player2, [0])
+        client.post(f"/game/{player2.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player2, [1])
+        self.assert_impending_energy(player1, [1])
+
+    def test_gain_multiple_turns(self):
+        client, player = self.setup_players()
+
+        cards = [card.id for card in player.hand.all() if card.cost >= 2]
+
+        client.post(f"/game/{player.id}/impend/{cards[0]}")
+        self.assert_impending_energy(player, [0])
+        client.post(f"/game/{player.id}/discard/all")
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player, [1])
+        client.post(f"/game/{player.id}/discard/all")
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player, [2])
+
+    def test_plus_two_energy(self):
+        client, player = self.setup_players()
+
+        cards = [card.id for card in player.hand.all() if card.cost >= 2]
+
+        player.presence_set.filter(energy="Impend2").update(opacity=0.0)
+
+        client.post(f"/game/{player.id}/impend/{cards[0]}")
+        self.assert_impending_energy(player, [0])
+        client.post(f"/game/{player.id}/discard/all")
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player, [2])
+
+    def test_plus_two_capped_at_cost(self):
+        client, player = self.setup_players()
+
+        cards = [card.id for card in player.hand.all() if card.cost == 3]
+
+        player.presence_set.filter(energy="Impend2").update(opacity=0.0)
+
+        client.post(f"/game/{player.id}/impend/{cards[0]}")
+        self.assert_impending_energy(player, [0])
+        client.post(f"/game/{player.id}/discard/all")
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        client.post(f"/game/{player.id}/discard/all")
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player, [3])
