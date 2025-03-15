@@ -15,6 +15,9 @@
 	      {% if player.spirit.name == 'Fractured' %}
 	      <button class="btn" hx-get="{% url 'send_days' player.id card.id %}">Days</button>
 	      {% endif %}
+	      {% if card.can_return_to_deck %}
+	      <button class="btn" hx-get="{% url 'return_to_deck' player.id card.id %}" hx-confirm="This will shuffle the card back into its power card deck. Are you sure?">Deck</button>
+	      {% endif %}
 	    </div>
 	  </div>
 	</div>
