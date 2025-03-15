@@ -96,6 +96,9 @@ class Card(models.Model):
     def __str__(self):
         return self.name
 
+    def can_return_to_deck(self):
+        return self.type in (self.MINOR, self.MAJOR)
+
     def url(self):
         return '/pbf/' + self.name.replace(",", '').replace("-", '').replace("'", '').replace(' ', '_').lower() + '.jpg'
 

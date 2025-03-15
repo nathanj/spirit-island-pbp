@@ -36,6 +36,7 @@ urlpatterns = [
     path('game/<int:player_id>/create_days/<int:num>', views.create_days, name='create_days'),
     path('game/<int:player_id>/discard-pile', views.discard_pile, name='discard_pile'),
     path('game/<int:player_id>/choose_from_discard/<int:card_id>', views.choose_from_discard, name='choose_from_discard'),
+    path('game/<int:player_id>/return_to_deck/<int:card_id>', views.return_to_deck, name='return_to_deck'),
     path('game/<int:player_id>/play/<int:card_id>', views.play_card, name='play_card'),
     path('game/<int:player_id>/add_energy_to_impending/<int:card_id>', views.add_energy_to_impending, name='add_energy_to_impending'),
     path('game/<int:player_id>/remove_energy_from_impending/<int:card_id>', views.remove_energy_from_impending, name='remove_energy_from_impending'),

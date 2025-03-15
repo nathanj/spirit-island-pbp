@@ -554,6 +554,24 @@ def discard_pile(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     return render(request, 'discard_pile.html', { 'player': player })
 
+def return_to_deck(request, player_id, card_id):
+    # this doesn't actually manipulate the player in any way,
+    # except to return to their tab after the operation is done
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    game = player.game
+    card = get_object_or_404(game.discard_pile, pk=card_id)
+    game.discard_pile.remove(card)
+
+    if card.type == card.MINOR:
+        game.minor_deck.add(card)
+    elif card.type == card.MAJOR:
+        game.major_deck.add(card)
+    else:
+        raise ValueError(f"Can't return {card}")
+
+    compute_card_thresholds(player)
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
 def choose_from_discard(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.game.discard_pile, pk=card_id)
