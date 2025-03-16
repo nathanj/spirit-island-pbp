@@ -489,7 +489,7 @@ def take_power(request, player_id, type):
     player.hand.add(card)
     deck.remove(card)
 
-    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes {card.name}')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes {card.name}', images='./pbf/static/' + card.url())
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
