@@ -1,5 +1,5 @@
 import json
-from random import shuffle
+from random import sample, shuffle
 
 from django.db import transaction
 from django.forms import ModelForm
@@ -437,26 +437,50 @@ def view_game(request, game_id):
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
     return render(request, 'game.html', { 'game': game, 'spirits_by_expansion': spirits_by_expansion, 'logs': logs })
 
-def draw_card(request, game_id, type):
+def draw_cards(request, game_id, type):
     game = get_object_or_404(Game, pk=game_id)
+    cards_needed = int(request.POST['num_cards'])
+    if cards_needed <= 0:
+        return render(request, 'host_draw.html', {'msg': f"Can't draw {cards_needed} cards"})
+
     if type == 'minor':
         deck = game.minor_deck
-    else:
+    elif type == 'major':
         deck = game.major_deck
+    else:
+        # don't need to render host_draw;
+        # the form should never submit an invalid type in the first place
+        raise ValueError(f"can't draw from {type} deck")
 
-    cards = list(deck.all())
-    if not cards:
-        # deck was empty
+    cards_have = deck.count()
+
+    draw_result_explain = ''
+    if cards_have >= cards_needed:
+        cards_drawn = sample(list(deck.all()), cards_needed)
+        deck.remove(*cards_drawn)
+    else:
+        # reshuffle needed, but first draw all the cards we do have
+        cards_drawn = list(deck.all())
+        cards_remain = cards_needed - cards_have
+        deck.clear()
         reshuffle_discard(game, type)
-        cards = list(deck.all())
-    shuffle(cards)
-    card = cards[0]
-    deck.remove(card)
-    game.discard_pile.add(card)
+        if deck.count() >= cards_remain:
+            new_cards = sample(list(deck.all()), cards_remain)
+            cards_drawn.extend(new_cards)
+            deck.remove(*new_cards)
+        else:
+            cards_drawn.extend(list(deck.all()))
+            draw_result_explain = f" (there were not enough cards to draw all {cards_needed})"
+            deck.clear()
 
-    add_log_msg(game, text=f'Host drew {card.name}', images='./pbf/static/' + card.url())
+    game.discard_pile.add(*cards_drawn)
 
-    return redirect(reverse('view_game', args=[game.id]))
+    draw_result = f"drew {len(cards_drawn)} {type} power card{'s' if len(cards_drawn) != 1 else ''}"
+    card_names = ', '.join(card.name for card in cards_drawn)
+
+    add_log_msg(game, text=f'Host {draw_result}: {card_names}', images=",".join('./pbf/static' + card.url() for card in cards_drawn))
+
+    return render(request, 'host_draw.html', {'msg': f"You {draw_result}{draw_result_explain}: {card_names}", 'cards': cards_drawn})
 
 def reshuffle_discard(game, type):
     if type == 'minor':
