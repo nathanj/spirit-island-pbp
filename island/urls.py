@@ -28,6 +28,7 @@ urlpatterns = [
     path('game/<str:game_id>/change_game_name', views.change_game_name, name='change_game_name'),
     path('game/<str:game_id>/change_scenario', views.change_scenario, name='change_scenario'),
     path('game/<str:game_id>/edit_players', views.edit_players, name='edit_players'),
+    path('game/<str:game_id>/change_button_or_a_mode', views.change_button_or_a_mode, name='change_button_or_a_mode'),
     path('game/<int:player_id>/gain/<str:type>/<int:num>', views.gain_power, name='gain_power'),
     path('game/<int:player_id>/gain_healing', views.gain_healing, name='gain_healing'),
     path('game/<int:player_id>/take/<str:type>/<int:num>', views.take_powers, name='take_powers'),
