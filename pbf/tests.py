@@ -129,23 +129,38 @@ class TestReshuffleOrNot(TestCase):
 
     def test_not_reshuffle_on_host_draw(self):
         arbitrary_cards_in_deck = 7
-        client, game, player = self.setup_game(arbitrary_cards_in_deck)
+        client, game, _ = self.setup_game(arbitrary_cards_in_deck)
 
         discard_before = game.discard_pile.count()
 
-        client.post(f"/game/{game.id}/draw/major")
+        client.post(f"/game/{game.id}/draw/major", {"num_cards": 4})
 
-        self.assertEqual(game.major_deck.count(), arbitrary_cards_in_deck - 1)
-        self.assertEqual(game.discard_pile.count(), discard_before + 1)
+        self.assertEqual(game.major_deck.count(), arbitrary_cards_in_deck - 4)
+        self.assertEqual(game.discard_pile.count(), discard_before + 4)
 
     def test_reshuffle_on_host_draw(self):
-        client, game, player = self.setup_game(0)
+        client, game, _ = self.setup_game(2)
+
+        remaining = list(game.major_deck.all())
         available_cards = game.major_deck.count() + game.discard_pile.count()
 
-        client.post(f"/game/{game.id}/draw/major")
+        client.post(f"/game/{game.id}/draw/major", {"num_cards": 4})
 
-        self.assertEqual(game.major_deck.count(), available_cards - 1)
-        self.assertEqual(game.discard_pile.count(), 1)
+        self.assertEqual(game.major_deck.count(), available_cards - 4)
+        discard = game.discard_pile.all()
+        self.assertEqual(len(discard), 4)
+        for rem in remaining:
+            self.assertIn(rem, discard, "game didn't discard a card in the pre-reshuffle deck")
+
+    def test_reshuffle_host_draw_too_many(self):
+        client, game, _ = self.setup_game(10)
+
+        available_cards = game.major_deck.count() + game.discard_pile.count()
+
+        client.post(f"/game/{game.id}/draw/major", {"num_cards": available_cards + 100})
+
+        self.assertEqual(game.major_deck.count(), 0)
+        self.assertEqual(game.discard_pile.count(), available_cards)
 
 class TestRot(TestCase):
     def assert_rot(self, rot, expected_rot_loss, expected_energy_gain, round_down=False):
