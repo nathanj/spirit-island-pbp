@@ -2,7 +2,7 @@
 
 <p>
 <h4>{{ name }} deck ({{ cards | length }} cards):</h4>
-<button class="btn" onClick="document.getElementById('{{name}}-deck').innerHTML='';">Close</button>
+<{{button_or_a}} class="btn" onClick="document.getElementById('{{name}}-deck').innerHTML='';">Close</{{button_or_a}}>
 <ul>
   <div class="container-fluid">
     <div class="row">
@@ -16,5 +16,5 @@
     </div>
   </div>
 </ul>
-<button class="btn" onClick="document.getElementById('{{name}}-deck').innerHTML='';">Close</button>
+<{{button_or_a}} class="btn" onClick="document.getElementById('{{name}}-deck').innerHTML='';">Close</{{button_or_a}}>
 </p>

@@ -91,14 +91,14 @@
   </div>
 
   {% if player.ready %}
-  <button class="btn"
+  <{{button_or_a}} class="btn"
 	  style="background-color: #8a8;"
-	  hx-get="{% url 'discard_all' player.id %}">Ready! Click to Discard All Played and Unready</button>
+	  hx-get="{% url 'discard_all' player.id %}">Ready! Click to Discard All Played and Unready</{{button_or_a}}>
   {% else %}
-  <button class="btn"
+  <{{button_or_a}} class="btn"
 	  hx-get="{% url 'ready' player.id %}"
 	  style="background-color: #a88;"
-	  >Not Ready</button>
+	  >Not Ready</{{button_or_a}}>
   {% endif %}
 
   <br/>
@@ -127,9 +127,9 @@
 		<img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      </div>
 	      <div class="text-center pb-5">
-		<button class="btn" hx-get="{% url 'choose_card' player.id card.id %}">Choose</button>
+		<{{button_or_a}} class="btn" hx-get="{% url 'choose_card' player.id card.id %}">Choose</{{button_or_a}}>
 		{% if player.spirit.name == 'Fractured' %}
-		<button class="btn" hx-get="{% url 'send_days' player.id card.id %}">Send to Days</button>
+		<{{button_or_a}} class="btn" hx-get="{% url 'send_days' player.id card.id %}">Send to Days</{{button_or_a}}>
 		{% endif %}
 	      </div>
 	    </div>
@@ -139,39 +139,39 @@
       </div>
     </div>
   </ul>
-  <button class="btn" hx-get="{% url 'undo_gain_card' player.id %}" hx-confirm="Are you sure?">Oops! Undo gain card</button>
+  <{{button_or_a}} class="btn" hx-get="{% url 'undo_gain_card' player.id %}" hx-confirm="Are you sure?">Oops! Undo gain card</{{button_or_a}}>
   {% else %}
   <p>Gain Minor ({{ player.game.minor_deck.count }} in deck):
   {% if player.aspect == 'Mentor' %}
-  <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' '2' %}">2 Cards (keep 2)</button>
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}" hx-confirm="Confirm you want to look at 4 minor power cards and keep 3 (Starlight Seeks Its Form used Boon of Reimagining on you)?">4 Cards (keep 3)</button>
+  <{{button_or_a}} class="btn" hx-get="{% url 'take_powers' player.id 'minor' '2' %}">2 Cards (keep 2)</{{button_or_a}}>
+  <{{button_or_a}} class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}" hx-confirm="Confirm you want to look at 4 minor power cards and keep 3 (Starlight Seeks Its Form used Boon of Reimagining on you)?">4 Cards (keep 3)</{{button_or_a}}>
   {% else %}
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}">4 Cards</button>
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '6' %}">6 Cards</button>
+  <{{button_or_a}} class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}">4 Cards</{{button_or_a}}>
+  <{{button_or_a}} class="btn" hx-get="{% url 'gain_power' player.id 'minor' '6' %}">6 Cards</{{button_or_a}}>
   {% endif %}
-  <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' '1' %}">1 Card</button>
+  <{{button_or_a}} class="btn" hx-get="{% url 'take_powers' player.id 'minor' '1' %}">1 Card</{{button_or_a}}>
 
-  <button class="btn" hx-get="{% url 'minor_deck' player.game.id %}" hx-target="#Minor-deck" hx-swap="innerHTML">Show deck</button>
+  <{{button_or_a}} class="btn" hx-get="{% url 'minor_deck' player.game.id %}" hx-target="#Minor-deck" hx-swap="innerHTML">Show deck</{{button_or_a}}>
   <div id="Minor-deck"></div>
 
   <p>Gain Major ({{ player.game.major_deck.count }} in deck):
   {% if player.aspect == 'Mentor' %}
-  <button class="btn" hx-get="{% url 'take_powers' player.id 'major' '2' %}">2 Cards (keep 2)</button>
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}" hx-confirm="Confirm you want to look at 4 major power cards and keep 1 (event Visions Out of Time)?">4 Cards</button>
+  <{{button_or_a}} class="btn" hx-get="{% url 'take_powers' player.id 'major' '2' %}">2 Cards (keep 2)</{{button_or_a}}>
+  <{{button_or_a}} class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}" hx-confirm="Confirm you want to look at 4 major power cards and keep 1 (event Visions Out of Time)?">4 Cards</{{button_or_a}}>
   {% else %}
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}">4 Cards</button>
+  <{{button_or_a}} class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}">4 Cards</{{button_or_a}}>
   {% if player.spirit.name == 'Covets' %}
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '6' %}">6 Cards</button>
+  <{{button_or_a}} class="btn" hx-get="{% url 'gain_power' player.id 'major' '6' %}">6 Cards</{{button_or_a}}>
   {% endif %}
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards</button>
+  <{{button_or_a}} class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards</{{button_or_a}}>
   {% endif %}
-  <button class="btn" hx-get="{% url 'take_powers' player.id 'major' '1' %}">1 Card</button>
+  <{{button_or_a}} class="btn" hx-get="{% url 'take_powers' player.id 'major' '1' %}">1 Card</{{button_or_a}}>
 
-  <button class="btn" hx-get="{% url 'major_deck' player.game.id %}" hx-target="#Major-deck" hx-swap="innerHTML">Show deck</button>
+  <{{button_or_a}} class="btn" hx-get="{% url 'major_deck' player.game.id %}" hx-target="#Major-deck" hx-swap="innerHTML">Show deck</{{button_or_a}}>
   <div id="Major-deck"></div>
 
   {% if player.spirit.name == 'Waters' %}
-  <p>Gain Healing Card: <button class="btn" hx-get="{% url 'gain_healing' player.id %}">Gain Healing Card</button>
+  <p>Gain Healing Card: <{{button_or_a}} class="btn" hx-get="{% url 'gain_healing' player.id %}">Gain Healing Card</{{button_or_a}}>
   {% endif %}
   {% endif %}
 
@@ -189,7 +189,7 @@
         {% endfor %}
       </div>
     </div>
-    <button class="btn" onClick="document.getElementById('taken_cards').remove();">OK (dismiss)</button>
+    <{{button_or_a}} class="btn" onClick="document.getElementById('taken_cards').remove();">OK (dismiss)</{{button_or_a}}>
   </div>
   {% endif %}
 
@@ -215,9 +215,9 @@
 		<img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      </div>
 	      <div class="text-center pb-5">
-		<button class="btn" hx-get="{% url 'unplay_card' player.id card.id %}">Unplay</button>
-		<button class="btn" hx-get="{% url 'discard_card' player.id card.id %}">Discard</button>
-		<button class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure?">Forget</button>
+		<{{button_or_a}} class="btn" hx-get="{% url 'unplay_card' player.id card.id %}">Unplay</{{button_or_a}}>
+		<{{button_or_a}} class="btn" hx-get="{% url 'discard_card' player.id card.id %}">Discard</{{button_or_a}}>
+		<{{button_or_a}} class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure?">Forget</{{button_or_a}}>
 	      </div>
 	    </div>
 	  </div>
@@ -240,12 +240,12 @@
 		<img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      </div>
 	      <div class="text-center pb-5">
-		<button class="btn" hx-get="{% url 'play_card' player.id card.id %}">Play</button>
+		<{{button_or_a}} class="btn" hx-get="{% url 'play_card' player.id card.id %}">Play</{{button_or_a}}>
 		{% if player.spirit.name == 'Earthquakes' %}
-		<button class="btn" hx-get="{% url 'impend_card' player.id card.id %}">Impend</button>
+		<{{button_or_a}} class="btn" hx-get="{% url 'impend_card' player.id card.id %}">Impend</{{button_or_a}}>
 		{% endif %}
-		<button class="btn" hx-get="{% url 'discard_card' player.id card.id %}">Discard</button>
-		<button class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure?">Forget</button>
+		<{{button_or_a}} class="btn" hx-get="{% url 'discard_card' player.id card.id %}">Discard</{{button_or_a}}>
+		<{{button_or_a}} class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure?">Forget</{{button_or_a}}>
 	      </div>
 	    </div>
 	  </div>
@@ -262,7 +262,7 @@
     {% if player.spirit_specific_incremented_this_turn %}
       Gained all this turn!
     {% else %}
-      <button class="btn" hx-get="{% url 'gain_energy_on_impending' player.id %}">+{{player.impending_energy}} to all cards made impending on previous turns</button>
+      <{{button_or_a}} class="btn" hx-get="{% url 'gain_energy_on_impending' player.id %}">+{{player.impending_energy}} to all cards made impending on previous turns</{{button_or_a}}>
     {% endif %}
 
   <ul>
@@ -281,21 +281,21 @@
 		<img src="{% static i.card.url %}" class="img-fluid rounded-top" alt="{{i.card.name}}">
 	      </div>
 	      <div class="text-center pb-5">
-		    <button class="btn" hx-get="{% url 'add_energy_to_impending' player.id i.card.id %}" {% if i.in_play or i.energy >= i.cost_with_scenario %}disabled{% endif %}>+1</button>
+		    <{{button_or_a}} class="btn" hx-get="{% url 'add_energy_to_impending' player.id i.card.id %}" {% if i.in_play or i.energy >= i.cost_with_scenario %}disabled{% endif %}>+1</{{button_or_a}}>
 			{% if i.energy >= i.cost_with_scenario %}
 				{% if i.in_play %}
-					<button class="btn" hx-get="{% url 'unplay_from_impending' player.id i.card.id %}">Unplay</button>
+					<{{button_or_a}} class="btn" hx-get="{% url 'unplay_from_impending' player.id i.card.id %}">Unplay</{{button_or_a}}>
 				{% else %}
-		   			<button class="btn" hx-get="{% url 'play_from_impending' player.id i.card.id %}">Play</button>
+		   			<{{button_or_a}} class="btn" hx-get="{% url 'play_from_impending' player.id i.card.id %}">Play</{{button_or_a}}>
 				{% endif %}
 			{% else %}
-				<button class="btn" disabled>{{ i.energy }} / {{ i.cost_with_scenario }}</button>
+				<{{button_or_a}} class="btn" disabled>{{ i.energy }} / {{ i.cost_with_scenario }}</{{button_or_a}}>
 			{% endif %}
-		    <button class="btn" hx-get="{% url 'remove_energy_from_impending' player.id i.card.id %}" {% if i.in_play or i.energy <= 0 %}disabled{% endif %}>-1</button>
+		    <{{button_or_a}} class="btn" hx-get="{% url 'remove_energy_from_impending' player.id i.card.id %}" {% if i.in_play or i.energy <= 0 %}disabled{% endif %}>-1</{{button_or_a}}>
 	      </div>
 	      <div class="text-center pb-5">
-		    <button class="btn" hx-get="{% url 'unimpend_card' player.id i.card.id %}">Unimpend</button>
-		    <button class="btn" hx-get="{% url 'forget_card' player.id i.card.id %}" hx-confirm="Are you sure?">Forget</button>
+		    <{{button_or_a}} class="btn" hx-get="{% url 'unimpend_card' player.id i.card.id %}">Unimpend</{{button_or_a}}>
+		    <{{button_or_a}} class="btn" hx-get="{% url 'forget_card' player.id i.card.id %}" hx-confirm="Are you sure?">Forget</{{button_or_a}}>
 	      </div>
 	    </div>
 	  </div>
@@ -311,7 +311,7 @@
   <h4>Discard:</h4>
   <ul>
     {% if player.discard.count > 0 %}
-    <button class="btn" hx-get="{% url 'reclaim_all' player.id %}">Reclaim All</button>
+    <{{button_or_a}} class="btn" hx-get="{% url 'reclaim_all' player.id %}">Reclaim All</{{button_or_a}}>
     {% endif %}
 
 
@@ -323,8 +323,8 @@
 	    <div class="card p-0 m-5 m-md-10">
 	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      <div class="text-center pb-5">
-		<button class="btn" hx-get="{% url 'reclaim_card' player.id card.id %}">Reclaim</button>
-		<button class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure?">Forget</button>
+		<{{button_or_a}} class="btn" hx-get="{% url 'reclaim_card' player.id card.id %}">Reclaim</{{button_or_a}}>
+		<{{button_or_a}} class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure?">Forget</{{button_or_a}}>
 	      </div>
 	    </div>
 	  </div>
@@ -342,8 +342,8 @@
     <div class="container-fluid">
       <div class="row">
 	{% if player.days_ordered.count == 0 %}
-	<button class="btn" hx-get="{% url 'create_days' player.id 6 %}">Create Days (1 or 2 player game)</button><br>
-	<button class="btn" hx-get="{% url 'create_days' player.id 4 %}">Create Days (3+ player game)</button>
+	<{{button_or_a}} class="btn" hx-get="{% url 'create_days' player.id 6 %}">Create Days (1 or 2 player game)</{{button_or_a}}><br>
+	<{{button_or_a}} class="btn" hx-get="{% url 'create_days' player.id 4 %}">Create Days (3+ player game)</{{button_or_a}}>
 	{% else %}
 	{% for card in player.days_ordered.all %}
 	<div class="col-auto">
@@ -351,7 +351,7 @@
 	    <div class="card p-0 m-5 m-md-10">
 	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      <div class="text-center pb-5">
-		<button class="btn" hx-get="{% url 'choose_days' player.id card.id %}">Gain</button>
+		<{{button_or_a}} class="btn" hx-get="{% url 'choose_days' player.id card.id %}">Gain</{{button_or_a}}>
 	      </div>
 	    </div>
 	  </div>
@@ -367,7 +367,7 @@
   <div id="spirit-discard-deck-{{player.id}}"
        hx-target="#spirit-discard-deck-{{player.id}}"
        hx-swap="outerHTML">
-    <button class="btn" hx-get="{% url 'discard_pile' player.id %}">Show Power Discard Pile</button>
+    <{{button_or_a}} class="btn" hx-get="{% url 'discard_pile' player.id %}">Show Power Discard Pile</{{button_or_a}}>
   </div>
 
   <p>

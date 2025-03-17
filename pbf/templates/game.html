@@ -65,6 +65,18 @@
     <div class="col-lg-3">
       <div class="content">
 	<button class="btn" type="button" onclick="halfmoon.toggleDarkMode()">Dark Mode</button>
+	<form method="post" action="{% url 'change_button_or_a_mode' game.id %}">
+	  {% csrf_token %}
+	  <button type="submit" class="btn">Scroll Workaround</button>
+	</form>
+
+  <abbr title="For some browsers/OSes, clicking the buttons to manipulate power cards (play, unplay, discard, etc.) causes the page to scroll/jump around. You can try hitting the Scroll Workaround button to change the current mode to 'Fixing scroll jumps' (instead of 'default') to work around this issue. It may cause some slightly annoying side effects (browsers will attempt to highlight the button text), so it's a temporary workaround until we can find a better solution.">Current mode:
+  {% if button_or_a == "button" %}
+  Default (recommended)
+  {% else %}
+  Fixing scroll jumps
+  {% endif %}
+  </abbr>
       </div>
       {% include "logs.html" %}
     </div>

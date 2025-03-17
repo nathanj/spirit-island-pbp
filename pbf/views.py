@@ -454,7 +454,7 @@ def view_game(request, game_id, spirit_spec=None):
 
     tab_id = try_match_spirit(game, spirit_spec) or (game.gameplayer_set.first().id if game.gameplayer_set.exists() else None)
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
-    return render(request, 'game.html', { 'game': game, 'logs': logs, 'tab_id': tab_id, 'spirit_spec': spirit_spec })
+    return render(request, 'game.html', { 'game': game, 'logs': logs, 'tab_id': tab_id, 'spirit_spec': spirit_spec, 'button_or_a': button_or_a(request) })
 
 def try_match_spirit(game, spirit_spec):
     if not spirit_spec:
@@ -577,7 +577,7 @@ def take_powers(request, player_id, type, num):
         add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {num} {type} powers: {card_names}', images=",".join('./pbf/static' + card.url() for card in taken_cards))
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards, 'button_or_a': button_or_a(request)}))
 
 def gain_healing(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -591,7 +591,7 @@ def gain_healing(request, player_id):
     player.selection.set(selection)
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def gain_power(request, player_id, type, num):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -605,19 +605,19 @@ def gain_power(request, player_id, type, num):
             images=images)
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def minor_deck(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
-    return render(request, 'power_deck.html', {'name': 'Minor', 'cards': game.minor_deck.all()})
+    return render(request, 'power_deck.html', {'name': 'Minor', 'cards': game.minor_deck.all(), 'button_or_a': button_or_a(request)})
 
 def major_deck(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
-    return render(request, 'power_deck.html', {'name': 'Major', 'cards': game.major_deck.all()})
+    return render(request, 'power_deck.html', {'name': 'Major', 'cards': game.major_deck.all(), 'button_or_a': button_or_a(request)})
 
 def discard_pile(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    return render(request, 'discard_pile.html', { 'player': player })
+    return render(request, 'discard_pile.html', { 'player': player, 'button_or_a': button_or_a(request) })
 
 def return_to_deck(request, player_id, card_id):
     # this doesn't actually manipulate the player in any way,
@@ -635,7 +635,7 @@ def return_to_deck(request, player_id, card_id):
         raise ValueError(f"Can't return {card}")
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def choose_from_discard(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -646,7 +646,7 @@ def choose_from_discard(request, player_id, card_id):
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes {card.name} from the power discard pile')
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def send_days(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -662,7 +662,7 @@ def send_days(request, player_id, card_id):
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} sends {card.name} to the Days That Never Were')
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def choose_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -694,7 +694,7 @@ def choose_card(request, player_id, card_id):
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {card.name}')
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def undo_gain_card(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -718,7 +718,7 @@ def undo_gain_card(request, player_id):
         player.selection.remove(rem)
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def choose_healing_card(request, player, card):
     if card.name.startswith('Waters'):
@@ -731,7 +731,7 @@ def choose_healing_card(request, player, card):
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} claims {card.name}')
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def choose_days(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -742,7 +742,7 @@ def choose_days(request, player_id, card_id):
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {card.name} from the Days That Never Were')
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def create_days(request, player_id, num):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -756,7 +756,7 @@ def create_days(request, player_id, num):
             player.days.add(c)
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def compute_card_thresholds(player):
     equiv_elements = player.equiv_elements()
@@ -799,7 +799,7 @@ def gain_energy_on_impending(request, player_id):
     player.save()
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def impend_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -808,7 +808,7 @@ def impend_card(request, player_id, card_id):
     player.hand.remove(card)
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def unimpend_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -817,7 +817,7 @@ def unimpend_card(request, player_id, card_id):
     player.hand.add(card)
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def add_energy_to_impending(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -828,7 +828,7 @@ def add_energy_to_impending(request, player_id, card_id):
         impending_with_energy.save()
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def remove_energy_from_impending(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -839,7 +839,7 @@ def remove_energy_from_impending(request, player_id, card_id):
         impending_with_energy.save()
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def play_from_impending(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -850,7 +850,7 @@ def play_from_impending(request, player_id, card_id):
         impending_with_energy.save()
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def unplay_from_impending(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -861,7 +861,7 @@ def unplay_from_impending(request, player_id, card_id):
         impending_with_energy.save()
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def play_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -870,7 +870,7 @@ def play_card(request, player_id, card_id):
     player.hand.remove(card)
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def unplay_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -879,7 +879,7 @@ def unplay_card(request, player_id, card_id):
     player.play.remove(card)
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def forget_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -896,7 +896,7 @@ def forget_card(request, player_id, card_id):
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} forgets {card.name}')
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 
 def reclaim_card(request, player_id, card_id):
@@ -906,7 +906,7 @@ def reclaim_card(request, player_id, card_id):
     player.discard.remove(card)
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def reclaim_all(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -916,7 +916,7 @@ def reclaim_all(request, player_id):
     player.discard.clear()
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def discard_all(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -947,7 +947,7 @@ def discard_all(request, player_id):
     player.save()
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def discard_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -965,7 +965,7 @@ def discard_card(request, player_id, card_id):
         pass
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def ready(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -987,7 +987,7 @@ def ready(request, player_id):
         add_log_msg(player.game, text=f'All spirits are ready!')
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def unready(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
@@ -1079,7 +1079,7 @@ def toggle_presence(request, player_id, left, top):
     presence.save()
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def add_element(request, player_id, element):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -1094,7 +1094,7 @@ def add_element(request, player_id, element):
     player.save()
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def remove_element(request, player_id, element):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -1109,7 +1109,7 @@ def remove_element(request, player_id, element):
     player.save()
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def add_element_permanent(request, player_id, element):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -1124,7 +1124,7 @@ def add_element_permanent(request, player_id, element):
     player.save()
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def remove_element_permanent(request, player_id, element):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -1139,16 +1139,29 @@ def remove_element_permanent(request, player_id, element):
     player.save()
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'button_or_a': button_or_a(request)}))
 
 def tab(request, game_id, player_id):
     game = get_object_or_404(Game, pk=game_id)
     player = get_object_or_404(GamePlayer, pk=player_id)
     compute_card_thresholds(player)
-    return render(request, 'tabs.html', {'game': game, 'player': player})
+    return render(request, 'tabs.html', {'game': game, 'player': player, 'button_or_a': button_or_a(request)})
 
 def game_logs(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
     return render(request, 'logs.html', {'game': game, 'logs': logs})
 
+def button_or_a(request):
+    # The value of this function is used to construct an HTML tag,
+    # so we should only return known valid values, rather than arbitrary values from the cookie.
+    return 'a' if request.COOKIES.get('button_or_a') == 'a' else 'button'
+
+def change_button_or_a_mode(request, game_id):
+    # Game ID is only used to redirect back, not to manipulate the game.
+    resp = redirect(reverse('view_game', args=[game_id]))
+    if request.COOKIES.get('button_or_a') == 'a':
+        resp.delete_cookie('button_or_a')
+    else:
+        resp.set_cookie('button_or_a', 'a')
+    return resp
