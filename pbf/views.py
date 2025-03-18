@@ -923,9 +923,9 @@ def create_days(request, player_id, num):
     for deck in [game.minor_deck, game.major_deck]:
         cards = list(deck.all())
         shuffle(cards)
-        for c in cards[:num]:
-            deck.remove(c)
-            player.days.add(c)
+        days = cards[:num]
+        deck.remove(*days)
+        player.days.add(*days)
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
