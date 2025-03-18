@@ -867,8 +867,7 @@ def choose_card(request, player_id, card_id):
     cards_left = player.selection.count()
     can_keep_selecting = card.type == Card.MINOR and (cards_left == 5 or player.aspect == 'Mentor' and cards_left > 1)
     if not can_keep_selecting:
-        for discard in player.selection.all():
-            player.game.discard_pile.add(discard)
+        player.game.discard_pile.add(*player.selection.all())
         player.selection.clear()
 
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {card.name}')
