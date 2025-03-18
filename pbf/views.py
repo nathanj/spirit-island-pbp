@@ -427,20 +427,13 @@ def make_initial_hand(gp, remove_from_decks=True):
     game = gp.game
     gp.hand.set(Card.objects.filter(spirit=gp.spirit))
     if gp.full_name() in spirit_additional_cards:
-        additional_starting_cards = spirit_additional_cards[gp.full_name()]
-        for card_name in additional_starting_cards:
-            card = Card.objects.get(name=card_name)
-            gp.hand.add(card)
-            if remove_from_decks:
-                if card.type == Card.MINOR:
-                    game.minor_deck.remove(card)
-                elif card.type == Card.MAJOR:
-                    game.major_deck.remove(card)
+        cards = [Card.objects.get(name=name) for name in spirit_additional_cards[gp.full_name()]]
+        gp.hand.add(*cards)
+        # Iterates over cards twice, but cards is currently small for all spirits, so not an issue yet.
+        game.minor_deck.remove(*[card for card in cards if card.type == Card.MINOR])
+        game.major_deck.remove(*[card for card in cards if card.type == Card.MAJOR])
     if gp.full_name() in spirit_remove_cards:
-        remove_cards = spirit_remove_cards[gp.full_name()]
-        for card_name in remove_cards:
-            card = Card.objects.get(name=card_name)
-            card = gp.hand.remove(card)
+        gp.hand.remove(*[Card.objects.get(name=name) for name in spirit_remove_cards[gp.full_name()]])
 
 def import_game(request):
     def cards_with_name(cards):
