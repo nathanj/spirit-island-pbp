@@ -223,6 +223,7 @@ class TestChooseCard(TestCase):
             client.post(f"/game/{player.id}/choose/{player.selection.first().id}")
             selected += 1
             player.refresh_from_db()
+        self.assertEqual(game.discard_pile.count(), draw - selected)
         return selected
 
     def assert_cards_gained(self, card_type, draw, should_gain):
