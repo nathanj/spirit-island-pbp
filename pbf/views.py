@@ -921,9 +921,7 @@ def create_days(request, player_id, num):
     game = player.game
 
     for deck in [game.minor_deck, game.major_deck]:
-        cards = list(deck.all())
-        shuffle(cards)
-        days = cards[:num]
+        days = sample(list(deck.all()), num)
         deck.remove(*days)
         player.days.add(*days)
 
