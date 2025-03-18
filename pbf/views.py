@@ -602,6 +602,8 @@ def choose_from_discard(request, player_id, card_id):
     player.hand.add(card)
     player.game.discard_pile.remove(card)
 
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes {card.name} from the power discard pile')
+
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
