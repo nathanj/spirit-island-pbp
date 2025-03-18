@@ -1086,14 +1086,11 @@ def reclaim_all(request, player_id):
 
 def discard_all(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    cards = list(player.play.all())
-    for card in cards:
-        player.discard.add(card)
+    player.discard.add(*player.play.all())
 
     if player.spirit.name == 'Earthquakes':
         played_impending = player.gameplayerimpendingwithenergy_set.filter(in_play=True)
-        for i in played_impending.all():
-            player.discard.add(i.card)
+        player.discard.add(*played_impending.values_list('card_id', flat=True))
         played_impending.delete()
         player.gameplayerimpendingwithenergy_set.update(this_turn=False)
 
