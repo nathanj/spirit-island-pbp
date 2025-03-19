@@ -507,7 +507,7 @@ def take_power(request, player_id, type):
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes {card.name}', images='./pbf/static/' + card.url())
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
 
 def gain_healing(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)

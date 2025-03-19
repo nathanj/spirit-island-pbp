@@ -159,6 +159,24 @@
   {% endif %}
   {% endif %}
 
+  {% if taken_cards %}
+  <div id="taken_cards">
+    You took {{ taken_cards | length }} card{{ taken_cards | pluralize }}:
+    <div class="container-fluid">
+      <div class="row">
+        {% for card in taken_cards %}
+          <div class="col-auto">
+            <div class="w-md-150">
+              <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    <button class="btn" onClick="document.getElementById('taken_cards').remove();">OK (dismiss)</button>
+  </div>
+  {% endif %}
+
   <p>
   <h4>Play/Hand:</h4>
   <ul>
