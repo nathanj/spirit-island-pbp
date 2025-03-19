@@ -633,7 +633,9 @@ def choose_card(request, player_id, card_id):
     #
     # TODO: Mentor Shifting Memory of Ages receiving a Boon of Reimagining:
     # They should draw 4 and gain 3 of them.
-    if card.type != Card.MINOR or player.selection.count() != 5:
+    cards_left = player.selection.count()
+    can_keep_selecting = card.type == Card.MINOR and cards_left == 5
+    if not can_keep_selecting:
         for discard in player.selection.all():
             player.game.discard_pile.add(discard)
         player.selection.clear()
