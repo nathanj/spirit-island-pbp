@@ -119,6 +119,19 @@ class Card(models.Model):
             thresholds.append(Threshold(t[0], t[1], check_elements(elements, t[2], equiv_elements)))
         return thresholds
 
+    def healing_thresholds(self, num_healing_cards, healing_markers):
+        elements = {elt: n for (_, _, n, elt) in healing_markers}
+        total_elements = sum(elements.values())
+        if self.name.startswith('Waters'):
+            y, elt = (80, 'animal') if self.name == 'Waters Taste of Ruin' else (74, 'water')
+            return [Threshold(2, y, total_elements >= 5 and elements[elt] >= 3)]
+        else:
+            y, elt = (65, 'animal') if self.name == 'Roiling Waters' else (68, 'water')
+            return [
+                Threshold(2, y, total_elements >= 3 and elements[elt] >= 2),
+                Threshold(2, y + 8, num_healing_cards == 0),
+            ]
+
 class Game(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)

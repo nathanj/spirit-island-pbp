@@ -726,6 +726,8 @@ def compute_card_thresholds(player):
     player.selection_cards = []
     for card in player.selection.all():
         card.computed_thresholds = card.thresholds(player.elements, equiv_elements)
+        if card.is_healing():
+            card.computed_thresholds.extend(card.healing_thresholds(player.healing.count(), player.spirit_specific_resource_elements()))
         player.selection_cards.append(card)
 
 def gain_energy_on_impending(request, player_id):
