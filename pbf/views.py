@@ -497,14 +497,31 @@ def reshuffle_discard(game, type):
 
     add_log_msg(game, text=f'Re-shuffling {type} power deck')
 
-def take_power(request, player_id, type):
+def take_powers(request, player_id, type, num):
     player = get_object_or_404(GamePlayer, pk=player_id)
 
-    taken_cards = cards_from_deck(player.game, 1, type)
+    taken_cards = cards_from_deck(player.game, num, type)
     player.hand.add(*taken_cards)
 
-    card = taken_cards[0]
-    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes {card.name}', images='./pbf/static' + card.url())
+    if num == 1:
+        card = taken_cards[0]
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes a {type} power: {card.name}', images='./pbf/static' + card.url())
+    else:
+        # There's a bit of tension between the function's name/functionality and game terminology.
+        #
+        # As used in code, take_powers is being used when we don't go through the selection process
+        # (the spirit gets all the cards directly into their hand).
+        # It's natural to use this for Mentor Shifting Memory of Ages,
+        # since the number of cards they get to keep is equal to the number of cards they look at.
+        #
+        # However, we do want to use the word "gain" in the log message, not "take",
+        # because Mentor still needs to forget a power card.
+        #
+        # The alternative is to special-case gain_power to not use selection if it's Mentor and num == 2.
+        # Either way we have to make some special cases,
+        # and doing it here at least matches in mechanism better.
+        card_names = ', '.join(card.name for card in taken_cards)
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {num} {type} powers: {card_names}', images=",".join('./pbf/static' + card.url() for card in taken_cards))
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))

@@ -109,22 +109,25 @@ class TestReshuffleOrNot(TestCase):
         discard_before = game.discard_pile.count()
         majors_before = player.hand.filter(type=Card.MAJOR).count()
 
-        client.post(f"/game/{player.id}/take/major")
+        client.post(f"/game/{player.id}/take/major/4")
 
-        self.assertEqual(player.hand.filter(type=Card.MAJOR).count(), majors_before + 1)
-        self.assertEqual(game.major_deck.count(), arbitrary_cards_in_deck - 1)
+        self.assertEqual(player.hand.filter(type=Card.MAJOR).count(), majors_before + 4)
+        self.assertEqual(game.major_deck.count(), arbitrary_cards_in_deck - 4)
         self.assertEqual(game.discard_pile.count(), discard_before)
 
     def test_reshuffle_on_take(self):
-        client, game, player = self.setup_game(0)
+        client, game, player = self.setup_game(1)
 
+        remaining = list(game.major_deck.all())
         majors_before = player.hand.filter(type=Card.MAJOR).count()
         available_cards = game.major_deck.count() + game.discard_pile.count()
 
-        client.post(f"/game/{player.id}/take/major")
+        client.post(f"/game/{player.id}/take/major/2")
 
-        self.assertEqual(player.hand.filter(type=Card.MAJOR).count(), majors_before + 1)
-        self.assertEqual(game.major_deck.count(), available_cards - 1)
+        self.assertEqual(player.hand.filter(type=Card.MAJOR).count(), majors_before + 2)
+        for rem in remaining:
+            self.assertIn(rem, player.hand.all(), "card in deck before reshuffle should have been taken")
+        self.assertEqual(game.major_deck.count(), available_cards - 2)
         self.assertEqual(game.discard_pile.count(), 0)
 
     def test_not_reshuffle_on_host_draw(self):
