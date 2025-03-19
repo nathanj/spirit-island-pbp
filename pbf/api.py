@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from typing import List
 from ninja import NinjaAPI
 from ninja import Field, ModelSchema
+from ninja.security import APIKeyHeader
 import os
 from .models import Card, Game, GameLog, GamePlayer, GamePlayerImpendingWithEnergy, Presence, Spirit
 
@@ -73,10 +74,17 @@ def get_ip(request):
     else:
         return request.META["REMOTE_ADDR"]
 
+class ApiKey(APIKeyHeader):
+    param_name = "X-API-Key"
+    def authenticate(self, request, key):
+        secret = os.getenv('CUSTOM_API_KEY', None)
+        if secret is None:
+            return False
+        if key == secret:
+            return key
+
 def ip_whitelist(request):
-    ip = str(os.environ['OWN_IP'])
-    if ip is None:
-        ip = "127.0.0.1"
+    ip = str(os.getenv('OWN_IP', '127.0.0.1'))
     if get_ip(request) == ip:
         return ip
 
@@ -84,7 +92,7 @@ def ip_whitelist(request):
 def ip(request):
     return f"Authenticated client, IP = {request.auth}"
 
-@api.post("/game/{game_id}/link/{channel_id}", auth=ip_whitelist)
+@api.post("/game/{game_id}/link/{channel_id}", auth=[ApiKey(),ip_whitelist])
 def game_link(request, game_id, channel_id):
     game = get_object_or_404(Game, pk=game_id)
     Game.objects.filter(discord_channel=channel_id).update(discord_channel='')

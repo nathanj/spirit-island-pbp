@@ -65,6 +65,20 @@ client = discord.Client(intents=intents)
 LOG = structlog.get_logger()
 debug = os.environ.get('DEBUG', None) == 'yes'
 
+auth_header = {}
+API_KEY = os.getenv('CUSTOM_API_KEY', None)
+if (API_KEY and API_KEY != 'secret_key'):
+    auth_header = { 'X-API-Key': API_KEY }
+
+DISCORD_KEY = os.getenv('DISCORD_KEY')
+DJANGO_HOST = os.getenv('DJANGO_HOST', 'localhost')
+DJANGO_PORT = int(os.getenv('DJANGO_PORT', 8000))
+GAME_URL = os.getenv('GAME_URL', r'''si.bitcrafter.net''')
+GUILD_ID = int(os.getenv('DISCORD_GUILD_ID', 846580409050857493))
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+
+
 def combine_images(filenames):
     images = []
 
@@ -92,10 +106,6 @@ def match_game_url(s):
     '573a76ed-b9ed-45b1-8e14-04bfacb90a21'
     >>> match_game_url('stuff')
     """
-    GAME_URL = os.environ['GAME_URL']
-    if not GAME_URL:
-        GAME_URL = r'''si.bitcrafter.net'''
-
     match = re.search(GAME_URL + r'''/game/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})''', s)
     if match is not None:
         return match[1]
@@ -106,7 +116,7 @@ async def updatethings(after,topic):
     if guid is not None:
         LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
         await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
-        r = requests.post(f'http://localhost:8000/api/game/{guid}/link/{after.id}')
+        r = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}', headers=auth_header)
         LOG.msg(r)
 
 @client.event
@@ -151,7 +161,7 @@ async def on_message(message):
                 await message.channel.send("Failed to pin the message due to an HTTP error.")
 
 def load_emojis():
-    guild = client.get_guild(846580409050857493)
+    guild = client.get_guild(GUILD_ID)
     for e in guild.emojis:
         #LOG.msg(f'found emoji = {e.name} {str(e)}')
         if e.name in spirit_emoji_map.values():
@@ -224,7 +234,7 @@ async def logger():
     await client.wait_until_ready()
     load_emojis()
 
-    redis_obj = await redis.from_url("redis://localhost", decode_responses=True)
+    redis_obj = await redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}", decode_responses=True)
     pubsub = redis_obj.pubsub()
     await pubsub.psubscribe("log-relay:*")
 
@@ -258,4 +268,4 @@ async def logger():
 
 if __name__ == '__main__':
     #combine_images(["./pbf/static/pbf/settle_into_huntinggrounds.jpg","./pbf/static/pbf/flocking_redtalons.jpg","./pbf/static/pbf/vigor_of_the_breaking_dawn.jpg","./pbf/static/pbf/vengeance_of_the_dead.jpg"])
-    client.run(os.environ['DISCORD_KEY'])
+    client.run(DISCORD_KEY)

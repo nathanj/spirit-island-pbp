@@ -943,13 +943,18 @@ version = "0.6.2"
 description = "async-await support for `requests`."
 optional = false
 python-versions = ">=3.6"
-files = [
-    {file = "requests-async-0.6.2.tar.gz", hash = "sha256:8f128b66dec2974aa263e24410914b1829d3e1506497364c2edfa10112f55e0b"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 http3 = "==0.6.*"
 requests = "==2.*"
+
+[package.source]
+type = "git"
+url = "https://github.com/encode/requests-async.git"
+reference = "0.6.2"
+resolved_reference = "00e2a3d22379e6af19e141b046751fad7d80a489"
 
 [[package]]
 name = "rfc3986"
@@ -1163,4 +1168,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "8c75374cd45f96bff7e09ab6159f05b65023d6f91c23b152c66830705eae7d25"
+content-hash = "2e12b742dd44a0619b275aad49f9d970a90a4b35757b7c51369fd507032da059"

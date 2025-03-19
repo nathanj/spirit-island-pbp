@@ -1,0 +1,9 @@
+__pycache__
+db.sqlite3
+out.jpg
+static/*
+*.bak
+nohup.out
+screenshot/*
+env/*
+.vs/
