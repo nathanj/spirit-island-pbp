@@ -211,11 +211,11 @@ class TestRot(TestCase):
         self.assert_rot(10, 5, 2, round_down=True)
 
 class TestChooseCard(TestCase):
-    def cards_gained(self, card_type, draw):
+    def cards_gained(self, spirit, card_type, draw):
         client = Client()
         client.post("/new")
         game = Game.objects.last()
-        client.post(f"/game/{game.id}/add-player", {"spirit": "Waters", "color": "random"})
+        client.post(f"/game/{game.id}/add-player", {"spirit": spirit, "color": "random"})
         v = game.gameplayer_set.all()
         self.assertEqual(len(v), 1, "didn't find one game player; spirit not created successfully?")
         player = v[0]
@@ -229,14 +229,17 @@ class TestChooseCard(TestCase):
         self.assertEqual(game.discard_pile.count(), draw - selected)
         return selected
 
-    def assert_cards_gained(self, card_type, draw, should_gain):
-        self.assertEqual(self.cards_gained(card_type, draw), should_gain)
+    def assert_cards_gained(self, card_type, draw, should_gain, spirit='Waters'):
+        self.assertEqual(self.cards_gained(spirit, card_type, draw), should_gain)
 
     def test_regular_minor(self):
         self.assert_cards_gained('minor', 4, 1)
 
     def test_boon_of_reimagining(self):
         self.assert_cards_gained('minor', 6, 2)
+
+    def test_mentor_shifting_memory_boon_of_reimagining(self):
+        self.assert_cards_gained('minor', 4, 3, spirit='Shifting - Mentor')
 
     def test_regular_major(self):
         self.assert_cards_gained('major', 4, 1)
