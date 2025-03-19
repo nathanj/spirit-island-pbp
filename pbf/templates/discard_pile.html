@@ -11,7 +11,7 @@
 	  <div class="card p-0 m-15">
 	    <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	    <div class="text-center pb-5">
-	      <button class="btn" hx-get="{% url 'choose_from_discard' player.id card.id %}">Claim</button>
+	      <button class="btn" hx-get="{% url 'choose_from_discard' player.id card.id %}">Take</button>
 	      {% if player.spirit.name == 'Fractured' %}
 	      <button class="btn" hx-get="{% url 'send_days' player.id card.id %}">Days</button>
 	      {% endif %}
