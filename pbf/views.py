@@ -504,7 +504,7 @@ def take_power(request, player_id, type):
     player.hand.add(*taken_cards)
 
     card = taken_cards[0]
-    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes {card.name}', images='./pbf/static/' + card.url())
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes {card.name}', images='./pbf/static' + card.url())
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
