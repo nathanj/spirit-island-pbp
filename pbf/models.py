@@ -99,6 +99,10 @@ class Card(models.Model):
     def can_return_to_deck(self):
         return self.type in (self.MINOR, self.MAJOR)
 
+    HEALING_NAMES = frozenset(('Serene Waters', 'Waters Renew', 'Roiling Waters', 'Waters Taste of Ruin'))
+    def is_healing(self):
+        return self.name in self.HEALING_NAMES
+
     def url(self):
         return '/pbf/' + self.name.replace(",", '').replace("-", '').replace("'", '').replace(' ', '_').lower() + '.jpg'
 

@@ -627,7 +627,7 @@ def choose_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.selection, pk=card_id)
 
-    if card.name in ("Serene Waters", "Waters Renew", "Roiling Waters", "Waters Taste of Ruin"):
+    if card.is_healing():
         return choose_healing_card(request, player, card)
 
     player.hand.add(card)
@@ -669,7 +669,7 @@ def undo_gain_card(request, player_id):
         elif sel.type == Card.MAJOR:
             game.major_deck.add(sel)
             to_remove.append(sel)
-        elif sel.name in ("Serene Waters", "Waters Renew", "Roiling Waters", "Waters Taste of Ruin"):
+        elif sel.is_healing():
             to_remove.append(sel)
         # If it's not any of these types, we'll leave it in selection, as something's gone wrong.
 
