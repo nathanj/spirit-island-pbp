@@ -85,26 +85,17 @@
 	  <button type="submit" class="btn" >Add Spirit</button>
 	</form>
 
-  <script type="text/javascript">
-    function update_draw_buttons(val) {
-      document.getElementById('draw_minors').textContent = `Draw ${val} minor powers`;
-      document.getElementById('draw_majors').textContent = `Draw ${val} major powers`;
-    }
-  </script>
   <form id="host-draw" hx-swap="afterend" hx-indicator="#host-draw-spinner">
     {# csrf_token not needed because we've configured HTMX to send the token in the header #}
-    Draw <input type="number" name="num_cards" min="1" max="100" value="{{game.gameplayer_set.count}}" onChange="update_draw_buttons(this.value);" /> cards:
-    <button type="submit" id="draw_minors" class="btn" hx-post="{% url 'draw_cards' game.id 'minor' %}">Draw minor powers</button>
-    <button type="submit" id="draw_majors" class="btn" hx-post="{% url 'draw_cards' game.id 'major' %}" hx-confirm="Confirm drawing major powers? (typically only used for blighted island Shattered Fragments of Power)">Draw major powers</button>
+    Discard top <input type="number" name="num_cards" min="1" max="100" value="{{game.gameplayer_set.count}}" />
+    <select name="type">
+      <option value="minor">minor</option>
+      <option value="major">major</option>
+    </select>
+    power cards:
+    <button type="submit" class="btn" hx-post="{% url 'draw_cards' game.id %}">Discard</button>
+    <span id="host-draw-spinner" class="htmx-indicator"><img src="{% static "pbf/bars.svg" %}" /></span>
   </form>
-  {# updating the initial counts on load instead of just writing their values in, #}
-  {# so that if they have no JS they see no number instead of an out-of-date-one. #}
-  {# this probably isn't necessary; if they don't have JS they probably can't make the AJAX request anyway. #}
-  <script type="text/javascript">
-    update_draw_buttons(document.getElementById('host-draw').elements['num_cards'].value);
-  </script>
-
-  <span id="host-draw-spinner" class="htmx-indicator"><img src="{% static "pbf/bars.svg" %}" /></span>
 
 	<form method="post" action="{% url 'change_game_name' game.id %}">
 	  {% csrf_token %}
