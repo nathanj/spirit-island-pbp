@@ -83,7 +83,7 @@ class ApiKey(APIKeyHeader):
         if key == secret:
             return key
 
-header_key = APIKey()
+header_key = ApiKey()
 
 def ip_whitelist(request):
     ip = str(os.getenv('OWN_IP', '127.0.0.1'))
