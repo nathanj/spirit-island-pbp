@@ -12,16 +12,12 @@ services:
       - "8000"
     restart: unless-stopped
     env_file: .env
-    volumes:
-      - ./:/app
   bot:
     build: .
     container_name: si-bot
     restart: unless-stopped
     env_file: .env
     entrypoint: run-bot.sh
-    volumes:
-      - ./:/app
   redis:
     image: redis:latest
     container_name: redis
