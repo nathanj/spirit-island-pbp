@@ -50,12 +50,13 @@ You can fix this by launching `regedit`, navigating to `HKEY_LOCAL_MACHINE\SYSTE
 ## Docker Compose
 
 ### Setup
-Create a `.env` file from the [.env.docker file](./.env.docker) and change out the values as needed.
+Create a `.env` file from the [.env.template file](./.env.template) and change out the values as needed.
 ```bash
-cp .env.docker .env
+cp .env.template .env
 ```
 
 Most of the values can be left as is, but the following need to be updated in most cases:
+- `GAME_URL`: Set this to your API's domain or `".*"` to bypass the host valdiation for incoming traffic. If using `".*"`, you should setup the `CUSTOM_API_KEY` shared secret to validate traffic is coming from the bot and not somewhere else.
 - `DISCORD_KEY`: Discord bot token. See https://www.writebots.com/discord-bot-token.
 - `EXTRA_ALLOWED_HOSTS`: Domain where you plan on hosting. You'll see `CSRF` errors if this is set incorrectly.
 - `DJANGO_SUPERUSER_EMAIL`: Email you want to use for default admin user.
