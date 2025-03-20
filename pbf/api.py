@@ -83,6 +83,8 @@ class ApiKey(APIKeyHeader):
         if key == secret:
             return key
 
+header_key = APIKey()
+
 def ip_whitelist(request):
     ip = str(os.getenv('OWN_IP', '127.0.0.1'))
     if get_ip(request) == ip:
@@ -92,7 +94,7 @@ def ip_whitelist(request):
 def ip(request):
     return f"Authenticated client, IP = {request.auth}"
 
-@api.post("/game/{game_id}/link/{channel_id}", auth=[ApiKey(),ip_whitelist])
+@api.post("/game/{game_id}/link/{channel_id}", auth=[ip_whitelist, header_key])
 def game_link(request, game_id, channel_id):
     game = get_object_or_404(Game, pk=game_id)
     Game.objects.filter(discord_channel=channel_id).update(discord_channel='')
