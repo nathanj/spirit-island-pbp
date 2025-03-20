@@ -36,6 +36,9 @@ if 'EXTRA_ALLOWED_HOSTS' in os.environ:
 
 CSRF_TRUSTED_ORIGINS = ['https://si.bitcrafter.net']
 
+if 'EXTRA_ALLOWED_HOSTS' in os.environ:
+    for url in os.environ['EXTRA_ALLOWED_HOSTS'].split(','):
+        CSRF_TRUSTED_ORIGINS.extend([f'https://{url}', f'http://{url}'])
 
 # Application definition
 
