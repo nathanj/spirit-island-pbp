@@ -65,8 +65,10 @@ client = discord.Client(intents=intents)
 LOG = structlog.get_logger()
 debug = os.environ.get('DEBUG', None) == 'yes'
 
+DISCORD_KEY = os.getenv('DISCORD_KEY')
 DJANGO_HOST = os.getenv('DJANGO_HOST', 'localhost')
 DJANGO_PORT = int(os.getenv('DJANGO_PORT', 8000))
+GAME_URL = os.getenv('GAME_URL', 'si.bitcrafter.net')
 GUILD_ID = int(os.getenv('DISCORD_GUILD_ID', 846580409050857493))
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
@@ -98,10 +100,6 @@ def match_game_url(s):
     '573a76ed-b9ed-45b1-8e14-04bfacb90a21'
     >>> match_game_url('stuff')
     """
-    GAME_URL = os.environ['GAME_URL']
-    if not GAME_URL:
-        GAME_URL = r'''si.bitcrafter.net'''
-
     match = re.search(GAME_URL + r'''/game/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})''', s)
     if match is not None:
         return match[1]
@@ -264,4 +262,4 @@ async def logger():
 
 if __name__ == '__main__':
     #combine_images(["./pbf/static/pbf/settle_into_huntinggrounds.jpg","./pbf/static/pbf/flocking_redtalons.jpg","./pbf/static/pbf/vigor_of_the_breaking_dawn.jpg","./pbf/static/pbf/vengeance_of_the_dead.jpg"])
-    client.run(os.environ['DISCORD_KEY'])
+    client.run(DISCORD_KEY)
