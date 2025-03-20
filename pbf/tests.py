@@ -109,22 +109,25 @@ class TestReshuffleOrNot(TestCase):
         discard_before = game.discard_pile.count()
         majors_before = player.hand.filter(type=Card.MAJOR).count()
 
-        client.post(f"/game/{player.id}/take/major")
+        client.post(f"/game/{player.id}/take/major/4")
 
-        self.assertEqual(player.hand.filter(type=Card.MAJOR).count(), majors_before + 1)
-        self.assertEqual(game.major_deck.count(), arbitrary_cards_in_deck - 1)
+        self.assertEqual(player.hand.filter(type=Card.MAJOR).count(), majors_before + 4)
+        self.assertEqual(game.major_deck.count(), arbitrary_cards_in_deck - 4)
         self.assertEqual(game.discard_pile.count(), discard_before)
 
     def test_reshuffle_on_take(self):
-        client, game, player = self.setup_game(0)
+        client, game, player = self.setup_game(1)
 
+        remaining = list(game.major_deck.all())
         majors_before = player.hand.filter(type=Card.MAJOR).count()
         available_cards = game.major_deck.count() + game.discard_pile.count()
 
-        client.post(f"/game/{player.id}/take/major")
+        client.post(f"/game/{player.id}/take/major/2")
 
-        self.assertEqual(player.hand.filter(type=Card.MAJOR).count(), majors_before + 1)
-        self.assertEqual(game.major_deck.count(), available_cards - 1)
+        self.assertEqual(player.hand.filter(type=Card.MAJOR).count(), majors_before + 2)
+        for rem in remaining:
+            self.assertIn(rem, player.hand.all(), "card in deck before reshuffle should have been taken")
+        self.assertEqual(game.major_deck.count(), available_cards - 2)
         self.assertEqual(game.discard_pile.count(), 0)
 
     def test_not_reshuffle_on_host_draw(self):
@@ -208,11 +211,11 @@ class TestRot(TestCase):
         self.assert_rot(10, 5, 2, round_down=True)
 
 class TestChooseCard(TestCase):
-    def cards_gained(self, card_type, draw):
+    def cards_gained(self, spirit, card_type, draw):
         client = Client()
         client.post("/new")
         game = Game.objects.last()
-        client.post(f"/game/{game.id}/add-player", {"spirit": "Waters", "color": "random"})
+        client.post(f"/game/{game.id}/add-player", {"spirit": spirit, "color": "random"})
         v = game.gameplayer_set.all()
         self.assertEqual(len(v), 1, "didn't find one game player; spirit not created successfully?")
         player = v[0]
@@ -223,16 +226,20 @@ class TestChooseCard(TestCase):
             client.post(f"/game/{player.id}/choose/{player.selection.first().id}")
             selected += 1
             player.refresh_from_db()
+        self.assertEqual(game.discard_pile.count(), draw - selected)
         return selected
 
-    def assert_cards_gained(self, card_type, draw, should_gain):
-        self.assertEqual(self.cards_gained(card_type, draw), should_gain)
+    def assert_cards_gained(self, card_type, draw, should_gain, spirit='Waters'):
+        self.assertEqual(self.cards_gained(spirit, card_type, draw), should_gain)
 
     def test_regular_minor(self):
         self.assert_cards_gained('minor', 4, 1)
 
     def test_boon_of_reimagining(self):
         self.assert_cards_gained('minor', 6, 2)
+
+    def test_mentor_shifting_memory_boon_of_reimagining(self):
+        self.assert_cards_gained('minor', 4, 3, spirit='Shifting - Mentor')
 
     def test_regular_major(self):
         self.assert_cards_gained('major', 4, 1)

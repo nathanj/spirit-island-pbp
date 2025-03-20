@@ -443,18 +443,27 @@ def draw_cards(request, game_id, type):
     if cards_needed <= 0:
         return render(request, 'host_draw.html', {'msg': f"Can't draw {cards_needed} cards"})
 
+    cards_drawn = cards_from_deck(game, cards_needed, type)
+    game.discard_pile.add(*cards_drawn)
+
+    draw_result = f"drew {len(cards_drawn)} {type} power card{'s' if len(cards_drawn) != 1 else ''}"
+    draw_result_explain = "" if len(cards_drawn) == cards_needed else f" (there were not enough cards to draw all {cards_needed})"
+    card_names = ', '.join(card.name for card in cards_drawn)
+
+    add_log_msg(game, text=f'Host {draw_result}: {card_names}', images=",".join('./pbf/static' + card.url() for card in cards_drawn))
+
+    return render(request, 'host_draw.html', {'msg': f"You {draw_result}{draw_result_explain}: {card_names}", 'cards': cards_drawn})
+
+def cards_from_deck(game, cards_needed, type):
     if type == 'minor':
         deck = game.minor_deck
     elif type == 'major':
         deck = game.major_deck
     else:
-        # don't need to render host_draw;
-        # the form should never submit an invalid type in the first place
         raise ValueError(f"can't draw from {type} deck")
 
     cards_have = deck.count()
 
-    draw_result_explain = ''
     if cards_have >= cards_needed:
         cards_drawn = sample(list(deck.all()), cards_needed)
         deck.remove(*cards_drawn)
@@ -470,17 +479,9 @@ def draw_cards(request, game_id, type):
             deck.remove(*new_cards)
         else:
             cards_drawn.extend(list(deck.all()))
-            draw_result_explain = f" (there were not enough cards to draw all {cards_needed})"
             deck.clear()
 
-    game.discard_pile.add(*cards_drawn)
-
-    draw_result = f"drew {len(cards_drawn)} {type} power card{'s' if len(cards_drawn) != 1 else ''}"
-    card_names = ', '.join(card.name for card in cards_drawn)
-
-    add_log_msg(game, text=f'Host {draw_result}: {card_names}', images=",".join('./pbf/static' + card.url() for card in cards_drawn))
-
-    return render(request, 'host_draw.html', {'msg': f"You {draw_result}{draw_result_explain}: {card_names}", 'cards': cards_drawn})
+    return cards_drawn
 
 def reshuffle_discard(game, type):
     if type == 'minor':
@@ -496,27 +497,34 @@ def reshuffle_discard(game, type):
 
     add_log_msg(game, text=f'Re-shuffling {type} power deck')
 
-def take_power(request, player_id, type):
+def take_powers(request, player_id, type, num):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    if type == 'minor':
-        deck = player.game.minor_deck
+
+    taken_cards = cards_from_deck(player.game, num, type)
+    player.hand.add(*taken_cards)
+
+    if num == 1:
+        card = taken_cards[0]
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes a {type} power: {card.name}', images='./pbf/static' + card.url())
     else:
-        deck = player.game.major_deck
-
-    cards = list(deck.all())
-    if not cards:
-        # deck was empty
-        reshuffle_discard(player.game, type)
-        cards = list(deck.all())
-    shuffle(cards)
-    card = cards[0]
-    player.hand.add(card)
-    deck.remove(card)
-
-    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes {card.name}', images='./pbf/static/' + card.url())
+        # There's a bit of tension between the function's name/functionality and game terminology.
+        #
+        # As used in code, take_powers is being used when we don't go through the selection process
+        # (the spirit gets all the cards directly into their hand).
+        # It's natural to use this for Mentor Shifting Memory of Ages,
+        # since the number of cards they get to keep is equal to the number of cards they look at.
+        #
+        # However, we do want to use the word "gain" in the log message, not "take",
+        # because Mentor still needs to forget a power card.
+        #
+        # The alternative is to special-case gain_power to not use selection if it's Mentor and num == 2.
+        # Either way we have to make some special cases,
+        # and doing it here at least matches in mechanism better.
+        card_names = ', '.join(card.name for card in taken_cards)
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {num} {type} powers: {card_names}', images=",".join('./pbf/static' + card.url() for card in taken_cards))
 
     compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
 
 def gain_healing(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -534,28 +542,8 @@ def gain_healing(request, player_id):
 
 def gain_power(request, player_id, type, num):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    if type == 'minor':
-        deck = player.game.minor_deck
-    else:
-        deck = player.game.major_deck
 
-    cards = list(deck.all())
-    shuffle(cards)
-    selection = cards[:num]
-    for c in selection:
-        deck.remove(c)
-
-    # handle power deck running out
-    if len(selection) != num:
-        reshuffle_discard(player.game, type)
-
-        cards = list(deck.all())
-        shuffle(cards)
-        selection2 = cards[:num-len(selection)]
-        for c in selection2:
-            deck.remove(c)
-        selection += selection2
-
+    selection = cards_from_deck(player.game, num, type)
     player.selection.set(selection)
 
     cards_str = ", ".join([str(card) for card in selection])
@@ -635,17 +623,17 @@ def choose_card(request, player_id, card_id):
     # if there are 5 minor cards left in their selection,
     # we assume this was a Boon of Reimagining (draw 6 and gain 2)
     # so we do not send the cards to the discard in that case.
-    # Otherwise, we do.
+    # Also, Boon of Reimagining on Mentor Shifting Memory of Ages will draw 4 and gain 3.
+    # Otherwise, we do discard the cards.
     # (It has to be minors because Covets Gleaming Shards of Earth can draw 6 majors)
     #
     # For now it works to make this decision solely based on the number of cards drawn.
     # If there's ever another effect that does draw 6 gain N with N != 2,
     # we would have to redo this in some way,
     # perhaps by adding a field to GamePlayer indicating the number of cards that are to be gained.
-    #
-    # TODO: Mentor Shifting Memory of Ages receiving a Boon of Reimagining:
-    # They should draw 4 and gain 3 of them.
-    if card.type != Card.MINOR or player.selection.count() != 5:
+    cards_left = player.selection.count()
+    can_keep_selecting = card.type == Card.MINOR and (cards_left == 5 or player.aspect == 'Mentor' and cards_left > 1)
+    if not can_keep_selecting:
         for discard in player.selection.all():
             player.game.discard_pile.add(discard)
         player.selection.clear()

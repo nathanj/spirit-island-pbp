@@ -141,11 +141,50 @@
   </ul>
   <button class="btn" hx-get="{% url 'undo_gain_card' player.id %}" hx-confirm="Are you sure?">Oops! Undo gain card</button>
   {% else %}
-  <p>Gain Minor ({{ player.game.minor_deck.count }} in deck): <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}">4 Cards</button> <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '6' %}">6 Cards</button> <button class="btn" hx-get="{% url 'take_power' player.id 'minor' %}">1 Card</button>
-  <p>Gain Major ({{ player.game.major_deck.count }} in deck): <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}">4 Cards</button> {% if player.spirit.name == 'Covets' %} <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '6' %}">6 Cards</button> {% endif %} <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards</button> <button class="btn" hx-get="{% url 'take_power' player.id 'major' %}">1 Card</button>
+  <p>Gain Minor ({{ player.game.minor_deck.count }} in deck):
+  {% if player.aspect == 'Mentor' %}
+  <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' '2' %}">2 Cards (keep 2)</button>
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}" hx-confirm="Confirm you want to look at 4 minor power cards and keep 3 (Starlight Seeks Its Form used Boon of Reimagining on you)?">4 Cards (keep 3)</button>
+  {% else %}
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}">4 Cards</button>
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '6' %}">6 Cards</button>
+  {% endif %}
+  <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' '1' %}">1 Card</button>
+
+  <p>Gain Major ({{ player.game.major_deck.count }} in deck):
+  {% if player.aspect == 'Mentor' %}
+  <button class="btn" hx-get="{% url 'take_powers' player.id 'major' '2' %}">2 Cards (keep 2)</button>
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}" hx-confirm="Confirm you want to look at 4 major power cards and keep 1 (event Visions Out of Time)?">4 Cards</button>
+  {% else %}
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}">4 Cards</button>
+  {% if player.spirit.name == 'Covets' %}
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '6' %}">6 Cards</button>
+  {% endif %}
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards</button>
+  {% endif %}
+  <button class="btn" hx-get="{% url 'take_powers' player.id 'major' '1' %}">1 Card</button>
+
   {% if player.spirit.name == 'Waters' %}
   <p>Gain Healing Card: <button class="btn" hx-get="{% url 'gain_healing' player.id %}">Gain Healing Card</button>
   {% endif %}
+  {% endif %}
+
+  {% if taken_cards %}
+  <div id="taken_cards">
+    You took {{ taken_cards | length }} card{{ taken_cards | pluralize }}:
+    <div class="container-fluid">
+      <div class="row">
+        {% for card in taken_cards %}
+          <div class="col-auto">
+            <div class="w-md-150">
+              <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    <button class="btn" onClick="document.getElementById('taken_cards').remove();">OK (dismiss)</button>
+  </div>
   {% endif %}
 
   <p>
