@@ -1,5 +1,6 @@
 import json
 from random import sample, shuffle
+import os
 
 from django.db import transaction
 from django.forms import ModelForm
@@ -11,7 +12,9 @@ from .models import *
 
 import redis
 
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=1)
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1)
 
 def add_log_msg(game, text, images=None):
     game.gamelog_set.create(text=text, images=images)

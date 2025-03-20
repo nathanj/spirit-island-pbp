@@ -65,6 +65,12 @@ client = discord.Client(intents=intents)
 LOG = structlog.get_logger()
 debug = os.environ.get('DEBUG', None) == 'yes'
 
+DJANGO_HOST = os.getenv('DJANGO_HOST', 'localhost')
+DJANGO_PORT = int(os.getenv('DJANGO_PORT', 8000))
+GUILD_ID = int(os.getenv('DISCORD_GUILD_ID', 846580409050857493))
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+
 def combine_images(filenames):
     images = []
 
@@ -106,7 +112,7 @@ async def updatethings(after,topic):
     if guid is not None:
         LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
         await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
-        r = requests.post(f'http://localhost:8000/api/game/{guid}/link/{after.id}')
+        r = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}')
         LOG.msg(r)
 
 @client.event
@@ -151,7 +157,7 @@ async def on_message(message):
                 await message.channel.send("Failed to pin the message due to an HTTP error.")
 
 def load_emojis():
-    guild = client.get_guild(846580409050857493)
+    guild = client.get_guild(GUILD_ID)
     for e in guild.emojis:
         #LOG.msg(f'found emoji = {e.name} {str(e)}')
         if e.name in spirit_emoji_map.values():
@@ -224,7 +230,7 @@ async def logger():
     await client.wait_until_ready()
     load_emojis()
 
-    redis_obj = await redis.from_url("redis://localhost", decode_responses=True)
+    redis_obj = await redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}", decode_responses=True)
     pubsub = redis_obj.pubsub()
     await pubsub.psubscribe("log-relay:*")
 
