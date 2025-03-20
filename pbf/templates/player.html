@@ -151,6 +151,9 @@
   {% endif %}
   <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' '1' %}">1 Card</button>
 
+  <button class="btn" hx-get="{% url 'minor_deck' player.game.id %}" hx-target="#Minor-deck" hx-swap="innerHTML">Show deck</button>
+  <div id="Minor-deck"></div>
+
   <p>Gain Major ({{ player.game.major_deck.count }} in deck):
   {% if player.aspect == 'Mentor' %}
   <button class="btn" hx-get="{% url 'take_powers' player.id 'major' '2' %}">2 Cards (keep 2)</button>
@@ -163,6 +166,9 @@
   <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards</button>
   {% endif %}
   <button class="btn" hx-get="{% url 'take_powers' player.id 'major' '1' %}">1 Card</button>
+
+  <button class="btn" hx-get="{% url 'major_deck' player.game.id %}" hx-target="#Major-deck" hx-swap="innerHTML">Show deck</button>
+  <div id="Major-deck"></div>
 
   {% if player.spirit.name == 'Waters' %}
   <p>Gain Healing Card: <button class="btn" hx-get="{% url 'gain_healing' player.id %}">Gain Healing Card</button>

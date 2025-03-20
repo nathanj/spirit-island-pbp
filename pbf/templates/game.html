@@ -27,13 +27,6 @@
 
 	<hr />
 
-  <button class="btn" hx-get="{% url 'minor_deck' game.id %}" hx-target="#Minor-deck">Show minor deck ({{game.minor_deck.count}} cards)</button>
-  <button class="btn" hx-get="{% url 'major_deck' game.id %}" hx-target="#Major-deck">Show major deck ({{game.major_deck.count}} cards)</button>
-  <div id="Minor-deck"></div>
-  <div id="Major-deck"></div>
-
-	<hr />
-
 	<h3>Host Actions:</h3>
 
 	<form enctype="multipart/form-data" method="post" action="{% url 'add_screenshot' game.id %}">
