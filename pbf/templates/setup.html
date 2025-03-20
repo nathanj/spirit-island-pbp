@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block main %}
+
+<h1>Game setup</h1>
+
+<a href="{% url 'view_game' game.id %}">Return to game</a>
+
+<form id="edit-players-form" method="post" action="{% url 'edit_players' game.id %}">
+  {% csrf_token %}
+<table class="table">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Spirit</th>
+      <th>Aspect</th>
+      <th>Name</th>
+      <th>Color</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for player in game.gameplayer_set.all %}
+    <tr>
+      {% with "pbf/spirit-icon-"|add:player.spirit.name|add:".png" as spirit_icon %}
+      <td><img src="{% static spirit_icon %}" alt="{{player.spirit.name}}" height="30" /></td>
+      {% endwith %}
+      <td>{{player.spirit.name}}</td>
+      <td>{% if player.aspect %}{{player.aspect}}{% endif %}</td>
+      <td>
+        <input type="hidden" name="id" value="{{player.id}}" />
+        <input type="text" name="name" value="{{player.name}}" />
+      </td>
+      <td>
+        <select name="color" style="background-color: {{player.circle_color}};" onChange="this.style.backgroundColor = this.options[this.selectedIndex].style.backgroundColor">
+          {% for color, freq, code in player.game.color_freq %}
+          {# Probably not necessary to show in-use indicators. #}
+          {# The host can see all the players in the table, #}
+          {# so they are capable of making this judgment themselves. #}
+          {# Besides, if we showed it we'd have to use JS to update it#}
+          <option style="background-color: {{code}};" value="{{color}}" {% if color == player.color %}selected{% endif %}>{{color.capitalize}}</option>
+          {% endfor %}
+        </select>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<button type="submit" class="btn">Save player names/colors</button>
+</form>
+
+<script src="{% static 'pbf/dropdown.min.js' %}"></script>
+
+<form id="add-spirit-form" method="post" action="{% url 'add_player' game.id %}">
+  {% csrf_token %}
+
+  <select name="spirit" is="ms-dropdown" data-visible-rows="12" style="width: 450px">
+    {% for expansion, spirits in spirits_by_expansion.items %}
+    <optgroup label="{{expansion}}">
+      {% for spirit in spirits %}
+      {% with "pbf/spirit-icon-"|add:spirit.0|add:".png" as spirit_icon %}
+      {% if expansion != 'Exploratory Testing' %}
+      {# exploratory spirits are implemented as aspects of the original so don't show the original in the exploratory category #}
+      <option value="{{spirit.0}}" data-image="{% static spirit_icon %}">{{spirit.1}}</option>
+      {% endif %}
+      {% for aspect in spirit.2 %}
+      <option value="{{spirit.0}} - {{aspect}}" data-image="{% static spirit_icon %}">{{spirit.1}} [{{aspect}}]</option>
+      {% endfor %}
+      {% endwith %}
+      {% endfor %}
+    </optgroup>
+    {% endfor %}
+  </select>
+  <select name="color" onChange="this.style.backgroundColor = this.options[this.selectedIndex].style.backgroundColor">
+    <option value="random">Random color</option>
+    {% for color, freq, code in game.color_freq %}
+    {% if freq == 0 %}
+    {# Setting the option's background colour doesn't seem to work for all browsers. #}
+    {# but we'll do it for the ones that do support it. #}
+    <option style="background-color: {{ code }};" value="{{color}}">{{color.capitalize}}</option>
+    {% endif %}
+    {% endfor %}
+  </select>
+  <input type="text" name="name" placeholder="player name">
+  <button type="submit" class="btn" >Add Spirit</button>
+</form>
+
+<form method="post" action="{% url 'change_game_name' game.id %}">
+  {% csrf_token %}
+  <abbr title="Change this to show the game name in the page title.">Game Name</abbr>: <input type="text" name="name" value="{{game.name}}" />
+  <button type="submit" class="btn">Change</button>
+</form>
+
+<form method="post" action="{% url 'change_scenario' game.id %}">
+  {% csrf_token %}
+  <select name="scenario">
+    <option value="">No scenario</option>
+    <option value="Blitz" {% if game.scenario == 'Blitz' %}selected{% endif %}>Blitz</option>
+  </select>
+  <button type="submit" class="btn">Change scenario</button>
+</form>
+
+{% endblock %}
