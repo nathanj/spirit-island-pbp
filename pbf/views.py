@@ -680,6 +680,10 @@ def undo_gain_card(request, player_id):
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def choose_healing_card(request, player, card):
+    if card.name.startswith('Waters'):
+        player.healing.remove(player.healing.filter(name__startswith='Waters').first())
+    else:
+        player.healing.clear()
     player.healing.add(card)
     player.selection.clear()
 
