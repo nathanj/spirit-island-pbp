@@ -1,0 +1,37 @@
+services:
+  sipbp:
+    build: .
+    container_name: sipbp
+    ports:
+      - "8000:8000"
+    expose:
+      - "8000"
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      ALLOWED_IPS: 172.17.0.0/16,127.0.0.1
+      DJANGO_HOST: sipbp
+      REDIS_HOST: siredis
+    volumes:
+      - .:/app
+  sibot:
+    build: .
+    container_name: sibot
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DJANGO_HOST: sipbp
+      REDIS_HOST: siredis
+    entrypoint: run-bot.sh
+    volumes:
+      - .:/app
+  siredis:
+    image: redis:latest
+    container_name: siredis
+    command: ["--save", "60", "1", "--loglevel", "warning"]
+    expose:
+      - "6379"
+    restart: always
+    env_file: .env
+    volumes:
+      - ./cache:/data
