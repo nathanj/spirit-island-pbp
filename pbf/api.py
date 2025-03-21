@@ -74,9 +74,7 @@ def get_ip(request):
         return request.META["REMOTE_ADDR"]
 
 def ip_whitelist(request):
-    ip = str(os.environ['OWN_IP'])
-    if ip is None:
-        ip = "127.0.0.1"
+    ip = str(os.environ['OWN_IP'], '127.0.0.1')
     if get_ip(request) == ip:
         return ip
 
