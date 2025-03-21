@@ -48,19 +48,116 @@ def new_game(request):
     game.save()
     game.minor_deck.set(Card.objects.filter(type=Card.MINOR))
     game.major_deck.set(Card.objects.filter(type=Card.MAJOR))
-    return redirect(reverse('view_game', args=[game.id]))
+    return redirect(reverse('game_setup', args=[game.id]))
+
+def edit_players(request, game_id):
+    game = get_object_or_404(Game, pk=game_id)
+    players = zip(request.POST.getlist('id'), request.POST.getlist('name'), request.POST.getlist('color'))
+    for (id, name, color) in players:
+        game.gameplayer_set.filter(id=id).update(name=name, color=color)
+
+    return redirect(reverse('game_setup', args=[game.id]))
+
+def game_setup(request, game_id):
+    game = get_object_or_404(Game, pk=game_id)
+
+    spirits_by_expansion = {
+        # Short name, full name, aspects (if any)
+        # Within an expansion, sorted alphabetically
+        #
+        # Should we sort by complexity?
+        # Don't think so; not everyone knows the complexities by heart,
+        # and so the ordering would look haphazard to those who don't know them.
+        #
+        # Similarly, aspects are going to be grouped with their spirit
+        # regardless of which expansion the aspect was released in,
+        # because not everyone is going to know which expansion has which aspects.
+        'Spirit Island (base)': [
+            ('Bringer', 'Bringer of Dreams and Nightmares', ('Enticing', 'Violence')),
+            ('Lightning', "Lightning's Swift Strike", ('Immense', 'Pandemonium', 'Sparking', 'Wind')),
+            ('Ocean', "Ocean's Hungry Grasp", ('Deeps',)),
+            ('River', 'River Surges in Sunlight', ('Haven', 'Sunshine', 'Travel')),
+            ('Shadows', 'Shadows Flicker Like Flame', ('Amorphous', 'Dark Fire', 'Foreboding', 'Madness', 'Reach')),
+            ('Green', 'A Spread of Rampant Green', ('Regrowth', 'Tangles')),
+            ('Thunderspeaker', 'Thunderspeaker', ('Tactician', 'Warrior')),
+            ('Earth', 'Vital Strength of the Earth', ('Might', 'Resilience', 'Nourishing')),
+        ],
+        'Branch & Claw': [
+            ('Keeper', 'Keeper of the Forbidden Wilds', ('Spreading Hostility',)),
+            ('Fangs', 'Sharp Fangs Behind the Leaves', ('Encircle', 'Unconstrained')),
+        ],
+        'Jagged Earth': [
+            ('Fractured', 'Fractured Days Split the Sky', ()),
+            ('Trickster', 'Grinning Trickster Stirs Up Trouble', ()),
+            ('Lure', 'Lure of the Deep Wilderness', ('Lair',)),
+            ('Minds', 'Many Minds Move as One', ()),
+            ('Shifting', 'Shifting Memory of Ages', ('Intensify', 'Mentor')),
+            ('Mist', 'Shroud of Silent Mist', ('Stranded',)),
+            ('Starlight', 'Starlight Seeks Its Form', ()),
+            ('Stone', "Stone's Unyielding Defiance", ()),
+            ('Vengeance', 'Vengeance as a Burning Plague', ()),
+            ('Volcano', 'Volcano Looming High', ()),
+        ],
+        'Feather & Flame': [
+            ('Downpour', 'Downpour Drenches the World', ()),
+            ('Finder', 'Finder of Paths Unseen', ()),
+            ('Wildfire', 'Heart of the Wildfire', ('Transforming',)),
+            ('Serpent', 'Serpent Slumbering Beneath the Island', ('Locus',)),
+        ],
+        'Horizons of Spirit Island': [
+            ('Teeth', 'Devouring Teeth Lurk Underfoot', ()),
+            ('Eyes', 'Eyes Watch from the Trees', ()),
+            ('Mud', 'Fathomless Mud of the Swamp', ()),
+            ('Heat', 'Rising Heat of Stone and Sand', ()),
+            ('Whirlwind', 'Sun-Bright Whirlwind', ()),
+        ],
+        'Nature Incarnate': [
+            ('Breath', 'Breath of Darkness Down Your Spine', ()),
+            ('Earthquakes', 'Dances Up Earthquakes', ()),
+            ('Behemoth', 'Ember-Eyed Behemoth', ()),
+            ('Vigil', 'Hearth-Vigil', ()),
+            ('Gaze', 'Relentless Gaze of the Sun', ()),
+            ('Roots', 'Towering Roots of the Jungle', ()),
+            ('Voice', 'Wandering Voice Keens Delirium', ()),
+            ('Waters', 'Wounded Waters Bleeding', ()),
+        ],
+        'Apocrypha': [
+            ('Covets', 'Covets Gleaming Shards of Earth v1.2.1 [Apocrypha]', ()),
+            ('Rot', 'Spreading Rot Renews the Earth [Apocrypha]', ('Round Down',)),
+        ],
+        'Exploratory Testing': [
+            # Note that the template has logic to not show the base spirit for this category,
+            # because the base spirit is assumed to be in a different expansion.
+            # In other words, this category only shows aspects.
+            ('Shadows', 'Shadows Flicker Like Flame', ('Exploratory', )),
+            ('Bringer', 'Bringer of Dreams and Nightmares', ('Exploratory', )),
+        ],
+    }
+    spirits_present = [spirit for (expansion, spirits) in spirits_by_expansion.items() for (spirit, _, _) in spirits]
+    spirits = [s.name for s in Spirit.objects.order_by('name').all()]
+
+    # These messages are useful while in development;
+    # we expect that they do not get printed in production.
+    missing_spirits = set(spirits) - set(spirits_present)
+    if missing_spirits:
+        print(f"Warning: missing spirits {missing_spirits}")
+    unknown_spirits = set(spirits_present) - set(spirits)
+    if unknown_spirits:
+        print(f"Warning: unknown spirits {unknown_spirits}")
+
+    return render(request, 'setup.html', { 'game': game, 'spirits_by_expansion': spirits_by_expansion })
 
 def change_game_name(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
     game.name = request.POST['name']
     game.save()
-    return redirect(reverse('view_game', args=[game.id]))
+    return redirect(reverse('game_setup', args=[game.id]))
 
 def change_scenario(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
     game.scenario = request.POST['scenario']
     game.save()
-    return redirect(reverse('view_game', args=[game.id]))
+    return redirect(reverse('game_setup', args=[game.id]))
 
 # Base energy gain per turn when no presence has been removed from tracks.
 # NOT to be used to indicate how much energy the spirit has at setup;
@@ -332,7 +429,7 @@ def add_player(request, game_id):
             card = Card.objects.get(name=card_name)
             card = gp.hand.remove(card)
 
-    return redirect(reverse('view_game', args=[game.id]))
+    return redirect(reverse('game_setup', args=[game.id]))
 
 def view_game(request, game_id, spirit_spec=None):
     game = get_object_or_404(Game, pk=game_id)
@@ -350,93 +447,9 @@ def view_game(request, game_id, spirit_spec=None):
                 add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot2.url)
                 return redirect(reverse('view_game', args=[game.id, spirit_spec]))
 
-    spirits_by_expansion = {
-        # Short name, full name, aspects (if any)
-        # Within an expansion, sorted alphabetically
-        #
-        # Should we sort by complexity?
-        # Don't think so; not everyone knows the complexities by heart,
-        # and so the ordering would look haphazard to those who don't know them.
-        #
-        # Similarly, aspects are going to be grouped with their spirit
-        # regardless of which expansion the aspect was released in,
-        # because not everyone is going to know which expansion has which aspects.
-        'Spirit Island (base)': [
-            ('Bringer', 'Bringer of Dreams and Nightmares', ('Enticing', 'Violence')),
-            ('Lightning', "Lightning's Swift Strike", ('Immense', 'Pandemonium', 'Sparking', 'Wind')),
-            ('Ocean', "Ocean's Hungry Grasp", ('Deeps',)),
-            ('River', 'River Surges in Sunlight', ('Haven', 'Sunshine', 'Travel')),
-            ('Shadows', 'Shadows Flicker Like Flame', ('Amorphous', 'Dark Fire', 'Foreboding', 'Madness', 'Reach')),
-            ('Green', 'A Spread of Rampant Green', ('Regrowth', 'Tangles')),
-            ('Thunderspeaker', 'Thunderspeaker', ('Tactician', 'Warrior')),
-            ('Earth', 'Vital Strength of the Earth', ('Might', 'Resilience', 'Nourishing')),
-        ],
-        'Branch & Claw': [
-            ('Keeper', 'Keeper of the Forbidden Wilds', ('Spreading Hostility',)),
-            ('Fangs', 'Sharp Fangs Behind the Leaves', ('Encircle', 'Unconstrained')),
-        ],
-        'Jagged Earth': [
-            ('Fractured', 'Fractured Days Split the Sky', ()),
-            ('Trickster', 'Grinning Trickster Stirs Up Trouble', ()),
-            ('Lure', 'Lure of the Deep Wilderness', ('Lair',)),
-            ('Minds', 'Many Minds Move as One', ()),
-            ('Shifting', 'Shifting Memory of Ages', ('Intensify', 'Mentor')),
-            ('Mist', 'Shroud of Silent Mist', ('Stranded',)),
-            ('Starlight', 'Starlight Seeks Its Form', ()),
-            ('Stone', "Stone's Unyielding Defiance", ()),
-            ('Vengeance', 'Vengeance as a Burning Plague', ()),
-            ('Volcano', 'Volcano Looming High', ()),
-        ],
-        'Feather & Flame': [
-            ('Downpour', 'Downpour Drenches the World', ()),
-            ('Finder', 'Finder of Paths Unseen', ()),
-            ('Wildfire', 'Heart of the Wildfire', ('Transforming',)),
-            ('Serpent', 'Serpent Slumbering Beneath the Island', ('Locus',)),
-        ],
-        'Horizons of Spirit Island': [
-            ('Teeth', 'Devouring Teeth Lurk Underfoot', ()),
-            ('Eyes', 'Eyes Watch from the Trees', ()),
-            ('Mud', 'Fathomless Mud of the Swamp', ()),
-            ('Heat', 'Rising Heat of Stone and Sand', ()),
-            ('Whirlwind', 'Sun-Bright Whirlwind', ()),
-        ],
-        'Nature Incarnate': [
-            ('Breath', 'Breath of Darkness Down Your Spine', ()),
-            ('Earthquakes', 'Dances Up Earthquakes', ()),
-            ('Behemoth', 'Ember-Eyed Behemoth', ()),
-            ('Vigil', 'Hearth-Vigil', ()),
-            ('Gaze', 'Relentless Gaze of the Sun', ()),
-            ('Roots', 'Towering Roots of the Jungle', ()),
-            ('Voice', 'Wandering Voice Keens Delirium', ()),
-            ('Waters', 'Wounded Waters Bleeding', ()),
-        ],
-        'Apocrypha': [
-            ('Covets', 'Covets Gleaming Shards of Earth v1.2.1 [Apocrypha]', ()),
-            ('Rot', 'Spreading Rot Renews the Earth [Apocrypha]', ('Round Down',)),
-        ],
-        'Exploratory Testing': [
-            # Note that the template has logic to not show the base spirit for this category,
-            # because the base spirit is assumed to be in a different expansion.
-            # In other words, this category only shows aspects.
-            ('Shadows', 'Shadows Flicker Like Flame', ('Exploratory', )),
-            ('Bringer', 'Bringer of Dreams and Nightmares', ('Exploratory', )),
-        ],
-    }
-    spirits_present = [spirit for (expansion, spirits) in spirits_by_expansion.items() for (spirit, _, _) in spirits]
-    spirits = [s.name for s in Spirit.objects.order_by('name').all()]
-
-    # These messages are useful while in development;
-    # we expect that they do not get printed in production.
-    missing_spirits = set(spirits) - set(spirits_present)
-    if missing_spirits:
-        print(f"Warning: missing spirits {missing_spirits}")
-    unknown_spirits = set(spirits_present) - set(spirits)
-    if unknown_spirits:
-        print(f"Warning: unknown spirits {unknown_spirits}")
-
     tab_id = try_match_spirit(game, spirit_spec) or (game.gameplayer_set.first().id if game.gameplayer_set.exists() else None)
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
-    return render(request, 'game.html', { 'game': game, 'spirits_by_expansion': spirits_by_expansion, 'logs': logs, 'tab_id': tab_id })
+    return render(request, 'game.html', { 'game': game, 'logs': logs, 'tab_id': tab_id })
 
 def try_match_spirit(game, spirit_spec):
     if not spirit_spec:
@@ -1124,28 +1137,6 @@ def remove_element_permanent(request, player_id, element):
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
-
-def change_player_name(request, player_id):
-    player = get_object_or_404(GamePlayer, pk=player_id)
-    player.name = request.POST['name']
-    player.save()
-
-    compute_card_thresholds(player)
-    return with_log_trigger(render(request, 'name.html', {'player': player, 'success': True}))
-
-def change_player_color(request, player_id):
-    player = get_object_or_404(GamePlayer, pk=player_id)
-    # Validation is done by the model layer,
-    # as the field only allows the valid choices.
-    # It's allowed to use this to assign duplicate colours as well.
-    # A warning is shown in the UI,
-    # but only because duplicate colours might be confusing to the players.
-    # It makes no difference to the database.
-    # Thus, no further validation needed here.
-    player.color = request.POST['color']
-    player.save()
-
-    return with_log_trigger(render(request, 'color.html', {'player': player, 'success': True}))
 
 def tab(request, game_id, player_id):
     game = get_object_or_404(Game, pk=game_id)
