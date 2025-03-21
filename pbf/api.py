@@ -3,6 +3,7 @@ from typing import List
 from ninja import NinjaAPI
 from ninja import Field, ModelSchema
 import os
+import ipaddress
 from .models import Card, Game, GameLog, GamePlayer, GamePlayerImpendingWithEnergy, Presence, Spirit
 
 api = NinjaAPI()
@@ -67,18 +68,28 @@ class GameLogSchema(ModelSchema):
         model = GameLog
         model_fields = ['id', 'date', 'text', 'images']
 
+class InvalidIP(Exception):
+    pass
+
 def get_ip(request):
     if 'HTTP_X_FORWARDED_FOR' in request.META:
         return request.META["HTTP_X_FORWARDED_FOR"]
     else:
         return request.META["REMOTE_ADDR"]
 
+@api.exception_handler(InvalidIP)
+def on_invalid_ip(request, exc):
+    ip = get_ip(request)
+    return api.create_response(request, {"detail": f"Unauthenticated source IP: {ip}"}, status=401)
+
 def ip_whitelist(request):
-    ip = str(os.environ['OWN_IP'])
-    if ip is None:
-        ip = "127.0.0.1"
-    if get_ip(request) == ip:
-        return ip
+    ALLOWED_IPS = (os.getenv('ALLOWED_IPS') or '127.0.0.1').split(',')
+    ip_networks = [ipaddress.ip_network(allowed_ip.strip()) for allowed_ip in ALLOWED_IPS]
+    ip = get_ip(request)
+    for network in ip_networks:
+        if ipaddress.IPv4Address(ip) in network:
+            return ip
+    raise InvalidIP
 
 @api.get("/ip", auth=ip_whitelist)
 def ip(request):

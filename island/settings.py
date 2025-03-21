@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-$1nkg1t+jd(&$u1-!-hejbk)#)!x#m=%ly_i)pgwhg)h0qt!2k'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY') or 'django-insecure-$1nkg1t+jd(&$u1-!-hejbk)#)!x#m=%ly_i)pgwhg)h0qt!2k'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', '') == 'yes'
@@ -32,10 +32,13 @@ DEBUG = os.environ.get('DEBUG', '') == 'yes'
 ALLOWED_HOSTS = ['localhost', 'si.bitcrafter.net']
 
 if 'EXTRA_ALLOWED_HOSTS' in os.environ:
-    ALLOWED_HOSTS = ALLOWED_HOSTS + [os.environ['EXTRA_ALLOWED_HOSTS']]
+    ALLOWED_HOSTS.extend(os.environ['EXTRA_ALLOWED_HOSTS'].split(','))
 
 CSRF_TRUSTED_ORIGINS = ['https://si.bitcrafter.net']
 
+if 'EXTRA_ALLOWED_HOSTS' in os.environ:
+    for url in os.environ['EXTRA_ALLOWED_HOSTS'].split(','):
+        CSRF_TRUSTED_ORIGINS.extend([f'https://{url}', f'http://{url}'])
 
 # Application definition
 
