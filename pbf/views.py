@@ -437,9 +437,10 @@ def view_game(request, game_id):
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
     return render(request, 'game.html', { 'game': game, 'spirits_by_expansion': spirits_by_expansion, 'logs': logs })
 
-def draw_cards(request, game_id, type):
+def draw_cards(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
     cards_needed = int(request.POST['num_cards'])
+    type = request.POST['type']
     if cards_needed <= 0:
         return render(request, 'host_draw.html', {'msg': f"Can't draw {cards_needed} cards"})
 

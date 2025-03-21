@@ -136,7 +136,7 @@ class TestReshuffleOrNot(TestCase):
 
         discard_before = game.discard_pile.count()
 
-        client.post(f"/game/{game.id}/draw/major", {"num_cards": 4})
+        client.post(f"/game/{game.id}/draw", {"type": "major", "num_cards": 4})
 
         self.assertEqual(game.major_deck.count(), arbitrary_cards_in_deck - 4)
         self.assertEqual(game.discard_pile.count(), discard_before + 4)
@@ -147,7 +147,7 @@ class TestReshuffleOrNot(TestCase):
         remaining = list(game.major_deck.all())
         available_cards = game.major_deck.count() + game.discard_pile.count()
 
-        client.post(f"/game/{game.id}/draw/major", {"num_cards": 4})
+        client.post(f"/game/{game.id}/draw", {"type": "major", "num_cards": 4})
 
         self.assertEqual(game.major_deck.count(), available_cards - 4)
         discard = game.discard_pile.all()
@@ -160,7 +160,7 @@ class TestReshuffleOrNot(TestCase):
 
         available_cards = game.major_deck.count() + game.discard_pile.count()
 
-        client.post(f"/game/{game.id}/draw/major", {"num_cards": available_cards + 100})
+        client.post(f"/game/{game.id}/draw", {"type": "major", "num_cards": available_cards + 100})
 
         self.assertEqual(game.major_deck.count(), 0)
         self.assertEqual(game.discard_pile.count(), available_cards)
