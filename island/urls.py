@@ -14,6 +14,7 @@ urlpatterns = [
     path('screenshot/<str:filename>', views.view_screenshot, name='view_screenshot'),
     path('new', views.new_game, name='new_game'),
     path('game/<str:game_id>', views.view_game, name='view_game'),
+    path('game/<str:game_id>/spirit/<path:spirit_spec>', views.view_game, name='view_game'),
     path('game/<str:game_id>/logs', views.game_logs, name='game_logs'),
     path('game/<str:game_id>/unready', views.unready, name='unready'),
     path('game/<str:game_id>/time-passes', views.time_passes, name='time_passes'),

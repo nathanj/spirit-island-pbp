@@ -364,6 +364,15 @@
     <button class="btn" hx-get="{% url 'discard_pile' player.id %}">Show Power Discard Pile</button>
   </div>
 
+  <p>
+  Direct link to spirit:
+  <a href="{% if player.aspect %}{% url 'view_game' player.game.id player.aspect %}{% else %}{% url 'view_game' player.game.id player.spirit.name %}{% endif %}">by spirit</a>
+  {% if player.name %}
+  <a href="{% url 'view_game' player.game.id player.name %}">by player name</a>
+  {% endif %}
+  <a href="{% url 'view_game' player.game.id player.id %}">by ID</a>
+  </p>
+
   {% include "name.html" %}
   {% include "color.html" %}
 

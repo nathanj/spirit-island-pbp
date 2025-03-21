@@ -53,6 +53,76 @@ class TestSetupEnergyAndBaseGain(TestCase):
     def test_spirit_with_initial_2(self):
         s = self.assert_spirit("Waters", per_turn=0, setup=4)
 
+class TestMatchSpirit(TestCase):
+    from .views import try_match_spirit
+    try_match_spirit = staticmethod(try_match_spirit)
+
+    def setup_game(self, players):
+        game = Game()
+        game.save()
+        for player in players:
+            if isinstance(player, str):
+                spirit = player
+                aspect = None
+                name = ''
+            else:
+                spirit = player[0]
+                aspect = player[1] if len(player) >= 2 else None
+                name = player[2] if len(player) >= 3 else ''
+            player = GamePlayer(game=game, name=name, spirit=Spirit.objects.get(name=spirit), aspect=aspect)
+            player.save()
+        return (game, game.gameplayer_set.values_list('id', flat=True))
+
+    def test_no_match(self):
+        (game, ids) = self.setup_game(['River'])
+        self.assertEqual(self.try_match_spirit(game, 'hello'), None)
+
+    def test_cardinal_1(self):
+        (game, ids) = self.setup_game(['River', 'Lightning'])
+        self.assertEqual(self.try_match_spirit(game, '1'), ids[0])
+
+    def test_cardinal_2(self):
+        (game, ids) = self.setup_game(['River', 'Lightning'])
+        self.assertEqual(self.try_match_spirit(game, '2'), ids[1])
+
+    def test_by_id(self):
+        # consume some player IDs
+        self.setup_game(['River', 'Lightning'])
+        (game, ids) = self.setup_game(['Shadows'])
+        self.assertEqual(self.try_match_spirit(game, str(ids[0])), ids[0])
+
+    def test_spirit(self):
+        (game, ids) = self.setup_game(['River'])
+        self.assertEqual(self.try_match_spirit(game, 'River'), ids[0])
+
+    def test_aspect(self):
+        (game, ids) = self.setup_game([('River', 'Haven')])
+        self.assertEqual(self.try_match_spirit(game, 'Haven'), ids[0])
+
+    def test_base_is_preferred(self):
+        (game, ids) = self.setup_game([('River', 'Haven'), 'River'])
+        self.assertEqual(GamePlayer.objects.get(id=self.try_match_spirit(game, 'River')).aspect, None)
+        (game, ids) = self.setup_game(['River', ('River', 'Haven')])
+        self.assertEqual(GamePlayer.objects.get(id=self.try_match_spirit(game, 'River')).aspect, None)
+
+    def test_name(self):
+        (game, ids) = self.setup_game([('River', None, 'myname')])
+        self.assertEqual(self.try_match_spirit(game, 'myname'), ids[0])
+
+    def test_spirit_beats_name(self):
+        (game, ids) = self.setup_game([('River', None), ('Lightning', None, 'River')])
+        self.assertEqual(GamePlayer.objects.get(id=self.try_match_spirit(game, 'River')).spirit.name, 'River')
+
+    def test_partial_name(self):
+        (game, ids) = self.setup_game([('River', None, 'name1')])
+        self.assertEqual(self.try_match_spirit(game, 'name'), ids[0])
+
+    def test_exact_name_beats_partial_name(self):
+        (game, ids) = self.setup_game([('River', None, 'name1'), ('Lightning', None, 'name')])
+        self.assertEqual(GamePlayer.objects.get(id=self.try_match_spirit(game, 'name')).name, 'name')
+        (game, ids) = self.setup_game([('River', None, 'name'), ('Lightning', None, 'name1')])
+        self.assertEqual(GamePlayer.objects.get(id=self.try_match_spirit(game, 'name')).name, 'name')
+
 class TestReshuffleOrNot(TestCase):
     def setup_game(self, cards_in_deck):
         client = Client()

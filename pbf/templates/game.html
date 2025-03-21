@@ -22,7 +22,7 @@
 	{% endif %}
 
 	{% if game.gameplayer_set.count > 0 %}
-	<div id="tabs" hx-get="{% url 'tab' game.id game.gameplayer_set.first.id %}" hx-trigger="load after:100ms" hx-target="#tabs" hx-swap="innerHTML"></div>
+	<div id="tabs" hx-get="{% url 'tab' game.id tab_id %}" hx-trigger="load after:100ms" hx-target="#tabs" hx-swap="innerHTML"></div>
 	{% endif %}
 
 	<hr />

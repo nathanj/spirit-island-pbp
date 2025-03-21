@@ -334,7 +334,7 @@ def add_player(request, game_id):
 
     return redirect(reverse('view_game', args=[game.id]))
 
-def view_game(request, game_id):
+def view_game(request, game_id, spirit_spec=None):
     game = get_object_or_404(Game, pk=game_id)
     if request.method == 'POST':
         if 'screenshot' in request.FILES:
@@ -342,13 +342,13 @@ def view_game(request, game_id):
             if form.is_valid():
                 form.save()
                 add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot.url)
-                return redirect(reverse('view_game', args=[game.id]))
+                return redirect(reverse('view_game', args=[game.id, spirit_spec]))
         if 'screenshot2' in request.FILES:
             form = GameForm2(request.POST, request.FILES, instance=game)
             if form.is_valid():
                 form.save()
                 add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot2.url)
-                return redirect(reverse('view_game', args=[game.id]))
+                return redirect(reverse('view_game', args=[game.id, spirit_spec]))
 
     spirits_by_expansion = {
         # Short name, full name, aspects (if any)
@@ -434,8 +434,42 @@ def view_game(request, game_id):
     if unknown_spirits:
         print(f"Warning: unknown spirits {unknown_spirits}")
 
+    tab_id = try_match_spirit(game, spirit_spec) or (game.gameplayer_set.first().id if game.gameplayer_set.exists() else None)
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
-    return render(request, 'game.html', { 'game': game, 'spirits_by_expansion': spirits_by_expansion, 'logs': logs })
+    return render(request, 'game.html', { 'game': game, 'spirits_by_expansion': spirits_by_expansion, 'logs': logs, 'tab_id': tab_id })
+
+def try_match_spirit(game, spirit_spec):
+    if not spirit_spec:
+        return None
+
+    if spirit_spec.isnumeric():
+        spirit_spec = int(spirit_spec)
+        player_ids = game.gameplayer_set.values_list('id', flat=True)
+        if 1 <= spirit_spec <= len(player_ids):
+            return player_ids[spirit_spec - 1]
+        elif spirit_spec in player_ids:
+            return spirit_spec
+    else:
+        aspect_match = game.gameplayer_set.filter(aspect__iexact=spirit_spec)
+        if aspect_match.exists():
+            return aspect_match.first().id
+        # prefer the base spirit if they search for a spirit name,
+        # in case there is one base and one aspected spirit in the same game.
+        base_spirit_match = game.gameplayer_set.filter(spirit__name__iexact=spirit_spec, aspect=None)
+        if base_spirit_match.exists():
+            return base_spirit_match.first().id
+        spirit_match = game.gameplayer_set.filter(spirit__name__iexact=spirit_spec)
+        if spirit_match.exists():
+            return spirit_match.first().id
+
+        # look for an exact match first, in case someone's name is a substring of another
+        # on the other hand, if someone's name is exactly a spirit or aspect's name, not much we can do!
+        player_exact_match = game.gameplayer_set.filter(name__iexact=spirit_spec)
+        if player_exact_match.exists():
+            return player_exact_match.first().id
+        player_match = game.gameplayer_set.filter(name__icontains=spirit_spec)
+        if player_match.exists():
+            return player_match.first().id
 
 def draw_cards(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
