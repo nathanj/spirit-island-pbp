@@ -136,7 +136,12 @@ async def on_message(message):
         if not guid:
             await message.channel.send(f"That doesn't look like a game URL. Did you provide the full URL https://{GAME_URL}/game/abcd1234... ?")
             return
-        await message.pin()
+        try:
+            await message.pin()
+        except discord.Forbidden:
+            await message.channel.send("I don't have permission to pin messages, so you'll have to pin the link yourself, but I'll still relay game logs.")
+        except discord.HTTPException:
+            await message.channel.send("Failed to pin the message due to an HTTP error, so you'll have to pin the link yourself, but I'll still relay game logs.")
     if message.content.startswith('$help'):
         # The message starts with the specified word
         LOG.msg(f'$help called')
