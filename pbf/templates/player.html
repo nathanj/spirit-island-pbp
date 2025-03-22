@@ -274,16 +274,15 @@
 	    <div class="card p-0 m-5 m-md-10" {% if i.in_play %}style="background-color: #040;"{% endif %}>
 	      <img src="{% static i.card.url %}" class="img-fluid rounded-top" alt="{{i.card.name}}">
 	      <div class="text-center pb-5">
-		    <button class="btn" hx-get="{% url 'add_energy_to_impending' player.id i.card.id %}" {% if i.in_play or i.energy >= i.card.cost %}disabled{% endif %}>+1</button>
-        {# TODO: cost needs to be adjusted for fast cards in Blitz #}
-			{% if i.energy >= i.card.cost %}
+		    <button class="btn" hx-get="{% url 'add_energy_to_impending' player.id i.card.id %}" {% if i.in_play or i.energy >= i.cost_with_scenario %}disabled{% endif %}>+1</button>
+			{% if i.energy >= i.cost_with_scenario %}
 				{% if i.in_play %}
 					<button class="btn" hx-get="{% url 'unplay_from_impending' player.id i.card.id %}">Unplay</button>
 				{% else %}
 		   			<button class="btn" hx-get="{% url 'play_from_impending' player.id i.card.id %}">Play</button>
 				{% endif %}
 			{% else %}
-				<button class="btn" disabled>{{ i.energy }} / {{ i.card.cost }}</button>
+				<button class="btn" disabled>{{ i.energy }} / {{ i.cost_with_scenario }}</button>
 			{% endif %}
 		    <button class="btn" hx-get="{% url 'remove_energy_from_impending' player.id i.card.id %}" {% if i.in_play or i.energy <= 0 %}disabled{% endif %}>-1</button>
 	      </div>

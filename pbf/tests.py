@@ -506,3 +506,37 @@ class TestImpending(TestCase):
         client.post(f"/game/{player.id}/discard/all")
         client.post(f"/game/{player.id}/gain_energy_on_impending")
         self.assert_impending_energy(player, [3])
+
+    def test_plus_two_capped_at_cost_blitz_fast(self):
+        client, player = self.setup_players()
+        player.game.scenario = 'Blitz'
+        player.game.save()
+
+        cards = [card.id for card in player.hand.all() if card.cost == 3 and card.speed == Card.FAST]
+
+        client.post(f"/game/{player.id}/impend/{cards[0]}")
+        self.assert_impending_energy(player, [0])
+        client.post(f"/game/{player.id}/discard/all")
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player, [1])
+        player.presence_set.filter(energy="Impend2").update(opacity=0.0)
+        client.post(f"/game/{player.id}/discard/all")
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player, [2])
+
+    def test_plus_two_capped_at_cost_blitz_slow(self):
+        client, player = self.setup_players()
+        player.game.scenario = 'Blitz'
+        player.game.save()
+
+        cards = [card.id for card in player.hand.all() if card.cost == 2 and card.speed == Card.SLOW]
+
+        client.post(f"/game/{player.id}/impend/{cards[0]}")
+        self.assert_impending_energy(player, [0])
+        client.post(f"/game/{player.id}/discard/all")
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player, [1])
+        player.presence_set.filter(energy="Impend2").update(opacity=0.0)
+        client.post(f"/game/{player.id}/discard/all")
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player, [2])

@@ -786,8 +786,7 @@ def gain_energy_on_impending(request, player_id):
         # There's no real harm in letting it exceed the cost
         # (the UI will still let you play it),
         # it's just that undoing it will require extra clicks on the -1.
-        # TODO: cost needs to be adjusted for fast cards in Blitz
-        impending.energy = min(impending.energy + to_gain, impending.card.cost)
+        impending.energy = min(impending.energy + to_gain, impending.cost_with_scenario)
         impending.save()
     player.spirit_specific_per_turn_flags |= GamePlayer.SPIRIT_SPECIFIC_INCREMENTED_THIS_TURN
     player.save()
@@ -817,8 +816,7 @@ def add_energy_to_impending(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.impending_with_energy, pk=card_id)
     impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
-    # TODO: cost needs to be adjusted for fast cards in Blitz
-    if not impending_with_energy.in_play and impending_with_energy.energy < card.cost:
+    if not impending_with_energy.in_play and impending_with_energy.energy < impending_with_energy.cost_with_scenario:
         impending_with_energy.energy += 1
         impending_with_energy.save()
 
@@ -840,8 +838,7 @@ def play_from_impending(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.impending_with_energy, pk=card_id)
     impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
-    # TODO: cost needs to be adjusted for fast cards in Blitz
-    if not impending_with_energy.in_play and impending_with_energy.energy >= card.cost:
+    if not impending_with_energy.in_play and impending_with_energy.energy >= impending_with_energy.cost_with_scenario:
         impending_with_energy.in_play = True
         impending_with_energy.save()
 
