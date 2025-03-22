@@ -31,12 +31,14 @@
 
 	<form enctype="multipart/form-data" method="post" action="{% url 'add_screenshot' game.id %}">
 	  {% csrf_token %}
+    {% if spirit_spec %}<input type="hidden" name="spirit_spec" value="{{spirit_spec}}">{% endif %}
 	  <input type="file" name="screenshot" accept="image/*" id="id_screenshot">
 	  <button type="submit" class="btn">Upload Screenshot</button>
 	</form>
 
 	<form enctype="multipart/form-data" method="post" action="{% url 'add_screenshot' game.id %}">
 	  {% csrf_token %}
+    {% if spirit_spec %}<input type="hidden" name="spirit_spec" value="{{spirit_spec}}">{% endif %}
 	  <input type="file" name="screenshot2" accept="image/*" id="id_screenshot2">
 	  <button type="submit" class="btn">Upload Screenshot 2</button>
 	</form>

@@ -437,22 +437,24 @@ def add_player(request, game_id):
 def view_game(request, game_id, spirit_spec=None):
     game = get_object_or_404(Game, pk=game_id)
     if request.method == 'POST':
+        if 'spirit_spec' in request.POST:
+            spirit_spec = request.POST['spirit_spec']
         if 'screenshot' in request.FILES:
             form = GameForm(request.POST, request.FILES, instance=game)
             if form.is_valid():
                 form.save()
                 add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot.url)
-                return redirect(reverse('view_game', args=[game.id, spirit_spec]))
+                return redirect(reverse('view_game', args=[game.id, spirit_spec] if spirit_spec else [game.id]))
         if 'screenshot2' in request.FILES:
             form = GameForm2(request.POST, request.FILES, instance=game)
             if form.is_valid():
                 form.save()
                 add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot2.url)
-                return redirect(reverse('view_game', args=[game.id, spirit_spec]))
+                return redirect(reverse('view_game', args=[game.id, spirit_spec] if spirit_spec else [game.id]))
 
     tab_id = try_match_spirit(game, spirit_spec) or (game.gameplayer_set.first().id if game.gameplayer_set.exists() else None)
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
-    return render(request, 'game.html', { 'game': game, 'logs': logs, 'tab_id': tab_id })
+    return render(request, 'game.html', { 'game': game, 'logs': logs, 'tab_id': tab_id, 'spirit_spec': spirit_spec })
 
 def try_match_spirit(game, spirit_spec):
     if not spirit_spec:
