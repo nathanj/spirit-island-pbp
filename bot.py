@@ -132,10 +132,10 @@ async def on_message(message):
     parts = message.content.split()
     if len(parts) >= 2 and parts[0] == '$follow':
         argument = parts[1]
-        await message.pin()
         guid = await updatethings(message.channel, argument)
         if not guid:
             await message.channel.send(f"That doesn't look like a game URL. Did you provide the full URL https://{GAME_URL}/game/abcd1234... ?")
+        await message.pin()
     if message.content.startswith('$help'):
         # The message starts with the specified word
         LOG.msg(f'$help called')
