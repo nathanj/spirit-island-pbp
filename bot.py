@@ -135,6 +135,7 @@ async def on_message(message):
         guid = await updatethings(message.channel, argument)
         if not guid:
             await message.channel.send(f"That doesn't look like a game URL. Did you provide the full URL https://{GAME_URL}/game/abcd1234... ?")
+            return
         await message.pin()
     if message.content.startswith('$help'):
         # The message starts with the specified word
