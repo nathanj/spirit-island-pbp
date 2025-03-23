@@ -411,6 +411,9 @@ class TestImpending(TestCase):
     def assert_impending_energy(self, player, expected):
         self.assertEqual(list(player.gameplayerimpendingwithenergy_set.values_list('energy', flat=True)), expected)
 
+    def assert_impending_in_play(self, player, expected):
+        self.assertEqual(list(player.gameplayerimpendingwithenergy_set.values_list('in_play', flat=True)), expected)
+
     def test_this_turn_doesnt_gain_energy(self):
         client, player = self.setup_players()
 
@@ -420,6 +423,15 @@ class TestImpending(TestCase):
         self.assert_impending_energy(player, [0])
         client.post(f"/game/{player.id}/gain_energy_on_impending")
         self.assert_impending_energy(player, [0])
+
+    def test_this_turn_doesnt_autoplay(self):
+        client, player = self.setup_players()
+
+        cards = player.hand.filter(cost=0).values_list('id', flat=True)
+
+        client.post(f"/game/{player.id}/impend/{cards[0]}")
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_in_play(player, [False])
 
     def test_previous_turn_does_gain_energy(self):
         client, player = self.setup_players()
@@ -431,6 +443,28 @@ class TestImpending(TestCase):
         client.post(f"/game/{player.id}/discard/all")
         client.post(f"/game/{player.id}/gain_energy_on_impending")
         self.assert_impending_energy(player, [1])
+
+    def test_previous_turn_1_does_autoplay(self):
+        client, player = self.setup_players()
+
+        cards = player.hand.filter(cost=1).values_list('id', flat=True)
+
+        client.post(f"/game/{player.id}/impend/{cards[0]}")
+        client.post(f"/game/{player.id}/discard/all")
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player, [1])
+        self.assert_impending_in_play(player, [True])
+
+    def test_previous_turn_2_doesnt_autoplay(self):
+        client, player = self.setup_players()
+
+        cards = player.hand.filter(cost=2).values_list('id', flat=True)
+
+        client.post(f"/game/{player.id}/impend/{cards[0]}")
+        client.post(f"/game/{player.id}/discard/all")
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        self.assert_impending_energy(player, [1])
+        self.assert_impending_in_play(player, [False])
 
     def test_two_of_each(self):
         client, player = self.setup_players()
