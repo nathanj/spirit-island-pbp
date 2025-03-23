@@ -414,7 +414,7 @@ class TestImpending(TestCase):
     def test_this_turn_doesnt_gain_energy(self):
         client, player = self.setup_players()
 
-        cards = [card.id for card in player.hand.all() if card.cost != 0]
+        cards = player.hand.exclude(cost=0).values_list('id', flat=True)
 
         client.post(f"/game/{player.id}/impend/{cards[0]}")
         self.assert_impending_energy(player, [0])
@@ -424,7 +424,7 @@ class TestImpending(TestCase):
     def test_previous_turn_does_gain_energy(self):
         client, player = self.setup_players()
 
-        cards = [card.id for card in player.hand.all() if card.cost != 0]
+        cards = player.hand.exclude(cost=0).values_list('id', flat=True)
 
         client.post(f"/game/{player.id}/impend/{cards[0]}")
         self.assert_impending_energy(player, [0])
@@ -435,7 +435,7 @@ class TestImpending(TestCase):
     def test_two_of_each(self):
         client, player = self.setup_players()
 
-        cards = [card.id for card in player.hand.all() if card.cost != 0]
+        cards = list(player.hand.exclude(cost=0).values_list('id', flat=True))
 
         client.post(f"/game/{player.id}/impend/{cards[0]}")
         client.post(f"/game/{player.id}/impend/{cards[1]}")
@@ -450,7 +450,7 @@ class TestImpending(TestCase):
     def test_energy_gain_different_players(self):
         client, player1, player2 = self.setup_players(2)
 
-        cards = [card.id for card in player1.hand.all() if card.cost != 0]
+        cards = player1.hand.exclude(cost=0).values_list('id', flat=True)
 
         client.post(f"/game/{player1.id}/impend/{cards[0]}")
         self.assert_impending_energy(player1, [0])
@@ -468,7 +468,7 @@ class TestImpending(TestCase):
     def test_gain_multiple_turns(self):
         client, player = self.setup_players()
 
-        cards = [card.id for card in player.hand.all() if card.cost >= 2]
+        cards = player.hand.filter(cost__gte=2).values_list('id', flat=True)
 
         client.post(f"/game/{player.id}/impend/{cards[0]}")
         self.assert_impending_energy(player, [0])
@@ -482,7 +482,7 @@ class TestImpending(TestCase):
     def test_plus_two_energy(self):
         client, player = self.setup_players()
 
-        cards = [card.id for card in player.hand.all() if card.cost >= 2]
+        cards = player.hand.filter(cost__gte=2).values_list('id', flat=True)
 
         player.presence_set.filter(energy="Impend2").update(opacity=0.0)
 
@@ -495,7 +495,7 @@ class TestImpending(TestCase):
     def test_plus_two_capped_at_cost(self):
         client, player = self.setup_players()
 
-        cards = [card.id for card in player.hand.all() if card.cost == 3]
+        cards = player.hand.filter(cost=3).values_list('id', flat=True)
 
         player.presence_set.filter(energy="Impend2").update(opacity=0.0)
 
@@ -512,7 +512,7 @@ class TestImpending(TestCase):
         player.game.scenario = 'Blitz'
         player.game.save()
 
-        cards = [card.id for card in player.hand.all() if card.cost == 3 and card.speed == Card.FAST]
+        cards = player.hand.filter(cost=3, speed=Card.FAST).values_list('id', flat=True)
 
         client.post(f"/game/{player.id}/impend/{cards[0]}")
         self.assert_impending_energy(player, [0])
@@ -529,7 +529,7 @@ class TestImpending(TestCase):
         player.game.scenario = 'Blitz'
         player.game.save()
 
-        cards = [card.id for card in player.hand.all() if card.cost == 2 and card.speed == Card.SLOW]
+        cards = player.hand.filter(cost=2, speed=Card.SLOW).values_list('id', flat=True)
 
         client.post(f"/game/{player.id}/impend/{cards[0]}")
         self.assert_impending_energy(player, [0])
