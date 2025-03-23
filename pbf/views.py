@@ -952,10 +952,8 @@ def compute_card_thresholds(player):
 def gain_energy_on_impending(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     to_gain = player.impending_energy()
-    for impending in player.gameplayerimpendingwithenergy_set.all():
-        if impending.this_turn:
-            # You only gain energy on cards made impending on previous turns.
-            continue
+    # You only gain energy on cards made impending on previous turns.
+    for impending in player.gameplayerimpendingwithenergy_set.filter(this_turn=False):
         # Let's cap the energy at the cost of the card.
         # There's no real harm in letting it exceed the cost
         # (the UI will still let you play it),
