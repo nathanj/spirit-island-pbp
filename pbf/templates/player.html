@@ -288,7 +288,7 @@
 	      </div>
 	      <div class="text-center pb-5">
 		    <button class="btn" hx-get="{% url 'unimpend_card' player.id i.card.id %}">Unimpend</button>
-		    <button class="btn" hx-get="{% url 'forget_card' player.id i.card.id %}">Forget</button>
+		    <button class="btn" hx-get="{% url 'forget_card' player.id i.card.id %}" hx-confirm="Are you sure?">Forget</button>
 	      </div>
 	    </div>
 	  </div>
