@@ -786,7 +786,10 @@ def gain_energy_on_impending(request, player_id):
         # There's no real harm in letting it exceed the cost
         # (the UI will still let you play it),
         # it's just that undoing it will require extra clicks on the -1.
-        impending.energy = min(impending.energy + to_gain, impending.cost_with_scenario)
+        impending.energy += to_gain
+        if impending.energy >= impending.cost_with_scenario:
+            impending.energy = impending.cost_with_scenario
+            impending.in_play = True
         impending.save()
     player.spirit_specific_per_turn_flags |= GamePlayer.SPIRIT_SPECIFIC_INCREMENTED_THIS_TURN
     player.save()
