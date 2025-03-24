@@ -11,12 +11,12 @@
 	  <div class="card p-0 m-15">
 	    <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	    <div class="text-center pb-5">
-	      <button class="btn" hx-get="{% url 'choose_from_discard' player.id card.id %}">Take</button>
+	      <{{button_or_a}} class="btn" hx-get="{% url 'choose_from_discard' player.id card.id %}">Take</{{button_or_a}}>
 	      {% if player.spirit.name == 'Fractured' %}
-	      <button class="btn" hx-get="{% url 'send_days' player.id card.id %}">Days</button>
+	      <{{button_or_a}} class="btn" hx-get="{% url 'send_days' player.id card.id %}">Days</{{button_or_a}}>
 	      {% endif %}
 	      {% if card.can_return_to_deck %}
-	      <button class="btn" hx-get="{% url 'return_to_deck' player.id card.id %}" hx-confirm="This will shuffle the card back into its power card deck. Are you sure?">Deck</button>
+	      <{{button_or_a}} class="btn" hx-get="{% url 'return_to_deck' player.id card.id %}" hx-confirm="This will shuffle the card back into its power card deck. Are you sure?">Deck</{{button_or_a}}>
 	      {% endif %}
 	    </div>
 	  </div>
