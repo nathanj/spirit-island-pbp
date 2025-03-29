@@ -268,11 +268,18 @@
   <ul>
     <div class="container-fluid">
       <div class="row">
-	{% for i in player.gameplayerimpendingwithenergy_set.all %}
+	{% for i in player.computed_impending %}
 	<div class="col-auto">
 	  <div class="w-100 w-md-200 mw-full">
 	    <div class="card p-0 m-5 m-md-10" {% if i.in_play %}style="background-color: #040;"{% endif %}>
-	      <img src="{% static i.card.url %}" class="img-fluid rounded-top" alt="{{i.card.name}}">
+	      <div style="position: relative">
+
+		{% for threshold in i.card.computed_thresholds %}
+		<img style="position: absolute; left: {{threshold.x}}%; top: {{threshold.y}}%; width: 2vmin; height: 2vmin;" src="{% if threshold.achieved %}{% static "pbf/green.png" %}{% else %}{% static "pbf/red.svg" %}{% endif %}" />
+		{% endfor %}
+
+		<img src="{% static i.card.url %}" class="img-fluid rounded-top" alt="{{i.card.name}}">
+	      </div>
 	      <div class="text-center pb-5">
 		    <button class="btn" hx-get="{% url 'add_energy_to_impending' player.id i.card.id %}" {% if i.in_play or i.energy >= i.cost_with_scenario %}disabled{% endif %}>+1</button>
 			{% if i.energy >= i.cost_with_scenario %}
