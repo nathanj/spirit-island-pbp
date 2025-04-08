@@ -1,4 +1,5 @@
 import os
+import sys
 import discord
 import requests
 import asyncio
@@ -57,10 +58,44 @@ energy_to_discord_map = {}
 
 load_dotenv()
 
-intents = discord.Intents.default()
-intents.message_content = True
+if '--fake-discord' in sys.argv:
+    class Client:
+        class Guild:
+            def __init__(self):
+                self.emojis = {}
 
-client = discord.Client(intents=intents)
+        class Channel:
+            def __init__(self, id):
+                self.id = id
+
+            async def send(self, msg, file=None):
+                if file:
+                    print(f"send f{self.id}: {msg} file: {file.filename}")
+                else:
+                    print(f"send f{self.id}: {msg}")
+
+        def event(self, f):
+            return f
+
+        def run(self, guild):
+            print(f"fake client for {guild}")
+            asyncio.run(on_ready())
+
+        async def wait_until_ready(self):
+            pass
+
+        def get_guild(self, _):
+            return self.Guild()
+
+        def get_channel(self, id):
+            return self.Channel(id)
+
+    client = Client()
+else:
+    intents = discord.Intents.default()
+    intents.message_content = True
+
+    client = discord.Client(intents=intents)
 
 LOG = structlog.get_logger()
 debug = os.environ.get('DEBUG', None) == 'yes'
