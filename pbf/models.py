@@ -490,6 +490,10 @@ class GamePlayerImpendingWithEnergy(models.Model):
     class Meta:
         db_table = "pbf_gameplayer_impending_with_energy"
 
+    @property
+    def cost_with_scenario(self):
+        return self.card.cost - (1 if self.card.speed == Card.FAST and self.gameplayer.game.scenario == 'Blitz' else 0)
+
 spirit_thresholds = {
         'EnticingBringer': [
             (360, 450, '2M2A'),

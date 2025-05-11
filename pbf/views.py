@@ -437,22 +437,24 @@ def add_player(request, game_id):
 def view_game(request, game_id, spirit_spec=None):
     game = get_object_or_404(Game, pk=game_id)
     if request.method == 'POST':
+        if 'spirit_spec' in request.POST:
+            spirit_spec = request.POST['spirit_spec']
         if 'screenshot' in request.FILES:
             form = GameForm(request.POST, request.FILES, instance=game)
             if form.is_valid():
                 form.save()
                 add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot.url)
-                return redirect(reverse('view_game', args=[game.id, spirit_spec]))
+                return redirect(reverse('view_game', args=[game.id, spirit_spec] if spirit_spec else [game.id]))
         if 'screenshot2' in request.FILES:
             form = GameForm2(request.POST, request.FILES, instance=game)
             if form.is_valid():
                 form.save()
                 add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot2.url)
-                return redirect(reverse('view_game', args=[game.id, spirit_spec]))
+                return redirect(reverse('view_game', args=[game.id, spirit_spec] if spirit_spec else [game.id]))
 
     tab_id = try_match_spirit(game, spirit_spec) or (game.gameplayer_set.first().id if game.gameplayer_set.exists() else None)
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
-    return render(request, 'game.html', { 'game': game, 'logs': logs, 'tab_id': tab_id })
+    return render(request, 'game.html', { 'game': game, 'logs': logs, 'tab_id': tab_id, 'spirit_spec': spirit_spec })
 
 def try_match_spirit(game, spirit_spec):
     if not spirit_spec:
@@ -772,6 +774,10 @@ def compute_card_thresholds(player):
         if card.is_healing():
             card.computed_thresholds.extend(card.healing_thresholds(player.healing.count(), player.spirit_specific_resource_elements()))
         player.selection_cards.append(card)
+    # we could just unconditionally set this, but I guess we'll save a database query if they're not Dances Up Earthquakes.
+    player.computed_impending = player.gameplayerimpendingwithenergy_set.all() if player.spirit.name == 'Earthquakes' else []
+    for imp in player.computed_impending:
+        imp.card.computed_thresholds = imp.card.thresholds(player.elements, equiv_elements)
 
 def gain_energy_on_impending(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -784,8 +790,10 @@ def gain_energy_on_impending(request, player_id):
         # There's no real harm in letting it exceed the cost
         # (the UI will still let you play it),
         # it's just that undoing it will require extra clicks on the -1.
-        # TODO: cost needs to be adjusted for fast cards in Blitz
-        impending.energy = min(impending.energy + to_gain, impending.card.cost)
+        impending.energy += to_gain
+        if impending.energy >= impending.cost_with_scenario:
+            impending.energy = impending.cost_with_scenario
+            impending.in_play = True
         impending.save()
     player.spirit_specific_per_turn_flags |= GamePlayer.SPIRIT_SPECIFIC_INCREMENTED_THIS_TURN
     player.save()
@@ -815,8 +823,7 @@ def add_energy_to_impending(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.impending_with_energy, pk=card_id)
     impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
-    # TODO: cost needs to be adjusted for fast cards in Blitz
-    if not impending_with_energy.in_play and impending_with_energy.energy < card.cost:
+    if not impending_with_energy.in_play and impending_with_energy.energy < impending_with_energy.cost_with_scenario:
         impending_with_energy.energy += 1
         impending_with_energy.save()
 
@@ -838,8 +845,7 @@ def play_from_impending(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.impending_with_energy, pk=card_id)
     impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
-    # TODO: cost needs to be adjusted for fast cards in Blitz
-    if not impending_with_energy.in_play and impending_with_energy.energy >= card.cost:
+    if not impending_with_energy.in_play and impending_with_energy.energy >= impending_with_energy.cost_with_scenario:
         impending_with_energy.in_play = True
         impending_with_energy.save()
 
@@ -1013,7 +1019,6 @@ def change_energy(request, player_id, amount):
     player.energy += amount
     player.save()
 
-    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
 def pay_energy(request, player_id):
@@ -1023,7 +1028,6 @@ def pay_energy(request, player_id):
     player.paid_this_turn = True
     player.save()
 
-    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
 def gain_energy(request, player_id):
@@ -1033,7 +1037,6 @@ def gain_energy(request, player_id):
     player.gained_this_turn = True
     player.save()
 
-    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
 def change_spirit_specific_resource(request, player_id, amount):
@@ -1045,9 +1048,6 @@ def change_spirit_specific_resource(request, player_id, amount):
     elif amount < 0:
         player.spirit_specific_per_turn_flags |= GamePlayer.SPIRIT_SPECIFIC_DECREMENTED_THIS_TURN
     player.save()
-
-    # As of this writing, no resource affects card thresholds.
-    # compute_card_thresholds(player)
 
     # The spirit-specific resource is displayed in energy.html,
     # because some of them can change simultaneously with energy (e.g. Rot).
