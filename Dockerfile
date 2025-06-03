@@ -40,4 +40,5 @@ ENV PATH="/app:$PATH"
 # test the app and its alias
 RUN app test
 
+HEALTHCHECK CMD curl --fail http://localhost:8000 || echo 1
 ENTRYPOINT ["entrypoint.sh"]
