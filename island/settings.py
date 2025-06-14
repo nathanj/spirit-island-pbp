@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     #'debug_toolbar',
     'django_prometheus',
     'pbf',
+    'django_cleanup.apps.CleanupConfig',
 ]
 
 MIDDLEWARE = [
