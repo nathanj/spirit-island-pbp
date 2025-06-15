@@ -70,9 +70,9 @@ if '--fake-discord' in sys.argv:
 
             async def send(self, msg, file=None):
                 if file:
-                    print(f"send f{self.id}: {msg} file: {file.filename}")
+                    print(f"send {self.id}: {msg} file: {file.filename}")
                 else:
-                    print(f"send f{self.id}: {msg}")
+                    print(f"send {self.id}: {msg}")
 
         def event(self, f):
             return f
