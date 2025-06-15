@@ -144,9 +144,10 @@ async def updatethings(after,topic):
     guid = match_game_url(topic)
     if guid is not None:
         LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
-        await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
         r = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}')
         LOG.msg(r)
+        if r.status_code == 200:
+            await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
         return r.status_code
 
 @client.event
