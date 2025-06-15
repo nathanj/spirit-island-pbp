@@ -123,9 +123,9 @@ def combine_images(filenames):
 
 @client.event
 async def on_ready():
-    await asyncio.create_task(logger())
-    #await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, status="a movie"))
     LOG.msg(f'We have logged in as {client}')
+    #await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, status="a movie"))
+    await asyncio.create_task(logger())
 
 def match_game_url(s):
     """
