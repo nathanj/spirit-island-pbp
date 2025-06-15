@@ -147,7 +147,7 @@ async def updatethings(after,topic):
         await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
         r = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}')
         LOG.msg(r)
-        return guid
+        return r.status_code
 
 @client.event
 async def on_guild_channel_update(before, after):
@@ -158,7 +158,9 @@ async def on_guild_channel_update(before, after):
         LOG.msg(f'before topic: {before.topic}')
         LOG.msg(f'after  topic: {after.topic}')
         if before.topic != after.topic:
-            await updatethings(after, after.topic)
+            status = await updatethings(after, after.topic)
+            if status and status != 200:
+                await after.send(f"Couldn't link the channel to the game ({status}). The bot owner needs to check the logs for the site API and/or bot")
 
 @client.event
 async def on_message(message):
@@ -167,9 +169,12 @@ async def on_message(message):
     parts = message.content.split()
     if len(parts) >= 2 and parts[0] == '$follow':
         argument = parts[1]
-        guid = await updatethings(message.channel, argument)
-        if not guid:
+        status = await updatethings(message.channel, argument)
+        if not status:
             await message.channel.send(f"That doesn't look like a game URL. Did you provide the full URL https://{GAME_URL}/game/abcd1234... ?")
+            return
+        elif status != 200:
+            await message.channel.send(f"Couldn't link the channel to the game ({status}). The bot owner needs to check the logs for the site API and/or bot")
             return
         try:
             await message.pin()
