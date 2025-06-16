@@ -1,4 +1,5 @@
 import os
+import sys
 import discord
 import requests
 import asyncio
@@ -57,10 +58,44 @@ energy_to_discord_map = {}
 
 load_dotenv()
 
-intents = discord.Intents.default()
-intents.message_content = True
+if '--fake-discord' in sys.argv:
+    class Client:
+        class Guild:
+            def __init__(self):
+                self.emojis = {}
 
-client = discord.Client(intents=intents)
+        class Channel:
+            def __init__(self, id):
+                self.id = id
+
+            async def send(self, msg, file=None):
+                if file:
+                    print(f"send {self.id}: {msg} file: {file.filename}")
+                else:
+                    print(f"send {self.id}: {msg}")
+
+        def event(self, f):
+            return f
+
+        def run(self, guild):
+            print(f"fake client for {guild}")
+            asyncio.run(on_ready())
+
+        async def wait_until_ready(self):
+            pass
+
+        def get_guild(self, _):
+            return self.Guild()
+
+        def get_channel(self, id):
+            return self.Channel(id)
+
+    client = Client()
+else:
+    intents = discord.Intents.default()
+    intents.message_content = True
+
+    client = discord.Client(intents=intents)
 
 LOG = structlog.get_logger()
 debug = os.environ.get('DEBUG', None) == 'yes'
@@ -88,9 +123,9 @@ def combine_images(filenames):
 
 @client.event
 async def on_ready():
-    await asyncio.create_task(logger())
-    #await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, status="a movie"))
     LOG.msg(f'We have logged in as {client}')
+    #await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, status="a movie"))
+    await asyncio.create_task(logger())
 
 def match_game_url(s):
     """
@@ -109,10 +144,11 @@ async def updatethings(after,topic):
     guid = match_game_url(topic)
     if guid is not None:
         LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
-        await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
         r = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}')
         LOG.msg(r)
-        return guid
+        if r.status_code == 200:
+            await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
+        return r.status_code
 
 @client.event
 async def on_guild_channel_update(before, after):
@@ -123,7 +159,9 @@ async def on_guild_channel_update(before, after):
         LOG.msg(f'before topic: {before.topic}')
         LOG.msg(f'after  topic: {after.topic}')
         if before.topic != after.topic:
-            await updatethings(after, after.topic)
+            status = await updatethings(after, after.topic)
+            if status and status != 200:
+                await after.send(f"Couldn't link the channel to the game ({status}). The bot owner needs to check the logs for the site API and/or bot")
 
 @client.event
 async def on_message(message):
@@ -132,9 +170,12 @@ async def on_message(message):
     parts = message.content.split()
     if len(parts) >= 2 and parts[0] == '$follow':
         argument = parts[1]
-        guid = await updatethings(message.channel, argument)
-        if not guid:
+        status = await updatethings(message.channel, argument)
+        if not status:
             await message.channel.send(f"That doesn't look like a game URL. Did you provide the full URL https://{GAME_URL}/game/abcd1234... ?")
+            return
+        elif status != 200:
+            await message.channel.send(f"Couldn't link the channel to the game ({status}). The bot owner needs to check the logs for the site API and/or bot")
             return
         try:
             await message.pin()

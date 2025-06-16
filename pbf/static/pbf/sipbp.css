@@ -1,0 +1,65 @@
+#tabs > .tab-list {
+	border-bottom: solid 3px #eee;
+}
+
+#tabs > .tab-list a {
+	display: inline-block;
+	padding: 5px 10px;
+	cursor:pointer;
+}
+
+#tabs > .tab-list a.selected {
+	background-color: #ccc;
+}
+
+#tabs > .tab-content {
+	padding:10px;
+	margin-bottom:100px;
+}
+
+form#add-spirit-form img.ms-dd-option-image {
+	height: 24px;
+}
+
+.spirit-image {
+	margin-bottom: 5px;
+}
+
+@media screen and (max-device-width:1400px), screen and (max-width:1400px) {
+	.spirit-image-single {
+		/* A spirit panel is by default 630 pixels. We multiply 630 * 0.8 to arrive at the below number.
+		   The same applies to the numbers for all other sizes.
+		 */
+		height: 504px;
+	}
+	.spirit-image-double {
+		height: 1008px;
+	}
+	.spirit-image {
+		transform: translateY(-10%) translateX(-10%) scale(0.8);
+	}
+}
+
+@media screen and (max-device-width:1100px), screen and (max-width:1100px) {
+	.spirit-image-single {
+		height: 378px;
+	}
+	.spirit-image-double {
+		height: 756px;
+	}
+	.spirit-image {
+		transform: translateY(-20%) translateX(-20%) scale(0.6);
+	}
+}
+
+@media screen and (max-device-width:850px), screen and (max-width:850px) {
+	.spirit-image-single {
+		height: 252px;
+	}
+	.spirit-image-double {
+		height: 504px;
+	}
+	.spirit-image {
+		transform: translateY(-30%) translateX(-30%) scale(0.4);
+	}
+}

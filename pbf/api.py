@@ -83,11 +83,11 @@ def on_invalid_ip(request, exc):
     return api.create_response(request, {"detail": f"Unauthenticated source IP: {ip}"}, status=401)
 
 def ip_whitelist(request):
-    ALLOWED_IPS = (os.getenv('ALLOWED_IPS') or '127.0.0.1').split(',')
+    ALLOWED_IPS = (os.getenv('ALLOWED_IPS') or '127.0.0.1,::1').split(',')
     ip_networks = [ipaddress.ip_network(allowed_ip.strip()) for allowed_ip in ALLOWED_IPS]
     ip = get_ip(request)
     for network in ip_networks:
-        if ipaddress.IPv4Address(ip) in network:
+        if ipaddress.ip_address(ip) in network:
             return ip
     raise InvalidIP
 
