@@ -14,7 +14,6 @@ Copy `.env.template` to `.env` and fill in the variables
 poetry install --no-root
 poetry run ./manage.py migrate auth
 poetry run ./manage.py migrate
-poetry run ./manage.py collectstatic
 poetry run ./manage.py runserver
 ```
 
@@ -97,3 +96,18 @@ you are ready to run the bot.
 ```
 poetry run python bot.py
 ```
+
+## Running the site in production
+
+A full treatment of this topic is beyond the scope of this document, but here are some notes specific to this project:
+
+* Remember to turn `DEBUG` off in the `.env` file.
+* `poetry run ./manage.py collectstatic` will copy all [static files](https://docs.djangoproject.com/en/stable/howto/static-files/) into `static/`.
+  You will need to configure your web server to serve static files out of this directory.
+* This repo already contains all the necessary configuration to be run by [Gunicorn](https://gunicorn.org/).
+* [Gunicorn deployment docs](https://docs.gunicorn.org/en/latest/deploy.html) recommend deploying Gunicorn behind a proxy server.
+  They themselves recommend [nginx](https://nginx.org/).
+  [Caddy](https://caddyserver.com/) is also known to work well; see the Caddyfile provided in this repo for a usable config.
+* If you'd prefer to use Docker, consider a [community-contributed Docker configuration](https://github.com/nathanj/spirit-island-pbp/pull/152).
+
+Further advice can be found in the [Django deployment docs](https://docs.djangoproject.com/en/stable/howto/deployment/).
