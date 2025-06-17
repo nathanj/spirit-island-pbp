@@ -51,10 +51,10 @@
         <input id="host-draw-num" type="number" name="num_cards" min="0" max="100" value="0" />
         <button onclick="document.getElementById('host-draw-num').value='{{game.gameplayer_set.count}}'; return false">Set to {{game.gameplayer_set.count}}</button>
       </div>
-      <select name="type">
-        <option value="minor">minor</option>
-        <option value="major">major</option>
-      </select>
+      <div>
+        <label><input type="radio" name="type" value="minor" checked> minor</label>
+        <label><input type="radio" name="type" value="major"> major</label>
+      </div>
       <div>power cards:</div>
       <button type="submit" class="btn" hx-post="{% url 'draw_cards' game.id %}">Discard</button>
       <span id="host-draw-spinner" class="htmx-indicator"><img src="{% static "pbf/bars.svg" %}" /></span>
