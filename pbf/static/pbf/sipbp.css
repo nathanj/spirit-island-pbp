@@ -25,6 +25,16 @@ form#add-spirit-form img.ms-dd-option-image {
 	margin-bottom: 5px;
 }
 
+form#host-draw div {
+	display: flex;
+	align-items: center;
+}
+form#host-draw div div {
+	margin-left: 5px;
+	margin-right: 5px;
+	flex-direction: column;
+}
+
 @media screen and (max-device-width:1400px), screen and (max-width:1400px) {
 	.spirit-image-single {
 		/* A spirit panel is by default 630 pixels. We multiply 630 * 0.8 to arrive at the below number.

@@ -43,16 +43,21 @@
 	  <button type="submit" class="btn">Upload Screenshot 2</button>
 	</form>
 
-  <form id="host-draw" hx-swap="afterend" hx-indicator="#host-draw-spinner">
+  <form id="host-draw" hx-target="#host-draw" hx-swap="afterend" hx-indicator="#host-draw-spinner">
     {# csrf_token not needed because we've configured HTMX to send the token in the header #}
-    Discard top <input type="number" name="num_cards" min="1" max="100" value="{{game.gameplayer_set.count}}" />
-    <select name="type">
-      <option value="minor">minor</option>
-      <option value="major">major</option>
-    </select>
-    power cards:
-    <button type="submit" class="btn" hx-post="{% url 'draw_cards' game.id %}">Discard</button>
-    <span id="host-draw-spinner" class="htmx-indicator"><img src="{% static "pbf/bars.svg" %}" /></span>
+    <div>
+      Discard top
+      <div>
+        <input id="host-draw-num" type="number" name="num_cards" min="1" max="100" value="{{game.gameplayer_set.count}}" />
+      </div>
+      <select name="type">
+        <option value="minor">minor</option>
+        <option value="major">major</option>
+      </select>
+      <div>power cards:</div>
+      <button type="submit" class="btn" hx-post="{% url 'draw_cards' game.id %}">Discard</button>
+      <span id="host-draw-spinner" class="htmx-indicator"><img src="{% static "pbf/bars.svg" %}" /></span>
+    </div>
   </form>
 
   <p><a href="{% url 'game_setup' game.id %}">Game setup</a></p>
