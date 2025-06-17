@@ -192,6 +192,7 @@ async def on_message(message):
             "Use `$follow (yourgameurl)` to start",
             "Use `$pin` (reply to message) to pin the message",
             "Use `$unpin` (reply to message) to unpin the message, or `$unpin N` to unpin the last N messages",
+            "Use `$delete` (reply to message) to delete a message (only messages posted by the bot)",
         ))
         await message.channel.send(text)
     if message.content.startswith('$pin'):
@@ -220,6 +221,18 @@ async def on_message(message):
                 await message.channel.send("There were no pinned messages to unpin")
         else:
             await message.channel.send(f"You need to reply to a message or specify a number of messages to unpin to use $unpin")
+    elif message.content.startswith('$delete'):
+        message_to_delete = await referenced_message(message, 'delete')
+        if not message_to_delete:
+            return
+        if message_to_delete.author != client.user:
+            await message.channel.send("I only delete my own messages")
+            return
+        # delete doesn't accept a reason argument
+        # doesn't matter anyway since we're deleting our own message,
+        # which doesn't create an audit log entry
+        if await act_on_message(message, message_to_delete, 'delete', reason=False):
+            await report_success(message, 'deleted')
 
 async def referenced_message(message, command):
     if message.reference:
