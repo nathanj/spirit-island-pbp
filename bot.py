@@ -191,6 +191,7 @@ async def on_message(message):
             "",
             "Use `$follow (yourgameurl)` to start",
             "Use `$pin` (reply to message) to pin the message",
+            "Use `$unpin` (reply to message) to unpin the message, or `$unpin N` to unpin the last N messages",
         ))
         await message.channel.send(text)
     if message.content.startswith('$pin'):
@@ -198,6 +199,27 @@ async def on_message(message):
         # OK not to check if the message is already pinned, since pinning is idempotent.
         if message_to_pin and await act_on_message(message, message_to_pin, 'pin'):
             await report_success(message, 'pinned')
+    elif message.content.startswith('$unpin'):
+        if message.reference:
+            message_to_unpin = await referenced_message(message, 'unpin')
+            # OK not to check that the message is pinned, since unpinning is idempotent.
+            if message_to_unpin and await act_on_message(message, message_to_unpin, 'unpin'):
+                await report_success(message, 'unpinned')
+        elif len(parts) >= 2 and parts[1].isnumeric() and (num_to_unpin := int(parts[1])) > 0:
+            try:
+                pinned = await message.channel.pins()
+            except discord.Forbidden:
+                await message.channel.send("I don't have permission to get the pinned messages")
+                return
+            for to_unpin in pinned[:num_to_unpin]:
+                if not await act_on_message(message, to_unpin, 'unpin'):
+                    return
+            if pinned:
+                await report_success(message, 'unpinned')
+            else:
+                await message.channel.send("There were no pinned messages to unpin")
+        else:
+            await message.channel.send(f"You need to reply to a message or specify a number of messages to unpin to use $unpin")
 
 async def referenced_message(message, command):
     if message.reference:
