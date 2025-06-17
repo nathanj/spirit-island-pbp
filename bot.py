@@ -186,9 +186,12 @@ async def on_message(message):
     if message.content.startswith('$help'):
         # The message starts with the specified word
         LOG.msg(f'$help called')
-        text = "[Github link](<https://github.com/nathanj/spirit-island-pbp>)\
-            \n\n- Use `$follow (yourgameurl)` to start\
-            \n- Use `$pin` (reply to message) to pin the message"
+        text = "\n".join((
+            "[Github link](<https://github.com/nathanj/spirit-island-pbp>)",
+            "",
+            "Use `$follow (yourgameurl)` to start",
+            "Use `$pin` (reply to message) to pin the message",
+        ))
         await message.channel.send(text)
     if message.content.startswith('$pin'):
         message_to_pin = await referenced_message(message, 'pin')
