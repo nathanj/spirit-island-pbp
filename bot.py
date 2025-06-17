@@ -198,7 +198,11 @@ async def on_message(message):
 
 async def referenced_message(message, command):
     if message.reference:
-        return await message.channel.fetch_message(message.reference.message_id)
+        try:
+            return await message.channel.fetch_message(message.reference.message_id)
+        except discord.Forbidden:
+            await message.channel.send("I don't have permission to read previous messages")
+            return
     await message.channel.send(f"You need to reply to a message to use ${command}")
 
 async def act_on_message(command_message, message_to_modify, verb):
