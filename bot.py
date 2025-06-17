@@ -191,18 +191,27 @@ async def on_message(message):
             \n- Use `$pin` (reply to message) to pin the message"
         await message.channel.send(text)
     if message.content.startswith('$pin'):
-        LOG.msg(f'$pin called')
-        if not message.reference:
-            await message.channel.send("You need to reply to a message to use $pin")
-        else:
-            message_to_pin = await message.channel.fetch_message(message.reference.message_id)
-            try:
-                await message_to_pin.pin()
-                await message.channel.send("Message pinned!")
-            except discord.Forbidden:
-                await message.channel.send("I don't have permission to pin messages.")
-            except discord.HTTPException:
-                await message.channel.send("Failed to pin the message due to an HTTP error.")
+        message_to_pin = await referenced_message(message, 'pin')
+        # OK not to check if the message is already pinned, since pinning is idempotent.
+        if message_to_pin and await act_on_message(message, message_to_pin, 'pin'):
+            await report_success(message, 'pinned')
+
+async def referenced_message(message, command):
+    if message.reference:
+        return await message.channel.fetch_message(message.reference.message_id)
+    await message.channel.send(f"You need to reply to a message to use ${command}")
+
+async def act_on_message(command_message, message_to_modify, verb):
+    try:
+        await getattr(message_to_modify, verb)()
+        return True
+    except discord.Forbidden:
+        await command_message.channel.send(f"I don't have permission to {verb} messages.")
+    except discord.HTTPException:
+        await command_message.channel.send(f"Failed to {verb} the message due to an HTTP error.")
+
+async def report_success(command_message, verb):
+    await command_message.channel.send(f"Message {verb}!")
 
 def load_emojis():
     guild = client.get_guild(GUILD_ID)
