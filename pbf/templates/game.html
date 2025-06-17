@@ -48,7 +48,8 @@
     <div>
       Discard top
       <div>
-        <input id="host-draw-num" type="number" name="num_cards" min="1" max="100" value="{{game.gameplayer_set.count}}" />
+        <input id="host-draw-num" type="number" name="num_cards" min="0" max="100" value="0" />
+        <button onclick="document.getElementById('host-draw-num').value='{{game.gameplayer_set.count}}'; return false">Set to {{game.gameplayer_set.count}}</button>
       </div>
       <select name="type">
         <option value="minor">minor</option>
