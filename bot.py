@@ -193,6 +193,7 @@ async def on_message(message):
             "Use `$pin` (reply to message) to pin the message",
             "Use `$unpin` (reply to message) to unpin the message, or `$unpin N` to unpin the last N messages",
             "Use `$delete` (reply to message) to delete a message (only messages posted by the bot)",
+            "Use `$topic (new topic)` to set the channel topic",
         ))
         await message.channel.send(text)
     if message.content.startswith('$pin'):
@@ -233,6 +234,12 @@ async def on_message(message):
         # which doesn't create an audit log entry
         if await act_on_message(message, message_to_delete, 'delete', reason=False):
             await report_success(message, 'deleted')
+    elif message.content.startswith('$topic'):
+        try:
+            await message.channel.edit(topic=" ".join(parts[1:]), reason=f"{message.author.display_name} ({message.author.name}) requested")
+            await report_success(message, 'set as topic')
+        except discord.Forbidden:
+            await message.channel.send("I don't have permission to set the channel topic")
 
 async def referenced_message(message, command):
     if message.reference:

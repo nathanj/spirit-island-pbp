@@ -89,6 +89,7 @@ The bot does not require any server-wide permissions, only permissions specific 
 * Optional: Add Reactions (If you want the bot to respond to commands via reactions instead of a separate message)
 * Optional: Read Message History (Enables commands like `$pin`, where the bot needs to access the message that the command is replying to)
 * Optional: Manage Messages (If you are comfortable allowing the bot to pin messages using the `$pin` command)
+* Optional: Manage Channel (If you are comfortable allowing the bot to set the topic using the `$topic` command. **WARNING**: This permission also allows deleting the channel. While this bot will never do so, an attacker who acquires the bot's token will be able to use it to delete channels if given this permission.)
 
 Once you have the bot added to the server,
 the permissions set up for the bot on the game update channels,
