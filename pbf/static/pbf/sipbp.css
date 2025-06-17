@@ -25,6 +25,9 @@ form#add-spirit-form img.ms-dd-option-image {
 	margin-bottom: 5px;
 }
 
+form#host-draw {
+	margin-top: 1.5em;
+}
 form#host-draw div {
 	display: flex;
 	align-items: center;
