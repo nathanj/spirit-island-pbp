@@ -37,6 +37,9 @@ form#host-draw div div {
 	margin-right: 5px;
 	flex-direction: column;
 }
+form#host-draw label {
+	margin-left: 5px;
+}
 
 @media screen and (max-device-width:1400px), screen and (max-width:1400px) {
 	.spirit-image-single {

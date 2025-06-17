@@ -46,7 +46,7 @@
   <form id="host-draw" hx-target="#host-draw" hx-swap="afterend" hx-indicator="#host-draw-spinner">
     {# csrf_token not needed because we've configured HTMX to send the token in the header #}
     <div>
-      Discard top
+      <label for="host-draw-num">Discard top</label>
       <div>
         <input id="host-draw-num" type="number" name="num_cards" min="0" max="100" value="0" />
         <button onclick="document.getElementById('host-draw-num').value='{{game.gameplayer_set.count}}'; return false">Set to {{game.gameplayer_set.count}}</button>
