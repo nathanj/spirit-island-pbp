@@ -16,6 +16,7 @@ class GameAdmin(admin.ModelAdmin):
         return False
 
 class GamePlayerAdmin(admin.ModelAdmin):
+    list_display = ('id', 'game', 'spirit', 'name')
     autocomplete_fields = ('hand', 'discard', 'play', 'selection', 'days')
 
 admin.site.register(Card, CardAdmin)
