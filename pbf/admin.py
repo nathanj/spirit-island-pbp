@@ -11,6 +11,7 @@ class CardAdmin(admin.ModelAdmin):
 class GameAdmin(admin.ModelAdmin):
     list_display = ('id', 'created_at', 'name', 'discord_channel')
     ordering = ('-created_at', )
+    filter_horizontal = ('minor_deck', 'major_deck', 'discard_pile')
     def has_delete_permission(self, request, obj=None):
         return False
 
