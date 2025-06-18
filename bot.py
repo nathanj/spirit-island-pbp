@@ -178,7 +178,7 @@ async def on_message(message):
             await message.channel.send(f"Couldn't link the channel to the game ({status}). The bot owner needs to check the logs for the site API and/or bot")
             return
         try:
-            await message.pin()
+            await message.pin(reason=f"{message.author.display_name} ({message.author.name}) requested")
         except discord.Forbidden:
             await message.channel.send("I don't have permission to pin messages, so you'll have to pin the link yourself, but I'll still relay game logs.")
         except discord.HTTPException:
@@ -205,9 +205,10 @@ async def referenced_message(message, command):
             return
     await message.channel.send(f"You need to reply to a message to use ${command}")
 
-async def act_on_message(command_message, message_to_modify, verb):
+async def act_on_message(command_message, message_to_modify, verb, reason=True):
     try:
-        await getattr(message_to_modify, verb)()
+        kwargs = {'reason': f"{command_message.author.display_name} ({command_message.author.name}) requested"} if reason else {}
+        await getattr(message_to_modify, verb)(**kwargs)
         return True
     except discord.Forbidden:
         await command_message.channel.send(f"I don't have permission to {verb} messages.")
