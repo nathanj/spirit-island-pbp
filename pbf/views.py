@@ -444,13 +444,12 @@ def view_game(request, game_id, spirit_spec=None):
             if form.is_valid():
                 form.save()
                 add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot.url)
-                return redirect(reverse('view_game', args=[game.id, spirit_spec] if spirit_spec else [game.id]))
         if 'screenshot2' in request.FILES:
             form = GameForm2(request.POST, request.FILES, instance=game)
             if form.is_valid():
                 form.save()
                 add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot2.url)
-                return redirect(reverse('view_game', args=[game.id, spirit_spec] if spirit_spec else [game.id]))
+        return redirect(reverse('view_game', args=[game.id, spirit_spec] if spirit_spec else [game.id]))
 
     tab_id = try_match_spirit(game, spirit_spec) or (game.gameplayer_set.first().id if game.gameplayer_set.exists() else None)
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
