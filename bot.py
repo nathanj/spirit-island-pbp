@@ -178,7 +178,7 @@ async def on_message(message):
             await message.channel.send(f"Couldn't link the channel to the game ({status}). The bot owner needs to check the logs for the site API and/or bot")
             return
         try:
-            await message.pin()
+            await message.pin(reason=f"{message.author.display_name} ({message.author.name}) requested")
         except discord.Forbidden:
             await message.channel.send("I don't have permission to pin messages, so you'll have to pin the link yourself, but I'll still relay game logs.")
         except discord.HTTPException:
@@ -186,23 +186,85 @@ async def on_message(message):
     if message.content.startswith('$help'):
         # The message starts with the specified word
         LOG.msg(f'$help called')
-        text = "[Github link](<https://github.com/nathanj/spirit-island-pbp>)\
-            \n\n- Use `$follow (yourgameurl)` to start\
-            \n- Use `$pin` (reply to message) to pin the message"
+        text = "\n".join((
+            "[Github link](<https://github.com/nathanj/spirit-island-pbp>)",
+            "",
+            "Use `$follow (yourgameurl)` to start",
+            "Use `$pin` (reply to message) to pin the message",
+            "Use `$unpin` (reply to message) to unpin the message, or `$unpin N` to unpin the last N messages",
+            "Use `$delete` (reply to message) to delete a message (only messages posted by the bot)",
+            "Use `$topic (new topic)` to set the channel topic",
+        ))
         await message.channel.send(text)
     if message.content.startswith('$pin'):
-        LOG.msg(f'$pin called')
-        if not message.reference:
-            await message.channel.send("You need to reply to a message to use $pin")
-        else:
-            message_to_pin = await message.channel.fetch_message(message.reference.message_id)
+        message_to_pin = await referenced_message(message, 'pin')
+        # OK not to check if the message is already pinned, since pinning is idempotent.
+        if message_to_pin and await act_on_message(message, message_to_pin, 'pin'):
+            await report_success(message, 'pinned')
+    elif message.content.startswith('$unpin'):
+        if message.reference:
+            message_to_unpin = await referenced_message(message, 'unpin')
+            # OK not to check that the message is pinned, since unpinning is idempotent.
+            if message_to_unpin and await act_on_message(message, message_to_unpin, 'unpin'):
+                await report_success(message, 'unpinned')
+        elif len(parts) >= 2 and parts[1].isnumeric() and (num_to_unpin := int(parts[1])) > 0:
             try:
-                await message_to_pin.pin()
-                await message.channel.send("Message pinned!")
+                pinned = await message.channel.pins()
             except discord.Forbidden:
-                await message.channel.send("I don't have permission to pin messages.")
-            except discord.HTTPException:
-                await message.channel.send("Failed to pin the message due to an HTTP error.")
+                await message.channel.send("I don't have permission to get the pinned messages")
+                return
+            for to_unpin in pinned[:num_to_unpin]:
+                if not await act_on_message(message, to_unpin, 'unpin'):
+                    return
+            if pinned:
+                await report_success(message, 'unpinned')
+            else:
+                await message.channel.send("There were no pinned messages to unpin")
+        else:
+            await message.channel.send(f"You need to reply to a message or specify a number of messages to unpin to use $unpin")
+    elif message.content.startswith('$delete'):
+        message_to_delete = await referenced_message(message, 'delete')
+        if not message_to_delete:
+            return
+        if message_to_delete.author != client.user:
+            await message.channel.send("I only delete my own messages")
+            return
+        # delete doesn't accept a reason argument
+        # doesn't matter anyway since we're deleting our own message,
+        # which doesn't create an audit log entry
+        if await act_on_message(message, message_to_delete, 'delete', reason=False):
+            await report_success(message, 'deleted')
+    elif message.content.startswith('$topic'):
+        try:
+            await message.channel.edit(topic=" ".join(parts[1:]), reason=f"{message.author.display_name} ({message.author.name}) requested")
+            await report_success(message, 'set as topic')
+        except discord.Forbidden:
+            await message.channel.send("I don't have permission to set the channel topic")
+
+async def referenced_message(message, command):
+    if message.reference:
+        try:
+            return await message.channel.fetch_message(message.reference.message_id)
+        except discord.Forbidden:
+            await message.channel.send("I don't have permission to read previous messages")
+            return
+    await message.channel.send(f"You need to reply to a message to use ${command}")
+
+async def act_on_message(command_message, message_to_modify, verb, reason=True):
+    try:
+        kwargs = {'reason': f"{command_message.author.display_name} ({command_message.author.name}) requested"} if reason else {}
+        await getattr(message_to_modify, verb)(**kwargs)
+        return True
+    except discord.Forbidden:
+        await command_message.channel.send(f"I don't have permission to {verb} messages.")
+    except discord.HTTPException:
+        await command_message.channel.send(f"Failed to {verb} the message due to an HTTP error.")
+
+async def report_success(command_message, verb):
+    try:
+        await command_message.add_reaction('✅')
+    except discord.Forbidden:
+        await command_message.channel.send(f"Message {verb}!")
 
 def load_emojis():
     guild = client.get_guild(GUILD_ID)
