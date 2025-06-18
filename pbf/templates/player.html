@@ -152,6 +152,15 @@
   <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' '1' %}">1 Card</button>
 
   <button class="btn" hx-get="{% url 'minor_deck' player.game.id %}" hx-target="#Minor-deck" hx-swap="innerHTML">Show deck</button>
+
+  <button class="btn" onClick="const ts = document.getElementById('trans-sac').style; ts.display = ts.display == 'block' ? 'none' : 'block'">Trans. Sac.</button>
+  <div id="trans-sac" style="display: none">
+    Transformative Sacrifice:
+    <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' '2' %}">Take 2</button>
+    <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' '3' %}">Take 3</button>
+    <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' '4' %}">Take 4</button>
+  </div>
+
   <div id="Minor-deck"></div>
 
   <p>Gain Major ({{ player.game.major_deck.count }} in deck):
