@@ -9,7 +9,7 @@ class CardAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 class GameAdmin(admin.ModelAdmin):
-    list_display = ('id', 'created_at', 'discord_channel')
+    list_display = ('id', 'created_at', 'name', 'discord_channel')
     ordering = ('-created_at', )
     def has_delete_permission(self, request, obj=None):
         return False
