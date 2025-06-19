@@ -336,6 +336,12 @@ async def relay_game(channel_id, log):
 # Buffer up the log so we can send a group of related log messages together.
 game_log_buffer = {}
 
+# The bot has been sending duplicate messages after running for some time.
+# We don't know the reason for this yet.
+# As a short-term solution we could de-duplicate before we send them,
+# but it'd be better to find the root of the problem and solve that instead.
+last_message = {}
+
 async def logger():
     await client.wait_until_ready()
     load_emojis()
@@ -355,7 +361,12 @@ async def logger():
                         game_log_buffer[channel_id]['timestamp'] = datetime.datetime.utcnow()
                     else:
                         game_log_buffer[channel_id] = {'timestamp': datetime.datetime.utcnow(), 'logs': []}
-                    game_log_buffer[channel_id]['logs'].append(json.loads(message['data']))
+
+                    if last_message.get(channel_id) == message['data']:
+                        LOG.msg('drop duplicate message')
+                    else:
+                        game_log_buffer[channel_id]['logs'].append(json.loads(message['data']))
+                        last_message[channel_id] = message['data']
 
                 keys = list(game_log_buffer.keys())
                 for channel_id in keys:
