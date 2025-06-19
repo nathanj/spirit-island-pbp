@@ -504,6 +504,7 @@ def import_game(request):
         basic_attrs = {attr: player[attr] for attr in (
             'name', 'aspect', 'energy',
             'ready', 'paid_this_turn', 'gained_this_turn',
+            'last_unready_energy', 'last_ready_energy',
             'spirit_specific_resource', 'spirit_specific_per_turn_flags',
             *elts,
             ) if attr in player}
@@ -1079,6 +1080,7 @@ def discard_all(request, player_id):
 
     player.play.clear()
     player.ready = False
+    player.last_unready_energy = player.energy
     player.gained_this_turn = False
     player.paid_this_turn = False
     player.temporary_sun = 0
@@ -1116,6 +1118,7 @@ def discard_card(request, player_id, card_id):
 def ready(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     player.ready = True
+    player.last_ready_energy = player.energy
     player.save()
 
     if player.gained_this_turn:
@@ -1124,6 +1127,7 @@ def ready(request, player_id):
         add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} plays {card.name}')
     if player.paid_this_turn:
         add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} pays {player.get_play_cost()} energy')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} started with {player.last_unready_energy_friendly} energy and now has {player.energy} energy')
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} is ready')
 
     if player.game.gameplayer_set.filter(ready=False).count() == 0:

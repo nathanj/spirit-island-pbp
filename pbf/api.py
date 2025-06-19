@@ -42,7 +42,9 @@ class GamePlayerSchema(ModelSchema):
     class Config:
         model = GamePlayer
         model_fields = [
-                'name', 'ready', 'paid_this_turn', 'gained_this_turn', 'energy', 'color', 'aspect',
+                'name', 'color', 'aspect',
+                'ready', 'paid_this_turn', 'gained_this_turn',
+                'energy', 'last_unready_energy', 'last_ready_energy',
                 'temporary_sun', 'temporary_moon', 'temporary_fire', 'temporary_air', 'temporary_water', 'temporary_earth', 'temporary_plant', 'temporary_animal',
                 'permanent_sun', 'permanent_moon', 'permanent_fire', 'permanent_air', 'permanent_water', 'permanent_earth', 'permanent_plant', 'permanent_animal',
                 'spirit_specific_resource', 'spirit_specific_per_turn_flags',
