@@ -97,6 +97,8 @@ else:
 
     client = discord.Client(intents=intents)
 
+list_guilds = '--list-guilds' in sys.argv
+
 LOG = structlog.get_logger()
 debug = os.environ.get('DEBUG', None) == 'yes'
 
@@ -123,7 +125,7 @@ def combine_images(filenames):
 
 @client.event
 async def on_ready():
-    LOG.msg(f'We have logged in as {client}')
+    LOG.msg(f'We have logged in as {client.user.name}, a member of {len(client.guilds)} guilds')
     #await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, status="a movie"))
     await asyncio.create_task(logger())
 
@@ -266,9 +268,8 @@ async def report_success(command_message, verb):
     except discord.Forbidden:
         await command_message.channel.send(f"Message {verb}!")
 
-def load_emojis():
-    guild = client.get_guild(GUILD_ID)
-    for e in guild.emojis:
+def load_emojis(emojis):
+    for e in emojis:
         #LOG.msg(f'found emoji = {e.name} {str(e)}')
         if e.name in spirit_emoji_map.values():
             emoji_to_discord_map[e.name] = str(e)
@@ -344,7 +345,16 @@ last_message = {}
 
 async def logger():
     await client.wait_until_ready()
-    load_emojis()
+
+    correct_guild = False
+    for guild in client.guilds:
+        if list_guilds:
+            LOG.msg(f"{guild.id} {guild.name}")
+        if guild.id == GUILD_ID:
+            load_emojis(guild.emojis)
+            correct_guild = True
+    if not correct_guild:
+        LOG.warn("Not in the correct guild! Won't be able to use any spirit emojis!")
 
     redis_obj = await redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}", decode_responses=True)
     pubsub = redis_obj.pubsub()

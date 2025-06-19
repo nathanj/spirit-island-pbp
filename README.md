@@ -79,6 +79,7 @@ If you need an actual Discord connection:
       Recall that `.env` can be used to provide the environment variable.
 1. Invite the bot to your server if you have the Manage Server permission, or ask someone who does to invite it.
     * check Settings → Installation for the format of the invite link if you need a reminder of what one should look like.
+    * You can use the `--list-guilds` flag to `bot.py` to check whether the guild is visible to the bot.
 
 The bot does not require any server-wide permissions, only permissions specific to channels where game updates will be posted.
 
