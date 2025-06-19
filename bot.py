@@ -97,6 +97,8 @@ else:
 
     client = discord.Client(intents=intents)
 
+list_guilds = '--list-guilds' in sys.argv
+
 LOG = structlog.get_logger()
 debug = os.environ.get('DEBUG', None) == 'yes'
 
@@ -346,6 +348,8 @@ async def logger():
 
     correct_guild = False
     for guild in client.guilds:
+        if list_guilds:
+            LOG.msg(f"{guild.id} {guild.name}")
         if guild.id == GUILD_ID:
             load_emojis(guild.emojis)
             correct_guild = True
