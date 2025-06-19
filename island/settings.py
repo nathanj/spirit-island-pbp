@@ -40,6 +40,8 @@ if 'EXTRA_ALLOWED_HOSTS' in os.environ:
     for url in os.environ['EXTRA_ALLOWED_HOSTS'].split(','):
         CSRF_TRUSTED_ORIGINS.extend([f'https://{url}', f'http://{url}'])
 
+CORS_ALLOWED_ORIGINS = os.environ['CORS_ALLOWED_ORIGINS'].split(',') if 'CORS_ALLOWED_ORIGINS' in os.environ and os.environ['CORS_ALLOWED_ORIGINS'] else []
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -49,6 +51,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     #'debug_toolbar',
     'django_prometheus',
     'pbf',
@@ -60,6 +63,7 @@ MIDDLEWARE = [
 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
