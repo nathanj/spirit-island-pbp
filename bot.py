@@ -123,7 +123,7 @@ def combine_images(filenames):
 
 @client.event
 async def on_ready():
-    LOG.msg(f'We have logged in as {client}')
+    LOG.msg(f'We have logged in as {client.user.name}, a member of {len(client.guilds)} guilds')
     #await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, status="a movie"))
     await asyncio.create_task(logger())
 
