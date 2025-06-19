@@ -399,7 +399,7 @@ def add_player(request, game_id):
     name = request.POST.get('name', '')
     # as noted above in the comment of spirit_base_energy_per_turn,
     # only spirit name (and not aspect) is considered in energy gain per turn.
-    gp = GamePlayer(game=game, name=name, spirit=spirit, color=color, aspect=aspect, energy=setup_energy, starting_energy=spirit_base_energy_per_turn[spirit.name])
+    gp = GamePlayer(game=game, name=name, spirit=spirit, color=color, aspect=aspect, energy=setup_energy, base_energy_per_turn=spirit_base_energy_per_turn[spirit.name])
     gp.init_spirit()
     gp.save()
     try:
@@ -518,7 +518,7 @@ def import_game(request):
                 **basic_attrs,
                 color=player.get('color', next(iter(available_colours))),
                 spirit=Spirit.objects.get(name__iexact=spirit_name),
-                starting_energy=spirit_base_energy_per_turn[spirit_name],
+                base_energy_per_turn=spirit_base_energy_per_turn[spirit_name],
                 )
         if gp.color in available_colours:
             available_colours.remove(gp.color)
