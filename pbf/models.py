@@ -243,13 +243,11 @@ class GamePlayer(models.Model):
     permanent_plant = models.IntegerField(default=0)
     permanent_animal = models.IntegerField(default=0)
     aspect = models.CharField(max_length=255, default=None, null=True, blank=True)
-    # starting_energy denotes the base energy gain PER TURN,
-    # when no presence has been removed from the tracks.
-    # It DOES NOT denote energy that the spirit starts with at setup
-    # (simply set the energy at creation time for this).
-    # It would be best to rename starting_energy to base_energy_per_turn,
-    # but this will need a database change.
-    starting_energy = models.IntegerField(default=0)
+    # "base" means "when no presence has been removed from the tracks"
+    # set once at creation based on the spirit and should never change afterward
+    # TODO: This could just be a lookup on spirit name.
+    # Check whether that has any impact on performance.
+    base_energy_per_turn = models.IntegerField(default=0)
     # A number of spirits have a resource that's specific to them.
     # Rather than have separate fields + endpoints that can modify each of them,
     # we'll use a single field for this purpose,
@@ -428,7 +426,7 @@ class GamePlayer(models.Model):
         return sum([card.cost - (1 if blitz and card.speed == Card.FAST else 0) for card in self.play.all()])
 
     def get_gain_energy(self):
-        amount = max([self.starting_energy] + [p.get_energy() for p in self.presence_set.all()]) + sum([p.get_plus_energy() for p in self.presence_set.all()])
+        amount = max([self.base_energy_per_turn] + [p.get_energy() for p in self.presence_set.all()]) + sum([p.get_plus_energy() for p in self.presence_set.all()])
         if self.aspect == 'Immense':
             return amount * 2
         elif self.aspect == 'Spreading Hostility':
