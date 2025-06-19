@@ -574,3 +574,124 @@ class TestImpending(TestCase):
         client.post(f"/game/{player.id}/discard/all")
         client.post(f"/game/{player.id}/gain_energy_on_impending")
         self.assert_impending_energy(player, [2])
+
+class TestImport(TestCase):
+    NUM_MINORS = Card.objects.filter(type=Card.MINOR).count()
+
+    def import_game(self, str):
+        import io
+        num_games = Game.objects.count()
+        client = Client()
+        resp = client.post("/import", {"json": io.StringIO(str)})
+        self.assertEqual(num_games + 1, Game.objects.count())
+        self.assertEqual(resp.status_code, 302)
+        return Game.objects.get(id=resp.url.split('/')[-1])
+
+    def test_import_nothing(self):
+        num_games = Game.objects.count()
+        self.import_game('{}')
+        # no additional asserts; import_game has already asserted that a game was created
+
+    def test_import_name(self):
+        game = self.import_game('{"name": "game imported in TEST"}')
+        self.assertEqual(game.name, 'game imported in TEST')
+
+    def test_import_scenario(self):
+        game = self.import_game('{"scenario": "Blitz"}')
+        self.assertEqual(game.scenario, 'Blitz')
+
+    def test_import_spirit_dict(self):
+        game = self.import_game('{"players": [{"spirit": {"name": "River"}}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.spirit.name, 'River')
+
+    def test_import_spirit_str(self):
+        game = self.import_game('{"players": [{"spirit": "River"}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.spirit.name, 'River')
+
+    def test_import_aspect(self):
+        game = self.import_game('{"players": [{"spirit": "River", "aspect": "Travel"}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.aspect, "Travel")
+
+    def test_locus_presence_removed_on_import(self):
+        game = self.import_game('{"players": [{"spirit": "Serpent"}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(sum(player.presence_set.values_list('opacity', flat=True)), 12)
+
+        game = self.import_game('{"players": [{"spirit": "Serpent", "aspect": "Locus"}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(sum(player.presence_set.values_list('opacity', flat=True)), 11)
+
+    def test_import_card_dict(self):
+        game = self.import_game('{"minor_deck": [{"name": "Call to Isolation"}]}')
+        minor = Card.objects.get(name="Call to Isolation")
+        self.assertEqual(game.minor_deck.count(), 1)
+        self.assertIn(minor, game.minor_deck.all())
+
+    def test_import_card_str(self):
+        game = self.import_game('{"minor_deck": ["Call to Isolation"]}')
+        minor = Card.objects.get(name="Call to Isolation")
+        self.assertEqual(game.minor_deck.count(), 1)
+        self.assertIn(minor, game.minor_deck.all())
+
+    def test_shared_discard_removed_from_default_minors(self):
+        game = self.import_game('{"discard_pile": ["Call to Isolation"]}')
+        minor = Card.objects.get(name="Call to Isolation")
+        self.assertEqual(game.discard_pile.count(), 1)
+        self.assertIn(minor, game.discard_pile.all())
+        self.assertEqual(game.minor_deck.count(), self.NUM_MINORS - 1)
+        self.assertEqual(list(game.minor_deck.filter(id=minor.id)), [])
+
+    def test_case_insensitive_card_name(self):
+        game = self.import_game('{"minor_deck": ["Call to Isolation", "call to bloodshed"]}')
+        minor1 = Card.objects.get(name="Call to Isolation")
+        minor2 = Card.objects.get(name="Call to Bloodshed")
+        self.assertEqual(game.minor_deck.count(), 2)
+        self.assertIn(minor1, game.minor_deck.all())
+        self.assertIn(minor2, game.minor_deck.all())
+
+    def test_players_discard_removed_from_default_minors(self):
+        game = self.import_game('{"players": [{"spirit": "River", "discard": ["Call to Isolation"]}]}')
+        minor = Card.objects.get(name="Call to Isolation")
+        self.assertEqual(game.minor_deck.count(), self.NUM_MINORS - 1)
+        self.assertEqual(list(game.minor_deck.filter(id=minor.id)), [])
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.discard.count(), 1)
+        self.assertIn(minor, player.discard.all())
+
+    def test_aspect_minor(self):
+        game = self.import_game('{"players": [{"spirit": "Serpent", "aspect": "Locus"}]}')
+        minor = Card.objects.get(name="Pull Beneath the Hungry Earth")
+        player = game.gameplayer_set.first()
+        self.assertIn(minor, player.hand.all())
+        self.assertEqual(game.minor_deck.count(), self.NUM_MINORS - 1)
+        self.assertEqual(list(game.minor_deck.filter(id=minor.id)), [])
+
+    def test_import_impending_name_dict(self):
+        game = self.import_game('{"players": [{"spirit": "Earthquakes", "impending": [{"card": {"name": "Call to Isolation"}}]}]}')
+        minor = Card.objects.get(name="Call to Isolation")
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.impending_with_energy.count(), 1)
+        self.assertIn(minor, player.impending_with_energy.all())
+
+    def test_import_impending_name_str(self):
+        game = self.import_game('{"players": [{"spirit": "Earthquakes", "impending": [{"card": "Call to Isolation"}]}]}')
+        minor = Card.objects.get(name="Call to Isolation")
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.impending_with_energy.count(), 1)
+        self.assertIn(minor, player.impending_with_energy.all())
+
+    def test_import_impending_energy(self):
+        game = self.import_game('{"players": [{"spirit": "Earthquakes", "impending": [{"card": "Call to Bloodshed", "energy": 1}]}]}')
+        minor = Card.objects.get(name="Call to Bloodshed")
+        player = game.gameplayer_set.first()
+        self.assertEqual(list(player.gameplayerimpendingwithenergy_set.values_list('energy', flat=True)), [1])
+
+    def test_impending_removed_from_default_minors(self):
+        game = self.import_game('{"players": [{"spirit": "Earthquakes", "impending": [{"card": "Call to Isolation"}]}]}')
+        minor = Card.objects.get(name="Call to Isolation")
+        # Other tests have already tested that the card is in the player's impending
+        self.assertEqual(game.minor_deck.count(), self.NUM_MINORS - 1)
+        self.assertEqual(list(game.minor_deck.filter(id=minor.id)), [])

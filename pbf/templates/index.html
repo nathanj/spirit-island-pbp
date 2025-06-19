@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block main %}
 <div class="content">
@@ -7,6 +8,20 @@
     {% csrf_token %}
     <button type="submit" class="btn btn-primary">Create a New Game</button>
   </form>
+
+  <hr>
+
+  <details class="collapse-panel">
+    <summary>Import a game</summary>
+    <div class="collapse-content">
+      <form enctype="multipart/form-data" method="post" action="{% url 'import_game' %}">
+        {% csrf_token %}
+        <input type="file" name="json" accept="application/json" id="id_json">
+        <button type="submit" class="btn">Import</button>
+        <a href="{% static 'pbf/import-help.html' %}">What's this?</a>
+      </form>
+    </div>
+  </details>
 
   <p>All images copyright Greater Than Games.</p>
 
