@@ -85,7 +85,7 @@ class Card(models.Model):
         (SPECIAL, 'Special'),
     )
     type = models.IntegerField(choices=TYPES)
-    spirit = models.ForeignKey(Spirit, null=True, on_delete=models.CASCADE)
+    spirit = models.ForeignKey(Spirit, blank=True, null=True, on_delete=models.CASCADE)
     cost = models.IntegerField()
     elements = models.CharField(max_length=255, blank=False)
 
