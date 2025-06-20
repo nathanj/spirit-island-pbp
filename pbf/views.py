@@ -1135,30 +1135,6 @@ def ready(request, player_id):
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def unready(request, game_id):
-    game = get_object_or_404(Game, pk=game_id)
-    for player in game.gameplayer_set.all():
-        player.ready = False
-        player.save()
-
-    add_log_msg(player.game, text=f'All spirits marked not ready')
-
-    return redirect(reverse('view_game', args=[game.id]))
-
-def time_passes(request, game_id):
-    game = get_object_or_404(Game, pk=game_id)
-    for player in game.gameplayer_set.all():
-        player.ready = False
-        player.save()
-    game.turn += 1
-    game.save()
-
-    add_log_msg(player.game, text=f'Time passes...')
-    add_log_msg(player.game, text=f'-- Turn {game.turn} --')
-
-    return redirect(reverse('view_game', args=[game.id]))
-
-
 def change_energy(request, player_id, amount):
     amount = int(amount)
     player = get_object_or_404(GamePlayer, pk=player_id)
