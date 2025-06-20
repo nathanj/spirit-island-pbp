@@ -1115,19 +1115,16 @@ def discard_card(request, player_id, card_id):
 
 def ready(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    player.ready = not player.ready
+    player.ready = True
     player.save()
 
-    if player.ready:
-        if player.gained_this_turn:
-            add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {player.get_gain_energy()} energy')
-        for card in player.play.all():
-            add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} plays {card.name}')
-        if player.paid_this_turn:
-            add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} pays {player.get_play_cost()} energy')
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} is ready')
-    else:
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} is not ready')
+    if player.gained_this_turn:
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {player.get_gain_energy()} energy')
+    for card in player.play.all():
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} plays {card.name}')
+    if player.paid_this_turn:
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} pays {player.get_play_cost()} energy')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} is ready')
 
     if player.game.gameplayer_set.filter(ready=False).count() == 0:
         add_log_msg(player.game, text=f'All spirits are ready!')
