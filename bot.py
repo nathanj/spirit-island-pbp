@@ -110,6 +110,8 @@ GUILD_ID = int(os.getenv('DISCORD_GUILD_ID', 846580409050857493))
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
 
+relay_task = None
+
 def combine_images(filenames):
     images = []
 
@@ -125,9 +127,17 @@ def combine_images(filenames):
 
 @client.event
 async def on_ready():
+    global relay_task
     LOG.msg(f'We have logged in as {client.user.name}, a member of {len(client.guilds)} guilds')
     #await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, status="a movie"))
-    await asyncio.create_task(logger())
+
+    # on_ready may be called multiple times during the bot's lifetime if it reconnects.
+    # if so, we only want to create one relay task,
+    # otherwise it will send duplicate messages.
+    if relay_task:
+        print("relay task already running, don't need to create another")
+    else:
+        await (relay_task := asyncio.create_task(logger()))
 
 def match_game_url(s):
     """
@@ -341,10 +351,8 @@ async def relay_game(channel_id, log):
 # Buffer up the log so we can send a group of related log messages together.
 game_log_buffer = {}
 
-# The bot has been sending duplicate messages after running for some time.
-# We don't know the reason for this yet.
-# As a short-term solution we could de-duplicate before we send them,
-# but it'd be better to find the root of the problem and solve that instead.
+# This shouldn't be necessary now that we make sure to only create one relay_task,
+# but we'll keep it in case there are other causes of duplicate messages.
 last_message = {}
 
 async def logger():
