@@ -60,8 +60,14 @@ load_dotenv()
 
 if '--fake-discord' in sys.argv:
     class Client:
-        class Guild:
+        class User:
             def __init__(self):
+                self.name = 'fake discord bot'
+
+        class Guild:
+            def __init__(self, id=0):
+                self.id = id
+                self.name = 'fake discord guild'
                 self.emojis = {}
 
         class Channel:
@@ -74,6 +80,10 @@ if '--fake-discord' in sys.argv:
                 else:
                     print(f"send {self.id}: {msg}")
 
+        def __init__(self):
+            self.user = self.User()
+            self.guilds = [self.Guild()]
+
         def event(self, f):
             return f
 
@@ -83,9 +93,6 @@ if '--fake-discord' in sys.argv:
 
         async def wait_until_ready(self):
             pass
-
-        def get_guild(self, _):
-            return self.Guild()
 
         def get_channel(self, id):
             return self.Channel(id)
