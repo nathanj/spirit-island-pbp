@@ -23,6 +23,8 @@
       (costs adjusted for Blitz)
     {% endif %}
 
+    {{ player.last_unready_energy_friendly }} at turn start{% if player.ready %}, {{ player.last_ready_energy }} when readied{% endif %}
+
     <span id="energy-spinner" class="htmx-indicator"><img src="{% static "pbf/bars.svg" %}" /></span>
   </p>
 

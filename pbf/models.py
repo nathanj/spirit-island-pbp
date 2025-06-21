@@ -209,6 +209,9 @@ class GamePlayer(models.Model):
     # had to rename from "impending" to enable ManyToManyField migration
     impending_with_energy = models.ManyToManyField(Card, through='GamePlayerImpendingWithEnergy', related_name='impending_with_energy', blank=True)
     healing = models.ManyToManyField(Card, related_name='healing', blank=True)
+    # the field is nullable, but should only be null for GamePlayer that were created before it was added.
+    last_unready_energy = models.IntegerField(null=True)
+    last_ready_energy = models.IntegerField(default=0)
     ready = models.BooleanField(default=False)
     paid_this_turn = models.BooleanField(default=False)
     gained_this_turn = models.BooleanField(default=False)
@@ -271,6 +274,11 @@ class GamePlayer(models.Model):
     # Spreading Rot Renews the Earth:
     ROT_GAINED_THIS_TURN = 1 << 2 # Whether they've gained from their track (NOT incrementing using the +1 button)
     ROT_CONVERTED_THIS_TURN = 1 << 3
+
+    @property
+    def last_unready_energy_friendly(self):
+        # don't use `or` here, because 0 is valid.
+        return 'unknown' if self.last_unready_energy is None else self.last_unready_energy
 
     def spirit_specific_incremented_this_turn(self):
         return self.spirit_specific_per_turn_flags & GamePlayer.SPIRIT_SPECIFIC_INCREMENTED_THIS_TURN
@@ -410,6 +418,7 @@ class GamePlayer(models.Model):
     # why not override __init__? Django docs indicate doing so is *not* preferred:
     # https://docs.djangoproject.com/en/5.1/ref/models/instances/
     def init_spirit(self):
+        self.last_unready_energy = self.energy
         if self.spirit.name == "Shifting":
             for e in (Elements.Moon, Elements.Air, Elements.Earth):
                 # Prepare one of each.

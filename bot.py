@@ -292,7 +292,11 @@ def adjust_msg(msg):
                 msg = re.sub(f'^(\\S+) {spirit} ', '\\1 ' + emoji_to_discord_map[spirit_emoji_map[spirit]] + ' ', msg)
             except KeyError:
                 pass
-        match = re.search(r'''(\d+) energy''', msg)
+        # For now, don't want to replace the "started with N energy and now has M energy" messages,
+        # because the message may be excessively long if the spirit has a lot.
+        # so restricting it to gains/pays
+        # With Blitz, you might pay negative energy. That's fine.
+        match = re.search(r'''(?:gains|pays) -?(\d+) energy''', msg)
         if match is not None:
             new_msg = ''
             value = int(match[1])

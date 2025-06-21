@@ -504,6 +504,7 @@ def import_game(request):
         basic_attrs = {attr: player[attr] for attr in (
             'name', 'aspect', 'energy',
             'ready', 'paid_this_turn', 'gained_this_turn',
+            'last_unready_energy', 'last_ready_energy',
             'spirit_specific_resource', 'spirit_specific_per_turn_flags',
             *elts,
             ) if attr in player}
@@ -1079,6 +1080,7 @@ def discard_all(request, player_id):
 
     player.play.clear()
     player.ready = False
+    player.last_unready_energy = player.energy
     player.gained_this_turn = False
     player.paid_this_turn = False
     player.temporary_sun = 0
@@ -1115,49 +1117,24 @@ def discard_card(request, player_id, card_id):
 
 def ready(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    player.ready = not player.ready
+    player.ready = True
+    player.last_ready_energy = player.energy
     player.save()
 
-    if player.ready:
-        if player.gained_this_turn:
-            add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {player.get_gain_energy()} energy')
-        for card in player.play.all():
-            add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} plays {card.name}')
-        if player.paid_this_turn:
-            add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} pays {player.get_play_cost()} energy')
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} is ready')
-    else:
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} is not ready')
+    if player.gained_this_turn:
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {player.get_gain_energy()} energy')
+    for card in player.play.all():
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} plays {card.name}')
+    if player.paid_this_turn:
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} pays {player.get_play_cost()} energy')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} started with {player.last_unready_energy_friendly} energy and now has {player.energy} energy')
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} is ready')
 
     if player.game.gameplayer_set.filter(ready=False).count() == 0:
         add_log_msg(player.game, text=f'All spirits are ready!')
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
-
-def unready(request, game_id):
-    game = get_object_or_404(Game, pk=game_id)
-    for player in game.gameplayer_set.all():
-        player.ready = False
-        player.save()
-
-    add_log_msg(player.game, text=f'All spirits marked not ready')
-
-    return redirect(reverse('view_game', args=[game.id]))
-
-def time_passes(request, game_id):
-    game = get_object_or_404(Game, pk=game_id)
-    for player in game.gameplayer_set.all():
-        player.ready = False
-        player.save()
-    game.turn += 1
-    game.save()
-
-    add_log_msg(player.game, text=f'Time passes...')
-    add_log_msg(player.game, text=f'-- Turn {game.turn} --')
-
-    return redirect(reverse('view_game', args=[game.id]))
-
 
 def change_energy(request, player_id, amount):
     amount = int(amount)
