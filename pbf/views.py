@@ -43,8 +43,8 @@ def home(request):
     games = Game.objects.all()
     return render(request, 'index.html', { 'games': games })
 
-def view_screenshot(request, filename):
-    with open(f'screenshot/{filename}', mode='rb') as f:
+def view_screenshot(request, game_id=None, filename=None):
+    with open(os.path.join(*[s for s in ['screenshot', game_id, filename] if s]), mode='rb') as f:
         return HttpResponse(f.read(), content_type='image/jpeg')
 
 def new_game(request):

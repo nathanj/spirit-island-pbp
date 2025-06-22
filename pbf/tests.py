@@ -619,6 +619,7 @@ class TestUpload(TestCase):
         client = Client()
         client.post("/new")
         game = Game.objects.last()
+        self.addCleanup(os.rmdir, os.path.join('screenshot', str(game.id)))
 
         ss1_before, ss2_before = self.upload(client, game, {'screenshot': 'test1.png', 'screenshot2': 'test2.png'})
         self.assertIn('test1.png', ss1_before.path)
@@ -632,6 +633,7 @@ class TestUpload(TestCase):
         client = Client()
         client.post("/new")
         game = Game.objects.last()
+        self.addCleanup(os.rmdir, os.path.join('screenshot', str(game.id)))
 
         ss1_before, ss2_before = self.upload(client, game, {'screenshot': 'test1.png', 'screenshot2': 'test2.png'})
         self.assertIn('test1.png', ss1_before.path)
@@ -645,6 +647,7 @@ class TestUpload(TestCase):
         client = Client()
         client.post("/new")
         game = Game.objects.last()
+        self.addCleanup(os.rmdir, os.path.join('screenshot', str(game.id)))
 
         ss1_before, ss2_before = self.upload(client, game, {'screenshot': 'test1.png', 'screenshot2': 'test2.png'})
         self.assertIn('test1.png', ss1_before.path)
@@ -658,6 +661,7 @@ class TestUpload(TestCase):
         client = Client()
         client.post("/new")
         game = Game.objects.last()
+        self.addCleanup(os.rmdir, os.path.join('screenshot', str(game.id)))
 
         ss1, _ = self.upload(client, game, {'screenshot': 'test-same-fn.png', 'screenshot2': 'dummy.png'})
         self.assertIn('test-same-fn.png', ss1.path)

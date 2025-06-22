@@ -146,9 +146,9 @@ class Game(models.Model):
             # because what we return here will still get passed through to that.
             # We just need the suffixing part.
             name, ext = os.path.splitext(filename)
-            return os.path.join('screenshot', f"{name}_{get_random_string(7)}{ext}")
+            return os.path.join('screenshot', str(game.id), f"{name}_{get_random_string(7)}{ext}")
 
-        return os.path.join('screenshot', filename)
+        return os.path.join('screenshot', str(game.id), filename)
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
