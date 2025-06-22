@@ -333,11 +333,14 @@ async def relay_game(channel_id, log):
                 combined_text = []
             images = entry['images']
             filenames = images.split(',')
-            if len(filenames) > 1:
-                combine_images(filenames)
-                await channel.send(msg, file=discord.File('out.jpg'))
-            else:
-                await channel.send(msg, file=discord.File(filenames[0]))
+            try:
+                if len(filenames) > 1:
+                    combine_images(filenames)
+                    await channel.send(msg, file=discord.File('out.jpg'))
+                else:
+                    await channel.send(msg, file=discord.File(filenames[0]))
+            except discord.Forbidden:
+                await channel.send(msg + "\nCouldn't send the image. Make sure I have permission to attach files.")
         else:
             combined_text.append(msg)
 
