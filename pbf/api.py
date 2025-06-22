@@ -63,7 +63,7 @@ class GameDetailSchema(ModelSchema):
     class Config:
         model = Game
         # we've not exported the screenshots, because it's not obvious how we would do it.
-        model_fields = ['id', 'name', 'discord_channel', 'scenario']
+        model_fields = ['id', 'name', 'discord_channel', 'scenario', 'always_suffix_screenshot']
 
 class GameLogSchema(ModelSchema):
     class Config:

@@ -473,6 +473,7 @@ def import_game(request):
     game = Game(
             name=to_import.get('name', 'Untitled Imported Game'),
             scenario=to_import.get('scenario', ''),
+            always_suffix_screenshot=to_import.get('always_suffix_screenshot', False),
             )
     # we are not importing the discord_channel,
     # because it's not yet been proven to be desirable to automatically do this.
