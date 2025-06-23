@@ -588,16 +588,15 @@ def view_game(request, game_id, spirit_spec=None):
     if request.method == 'POST':
         if 'spirit_spec' in request.POST:
             spirit_spec = request.POST['spirit_spec']
-        if 'screenshot' in request.FILES:
-            form = GameForm(request.POST, request.FILES, instance=game)
+
+        for key, form_class in (('screenshot', GameForm), ('screenshot2', GameForm2)):
+            if key not in request.FILES:
+                continue
+            form = form_class(request.POST, request.FILES, instance=game)
             if form.is_valid():
                 form.save()
-                add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot.url)
-        if 'screenshot2' in request.FILES:
-            form = GameForm2(request.POST, request.FILES, instance=game)
-            if form.is_valid():
-                form.save()
-                add_log_msg(game, text=f'New screenshot uploaded.', images='.' + game.screenshot2.url)
+                add_log_msg(game, text=f'New screenshot uploaded.', images='.' + getattr(game, key).url)
+
         return redirect(reverse('view_game', args=[game.id, spirit_spec] if spirit_spec else [game.id]))
 
     tab_id = try_match_spirit(game, spirit_spec) or (game.gameplayer_set.first().id if game.gameplayer_set.exists() else None)
