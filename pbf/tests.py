@@ -654,6 +654,24 @@ class TestUpload(TestCase):
         self.assertIn('test-replace1.png', ss1_after.path)
         self.assertIn('test-replace2.png', ss2_after.path)
 
+    def test_reuse_filename(self):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+
+        ss1, _ = self.upload(client, game, {'screenshot': 'test-same-fn.png', 'screenshot2': 'dummy.png'})
+        self.assertIn('test-same-fn.png', ss1.path)
+
+        ss2, _ = self.upload(client, game, {'screenshot': 'test-same-fn.png'})
+        # image cleanup doesn't seem to happen in tests, so we'll have to do it.
+        # we immediately remove this one to simulate the behaviour.
+        os.remove(ss1.path)
+        self.assertNotEqual(ss1.path, ss2.path)
+
+        ss3, _ = self.upload(client, game, {'screenshot': 'test-same-fn.png'})
+        # if the paths are the same, browser caches mean players may see an outdated image.
+        self.assertNotEqual(ss1.path, ss3.path)
+
 class TestImport(TestCase):
     NUM_MINORS = Card.objects.filter(type=Card.MINOR).count()
 

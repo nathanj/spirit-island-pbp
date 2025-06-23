@@ -137,6 +137,9 @@ class Game(models.Model):
     def screenshot_with_suffix(game, filename):
         # If the game is set to always suffix the screenshot, do so.
         # Django admin has to be used to manually set this setting.
+        # Related: the screenshot upload code in views.py,
+        # which will add suffixes on an as-needed basis,
+        # without enabling this setting.
         if game.always_suffix_screenshot:
             from django.utils.crypto import get_random_string
             # We do not need to fully reimplement django.core.files.storage.get_available_name,

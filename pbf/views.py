@@ -589,9 +589,41 @@ def view_game(request, game_id, spirit_spec=None):
         if 'spirit_spec' in request.POST:
             spirit_spec = request.POST['spirit_spec']
 
+        def without_suffix(ss):
+            name, ext = os.path.splitext(os.path.basename(ss.url))
+            if len(name) >= 8 and name[-8] == '_':
+                return f"{name[:-8]}{ext}"
+        existing_files = [without_suffix(ss) for ss in [game.screenshot, game.screenshot2] if ss]
+
         for key, form_class in (('screenshot', GameForm), ('screenshot2', GameForm2)):
             if key not in request.FILES:
                 continue
+
+            # Some hosts always use the same filename for their uploads.
+            # Django's behaviour is to try to use that filename,
+            # but suffix it with random characters if it already exists.
+            #
+            # Because we use django_cleanup, which deletes previous files,
+            # every other file will be stored at the same location:
+            # name, name_suffix1, name, name_suffix2, name, name_suffix3...
+            #
+            # If this happens, browsers may use the cached version of the unsuffixed file,
+            # so players will see the cached version from a previous upload.
+            #
+            # We can try to control this by setting the max age on the cache (web server config),
+            # but it's not clear what value we should use,
+            # and ultimately the behaviour would be at the browser's discretion.
+            #
+            # Overall it seems best to detect when a game is reusing the same filenames,
+            # and add a suffix ourselves if necessary.
+            #
+            # if the existing screenshot has filename e.g. name_abc1234.png,
+            # detect when they upload the file name.png
+            if not game.always_suffix_screenshot and request.FILES[key].name in existing_files:
+                from django.utils.crypto import get_random_string
+                name, ext = os.path.splitext(request.FILES[key].name)
+                request.FILES[key].name = f"{name}_{get_random_string(7)}{ext}"
+
             form = form_class(request.POST, request.FILES, instance=game)
             if form.is_valid():
                 form.save()
