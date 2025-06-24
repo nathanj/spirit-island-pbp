@@ -11,8 +11,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("api/", api.urls),
     path('', views.home, name='home'),
-    path('screenshot/<str:filename>', views.view_screenshot, name='view_screenshot'),
-    path('screenshot/<str:game_id>/<str:filename>', views.view_screenshot, name='view_screenshot'),
     path('new', views.new_game, name='new_game'),
     path('import', views.import_game, name='import_game'),
     path('game/<str:game_id>', views.view_game, name='view_game'),
@@ -66,3 +64,9 @@ urlpatterns = [
     path('game/<int:player_id>/element-permanent/<str:element>/add', views.add_element_permanent, name='add_element_permanent'),
     path('game/<int:player_id>/element-permanent/<str:element>/remove', views.remove_element_permanent, name='remove_element_permanent'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+if settings.DEBUG:
+    urlpatterns += [
+        path('screenshot/<str:filename>', views.view_screenshot, name='view_screenshot'),
+        path('screenshot/<str:game_id>/<str:filename>', views.view_screenshot, name='view_screenshot'),
+    ]

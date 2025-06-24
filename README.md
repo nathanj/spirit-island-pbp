@@ -108,6 +108,7 @@ A full treatment of this topic is beyond the scope of this document, but here ar
 * Remember to turn `DEBUG` off in the `.env` file.
 * `poetry run ./manage.py collectstatic` will copy all [static files](https://docs.djangoproject.com/en/stable/howto/static-files/) into `static/`.
   You will need to configure your web server to serve static files out of this directory.
+* You will also need to configure your web server to serve uploaded files out of the `screenshots/` directory.
 * This repo already contains all the necessary configuration to be run by [Gunicorn](https://gunicorn.org/).
 * [Gunicorn deployment docs](https://docs.gunicorn.org/en/latest/deploy.html) recommend deploying Gunicorn behind a proxy server.
   They themselves recommend [nginx](https://nginx.org/).
