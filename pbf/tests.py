@@ -1,4 +1,6 @@
+import os
 from collections import Counter
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from .models import Card, Elements, Game, GamePlayer, Spirit
 
@@ -574,6 +576,105 @@ class TestImpending(TestCase):
         client.post(f"/game/{player.id}/discard/all")
         client.post(f"/game/{player.id}/gain_energy_on_impending")
         self.assert_impending_energy(player, [2])
+
+class TestUpload(TestCase):
+    def png_chunk(type, data):
+        import binascii
+        import struct
+
+        chunk = type.encode() + bytes(data)
+        return struct.pack('>I', len(data)) + chunk + struct.pack('>I', binascii.crc32(chunk))
+
+    # https://evanhahn.com/worlds-smallest-png/
+    PNG = b"".join([
+        bytes([0x89]), 'PNG'.encode(), bytes([0x0d, 0x0a, 0x1a, 0x0a]), # signature
+        png_chunk('IHDR', [
+            0, 0, 0, 1, # width 1
+            0, 0, 0, 1, # height 1
+            1, 0, 0, 0, 0 # bit depth, colour type, compression method, filter method, interlace method
+        ]),
+        png_chunk('IDAT', [
+            0, 0,
+            0x78, 0x01, # zlib header
+            0x63, 0x60, 0x00, 0x00, # DEFLATE block
+            0x00, 0x02, 0x00, 0x01, # zlib checksum
+        ]),
+        png_chunk('IEND', []),
+    ])
+
+    def remove_if_exists(self, path):
+        if os.path.exists(path):
+            os.remove(path)
+
+    def upload(self, client, game, data):
+        client.post(f"/game/{game.id}/screenshot", {k: SimpleUploadedFile(fn, self.PNG) for k, fn in data.items()})
+        game.refresh_from_db()
+        ss1 = game.screenshot
+        ss2 = game.screenshot2
+        self.addCleanup(self.remove_if_exists, ss1.path)
+        self.addCleanup(self.remove_if_exists, ss2.path)
+        return (ss1, ss2)
+
+    def test_replace_first(self):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        self.addCleanup(os.rmdir, os.path.join('screenshot', str(game.id)))
+
+        ss1_before, ss2_before = self.upload(client, game, {'screenshot': 'test1.png', 'screenshot2': 'test2.png'})
+        self.assertIn('test1.png', ss1_before.path)
+        self.assertIn('test2.png', ss2_before.path)
+
+        ss1_after, ss2_after = self.upload(client, game, {'screenshot': 'test-replace.png'})
+        self.assertIn('test-replace.png', ss1_after.path)
+        self.assertIn('test2.png', ss2_after.path)
+
+    def test_replace_second(self):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        self.addCleanup(os.rmdir, os.path.join('screenshot', str(game.id)))
+
+        ss1_before, ss2_before = self.upload(client, game, {'screenshot': 'test1.png', 'screenshot2': 'test2.png'})
+        self.assertIn('test1.png', ss1_before.path)
+        self.assertIn('test2.png', ss2_before.path)
+
+        ss1_after, ss2_after = self.upload(client, game, {'screenshot2': 'test-replace.png'})
+        self.assertIn('test1.png', ss1_after.path)
+        self.assertIn('test-replace.png', ss2_after.path)
+
+    def test_replace_both(self):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        self.addCleanup(os.rmdir, os.path.join('screenshot', str(game.id)))
+
+        ss1_before, ss2_before = self.upload(client, game, {'screenshot': 'test1.png', 'screenshot2': 'test2.png'})
+        self.assertIn('test1.png', ss1_before.path)
+        self.assertIn('test2.png', ss2_before.path)
+
+        ss1_after, ss2_after = self.upload(client, game, {'screenshot': 'test-replace1.png', 'screenshot2': 'test-replace2.png'})
+        self.assertIn('test-replace1.png', ss1_after.path)
+        self.assertIn('test-replace2.png', ss2_after.path)
+
+    def test_reuse_filename(self):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        self.addCleanup(os.rmdir, os.path.join('screenshot', str(game.id)))
+
+        ss1, _ = self.upload(client, game, {'screenshot': 'test-same-fn.png', 'screenshot2': 'dummy.png'})
+        self.assertIn('test-same-fn.png', ss1.path)
+
+        ss2, _ = self.upload(client, game, {'screenshot': 'test-same-fn.png'})
+        # image cleanup doesn't seem to happen in tests, so we'll have to do it.
+        # we immediately remove this one to simulate the behaviour.
+        os.remove(ss1.path)
+        self.assertNotEqual(ss1.path, ss2.path)
+
+        ss3, _ = self.upload(client, game, {'screenshot': 'test-same-fn.png'})
+        # if the paths are the same, browser caches mean players may see an outdated image.
+        self.assertNotEqual(ss1.path, ss3.path)
 
 class TestImport(TestCase):
     NUM_MINORS = Card.objects.filter(type=Card.MINOR).count()

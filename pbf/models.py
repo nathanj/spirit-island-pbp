@@ -1,3 +1,4 @@
+import os
 import uuid
 from enum import Enum
 from collections import Counter, defaultdict
@@ -133,6 +134,22 @@ class Card(models.Model):
             ]
 
 class Game(models.Model):
+    def screenshot_with_suffix(game, filename):
+        # If the game is set to always suffix the screenshot, do so.
+        # Django admin has to be used to manually set this setting.
+        # Related: the screenshot upload code in views.py,
+        # which will add suffixes on an as-needed basis,
+        # without enabling this setting.
+        if game.always_suffix_screenshot:
+            from django.utils.crypto import get_random_string
+            # We do not need to fully reimplement django.core.files.storage.get_available_name,
+            # because what we return here will still get passed through to that.
+            # We just need the suffixing part.
+            name, ext = os.path.splitext(filename)
+            return os.path.join('screenshot', str(game.id), f"{name}_{get_random_string(7)}{ext}")
+
+        return os.path.join('screenshot', str(game.id), filename)
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     turn = models.IntegerField(default=1)
@@ -140,8 +157,9 @@ class Game(models.Model):
     minor_deck = models.ManyToManyField(Card, related_name='minor_deck', blank=True)
     major_deck = models.ManyToManyField(Card, related_name='major_deck', blank=True)
     discard_pile = models.ManyToManyField(Card, related_name='discard_pile', blank=True)
-    screenshot = models.ImageField(upload_to='screenshot', blank=True)
-    screenshot2 = models.ImageField(upload_to='screenshot', blank=True)
+    screenshot = models.ImageField(upload_to=screenshot_with_suffix, blank=True)
+    screenshot2 = models.ImageField(upload_to=screenshot_with_suffix, blank=True)
+    always_suffix_screenshot = models.BooleanField(default=False)
     scenario = models.CharField(max_length=255, blank=True)
     #CHANNELS = (
     #    ('957389286834057306', '#pbp1-updates'),
