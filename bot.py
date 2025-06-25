@@ -119,6 +119,7 @@ debug = os.environ.get('DEBUG', None) == 'yes'
 DISCORD_KEY = os.getenv('DISCORD_KEY')
 DJANGO_HOST = os.getenv('DJANGO_HOST', 'localhost')
 DJANGO_PORT = int(os.getenv('DJANGO_PORT', 8000))
+NON_UPDATE_CHANNEL_PATTERN = re.compile(os.getenv('DISCORD_NON_UPDATE_CHANNEL_PATTERN', r'\A\d+-?dc'))
 GAME_URL = os.getenv('GAME_URL', 'si.bitcrafter.net')
 GUILD_ID = int(os.getenv('DISCORD_GUILD_ID', 846580409050857493))
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
@@ -194,6 +195,9 @@ async def on_guild_channel_update(before, after):
             return
         guid = match_game_url(after.topic)
         if not guid:
+            return
+        if re.search(NON_UPDATE_CHANNEL_PATTERN, after.name):
+            LOG.msg('skip non-update channel')
             return
         await link_channel_to_game(after, guid)
 
