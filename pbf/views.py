@@ -1158,6 +1158,8 @@ def ready(request, player_id):
         add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {player.get_gain_energy()} energy')
     for card in player.play.all():
         add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} plays {card.name}')
+    if player.spirit.name == 'Earthquakes':
+        add_impending_log_msgs(player)
     if player.paid_this_turn:
         add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} pays {player.get_play_cost()} energy')
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} started with {player.last_unready_energy_friendly} energy and now has {player.energy} energy')
@@ -1168,6 +1170,16 @@ def ready(request, player_id):
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
+
+def add_impending_log_msgs(player):
+    for impended_card_with_energy in player.gameplayerimpendingwithenergy_set.all().prefetch_related('card'):
+        card = impended_card_with_energy.card
+        if impended_card_with_energy.this_turn:
+            add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} impends {card.name}')
+        elif impended_card_with_energy.in_play:
+            add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} plays {card.name} from impending')
+        else:
+            add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} adjusts energy on impended card {card.name} ({impended_card_with_energy.energy}/{impended_card_with_energy.cost_with_scenario})')
 
 def change_energy(request, player_id, amount):
     amount = int(amount)
