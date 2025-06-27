@@ -1139,8 +1139,7 @@ def ready(request, player_id):
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def add_impending_log_msgs(player):
-    for card in player.impending_with_energy.all():
-        impended_card_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
+    for impended_card_with_energy in player.gameplayerimpendingwithenergy_set.all():
         if impended_card_with_energy.this_turn:
             add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} impends {card.name}')
         elif impended_card_with_energy.in_play:
