@@ -119,6 +119,7 @@ debug = os.environ.get('DEBUG', None) == 'yes'
 DISCORD_KEY = os.getenv('DISCORD_KEY')
 DJANGO_HOST = os.getenv('DJANGO_HOST', 'localhost')
 DJANGO_PORT = int(os.getenv('DJANGO_PORT', 8000))
+NON_UPDATE_CHANNEL_PATTERN = re.compile(os.getenv('DISCORD_NON_UPDATE_CHANNEL_PATTERN', r'\A\d+-?dc'))
 GAME_URL = os.getenv('GAME_URL', 'si.bitcrafter.net')
 GUILD_ID = int(os.getenv('DISCORD_GUILD_ID', 846580409050857493))
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
@@ -173,15 +174,14 @@ def match_game_url(s):
         return match[1]
     return None
 
-async def updatethings(after,topic):
-    guid = match_game_url(topic)
-    if guid is not None:
-        LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
-        r = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}')
-        LOG.msg(r)
-        if r.status_code == 200:
-            await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
-        return r.status_code
+async def link_channel_to_game(after, guid):
+    LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
+    r = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}')
+    LOG.msg(r)
+    if r.status_code == 200:
+        await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
+        return True
+    await after.send(f"Couldn't link the channel to the game ({r.status_code}). The bot owner needs to check the logs for the site API and/or bot")
 
 @client.event
 async def on_guild_channel_update(before, after):
@@ -191,10 +191,15 @@ async def on_guild_channel_update(before, after):
         LOG.msg(f'id: {after.id}')
         LOG.msg(f'before topic: {before.topic}')
         LOG.msg(f'after  topic: {after.topic}')
-        if before.topic != after.topic:
-            status = await updatethings(after, after.topic)
-            if status and status != 200:
-                await after.send(f"Couldn't link the channel to the game ({status}). The bot owner needs to check the logs for the site API and/or bot")
+        if before.topic == after.topic:
+            return
+        guid = match_game_url(after.topic)
+        if not guid:
+            return
+        if re.search(NON_UPDATE_CHANNEL_PATTERN, after.name):
+            LOG.msg('skip non-update channel')
+            return
+        await link_channel_to_game(after, guid)
 
 @client.event
 async def on_message(message):
@@ -203,12 +208,11 @@ async def on_message(message):
     parts = message.content.split()
     if len(parts) >= 2 and parts[0] == '$follow':
         argument = parts[1]
-        status = await updatethings(message.channel, argument)
-        if not status:
+        guid = match_game_url(argument)
+        if not guid:
             await message.channel.send(f"That doesn't look like a game URL. Did you provide the full URL https://{GAME_URL}/game/abcd1234... ?")
             return
-        elif status != 200:
-            await message.channel.send(f"Couldn't link the channel to the game ({status}). The bot owner needs to check the logs for the site API and/or bot")
+        if not await link_channel_to_game(message.channel, guid):
             return
         try:
             await message.pin(reason=f"{message.author.display_name} ({message.author.name}) requested")
