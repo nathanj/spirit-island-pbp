@@ -1,6 +1,0 @@
-discord
-structlog
-async_timeout
-load_dotenv
-pillow
-redis
