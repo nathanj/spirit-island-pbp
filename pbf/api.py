@@ -9,25 +9,25 @@ from .models import Card, Game, GameLog, GamePlayer, GamePlayerImpendingWithEner
 api = NinjaAPI()
 
 class SpiritSchema(ModelSchema):
-    class Config:
+    class Meta:
         model = Spirit
-        model_fields = ['id', 'name']
+        fields = ['id', 'name']
 
 class CardSchema(ModelSchema):
-    class Config:
+    class Meta:
         model = Card
-        model_fields = ['id', 'name']
+        fields = ['id', 'name']
 
 class ImpendingSchema(ModelSchema):
     card: CardSchema = None
-    class Config:
+    class Meta:
         model = GamePlayerImpendingWithEnergy
-        model_fields = ['energy', 'in_play', 'this_turn']
+        fields = ['energy', 'in_play', 'this_turn']
 
 class PresenceSchema(ModelSchema):
-    class Config:
+    class Meta:
         model = Presence
-        model_fields = ['opacity', 'energy', 'elements']
+        fields = ['opacity', 'energy', 'elements']
 
 class GamePlayerSchema(ModelSchema):
     spirit: SpiritSchema = None
@@ -39,9 +39,9 @@ class GamePlayerSchema(ModelSchema):
     healing: List[CardSchema] = []
     impending: List[ImpendingSchema] = Field([], alias="gameplayerimpendingwithenergy_set")
     presence: List[PresenceSchema] = Field([], alias="presence_set")
-    class Config:
+    class Meta:
         model = GamePlayer
-        model_fields = [
+        fields = [
                 'name', 'color', 'aspect',
                 'ready', 'paid_this_turn', 'gained_this_turn',
                 'energy', 'last_unready_energy', 'last_ready_energy',
@@ -51,24 +51,24 @@ class GamePlayerSchema(ModelSchema):
                 ]
 
 class GameSchema(ModelSchema):
-    class Config:
+    class Meta:
         model = Game
-        model_fields = ['id', 'name', 'discord_channel', 'scenario']
+        fields = ['id', 'name', 'discord_channel', 'scenario']
 
 class GameDetailSchema(ModelSchema):
     players: List[GamePlayerSchema] = Field([], alias="gameplayer_set")
     minor_deck: List[CardSchema] = []
     major_deck: List[CardSchema] = []
     discard_pile: List[CardSchema] = []
-    class Config:
+    class Meta:
         model = Game
         # we've not exported the screenshots, because it's not obvious how we would do it.
-        model_fields = ['id', 'name', 'discord_channel', 'scenario', 'always_suffix_screenshot']
+        fields = ['id', 'name', 'discord_channel', 'scenario', 'always_suffix_screenshot']
 
 class GameLogSchema(ModelSchema):
-    class Config:
+    class Meta:
         model = GameLog
-        model_fields = ['id', 'date', 'text', 'images']
+        fields = ['id', 'date', 'text', 'images']
 
 class InvalidIP(Exception):
     pass
