@@ -12,7 +12,7 @@ django-cleanup = "^9.0.0"
 Pillow = "^11.0.0"
 django-ninja = "^0.16.1"
 gunicorn = "^23.0.0"
-python-dotenv = "^0.19.2"
+python-dotenv = "^1.0.0"
 "discord.py" = "^2.5.0"
 requests = "^2.0.0"
 # structlog uses calendar versioning,
