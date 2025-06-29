@@ -12,14 +12,18 @@ django-cleanup = "^9.0.0"
 Pillow = "^11.0.0"
 django-ninja = "^0.16.1"
 gunicorn = "^23.0.0"
-python-dotenv = "^0.19.2"
+python-dotenv = "^1.0.0"
 "discord.py" = "^2.5.0"
 requests = "^2.0.0"
-structlog = "^21.5.0"
+# structlog uses calendar versioning,
+# so using ^ is unnecessarily restrictive
+structlog = ">= 25.1.0"
 redis = "^4.2.0"
 django-prometheus = "^2.2.0"
-async-timeout = "^4.0.3"
-load-dotenv = "^0.1.0"
+# TODO: remove this dependency once all installations are using Python 3.11,
+# since 3.11 has asyncio.timeout in the standard library
+# will need to first migrate bot.py to use the standard library
+async-timeout = "^5.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
