@@ -18,7 +18,13 @@ requests = "^2.0.0"
 # structlog uses calendar versioning,
 # so using ^ is unnecessarily restrictive
 structlog = ">= 25.1.0"
-redis = "^4.2.0"
+# 6.0.0 and above only officially supports Redis 7.2, 7.4, and 8.0.
+# We've unofficially observed that it will still work for older versions,
+# but need more data before being able to rely on this.
+# We don't need the token auth functionality of 5.3.0,
+# and it introduces a dependency on pyjwt that we don't need,
+# so we'll skip that to keep fewer dependencies.
+redis = "~5.2"
 django-prometheus = "^2.2.0"
 # TODO: remove this dependency once all installations are using Python 3.11,
 # since 3.11 has asyncio.timeout in the standard library
