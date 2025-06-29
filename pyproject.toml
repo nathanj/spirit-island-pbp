@@ -21,7 +21,6 @@ structlog = ">= 25.1.0"
 redis = "^4.2.0"
 django-prometheus = "^2.2.0"
 async-timeout = "^4.0.3"
-load-dotenv = "^0.1.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

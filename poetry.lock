@@ -556,20 +556,6 @@ files = [
 ]
 
 [[package]]
-name = "load-dotenv"
-version = "0.1.0"
-description = "Automatically and implicitly load environment variables from .env file"
-optional = false
-python-versions = "*"
-files = [
-    {file = "load-dotenv-0.1.0.tar.gz", hash = "sha256:bbe5f40072d4a61eadca66de6c222df5a2d935d6d41b703be1ff75396f635145"},
-    {file = "load_dotenv-0.1.0-py3-none-any.whl", hash = "sha256:614803f720153fb8a5f97124a72aaa3930a67aa5547cbe8603d01ea7f9ac1adf"},
-]
-
-[package.dependencies]
-python-dotenv = "*"
-
-[[package]]
 name = "multidict"
 version = "6.0.5"
 description = "multidict implementation"
@@ -1080,4 +1066,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "e58b4925d46a5173e2535fbdad385ae1b369cde1ae3c79961ab65c590935df93"
+content-hash = "dd7a2af57e2c5d86d1f5eef11117705f37c28872884748c8f2655397aa806a36"
