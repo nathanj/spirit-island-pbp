@@ -369,6 +369,14 @@ async def relay_game(channel_id, log):
                     await channel.send(msg, file=discord.File(filenames[0]))
             except discord.Forbidden:
                 await channel.send(msg + "\nCouldn't send the image. Make sure I have permission to attach files.")
+            except FileNotFoundError:
+                # If the host uploads two screenshots to the same slot before a message has been sent,
+                # because we use django_cleanup, the first message's image will have been deleted by now.
+                # We don't want the FileNotFoundError to prevent further messages in this batch from being sent.
+                # TODO: After we've confirmed this is in fact what's happening
+                #       we can probably delete this message, and just pass here.
+                # Players probably don't need to be informed of this, so we can just pass.
+                await channel.send(msg + " (the image has since been deleted)")
         else:
             combined_text.append(msg)
 
