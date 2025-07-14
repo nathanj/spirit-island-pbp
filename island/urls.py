@@ -6,7 +6,6 @@ from pbf import views
 from pbf.api import api
 
 urlpatterns = [
-    path('__debug__/', include('debug_toolbar.urls')),
     path('', include('django_prometheus.urls')),
     path('admin/', admin.site.urls),
     path("api/", api.urls),
@@ -70,3 +69,7 @@ if settings.DEBUG:
         path('screenshot/<str:filename>', views.view_screenshot, name='view_screenshot'),
         path('screenshot/<str:game_id>/<str:filename>', views.view_screenshot, name='view_screenshot'),
     ]
+    if 'debug_toolbar' in settings.INSTALLED_APPS:
+        urlpatterns += [
+            path('__debug__/', include('debug_toolbar.urls')),
+        ]
