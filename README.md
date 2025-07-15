@@ -45,6 +45,17 @@ Doing so makes Django serve [static files](https://docs.djangoproject.com/en/sta
 
 If no images are showing up when running in production, check that you've configured your chosen web server to serve the static files (exact configuration depends on the web server).
 
+### `poetry install` DBus UnknownMethod
+
+If `poetry install` fails with an error like:
+
+```
+[org.freedesktop.DBus.Error.UnknownMethod] ('Object does not exist at path “/org/freedesktop/secrets/collection/login”',)
+```
+
+you can run `export PYTHON_KEYRING_BACKEND=keyring.backends.fail.Keyring` before the `poetry install`
+(as stated in https://github.com/python-poetry/poetry/issues/1917).
+
 ### `poetry install` file not found on Windows
 
 If you encounter file not found errors on Windows when running `poetry install` with paths that look similar to the following:
