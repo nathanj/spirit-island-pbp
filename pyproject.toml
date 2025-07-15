@@ -7,7 +7,6 @@ authors = ["Nathan Jones <nathanj439@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.10"
 Django = "^5.0.0"
-django-debug-toolbar = "^5.0.0"
 django-cleanup = "^9.0.0"
 Pillow = "^11.0.0"
 django-ninja = "^1.0.0"
@@ -30,6 +29,9 @@ django-prometheus = "^2.2.0"
 # since 3.11 has asyncio.timeout in the standard library
 # will need to first migrate bot.py to use the standard library
 async-timeout = "^5.0.0"
+
+[tool.poetry.group.dev.dependencies]
+django-debug-toolbar = "^5.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
