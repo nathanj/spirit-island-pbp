@@ -212,6 +212,17 @@ colors_to_emoji_map = {
 ELEMENT_WIDTH = 4
 ELEMENT_MASK = (1 << ELEMENT_WIDTH) - 1
 
+spirit_to_spirit_specific_resource_name_map = {
+    'Rot': 'Rot',
+    'Round DownRot': 'Rot',
+    'Covets': 'Metal',
+    'UnconstrainedFangs': 'Prepared Beasts',
+    'Shifting': 'Prepared Elements',
+    'IntensifyShifting': 'Prepared Elements',
+    'MentorShifting': 'Prepared Elements',
+    'Waters': 'Healing Markers',
+}
+
 class GamePlayer(models.Model):
     class Meta:
         ordering = ('-id', )
@@ -313,18 +324,11 @@ class GamePlayer(models.Model):
     def __str__(self):
         return str(self.game.id) + ' - ' + str(self.spirit.name)
 
+    def has_spirit_specific_resource(self):
+        return spirit_to_spirit_specific_resource_name_map.__contains__(self.full_name())
+
     def spirit_specific_resource_name(self):
-        d = {
-            'Rot': 'Rot',
-            'Round DownRot': 'Rot',
-            'Covets': 'Metal',
-            'UnconstrainedFangs': 'Prepared Beasts',
-            'Shifting': 'Prepared Elements',
-            'IntensifyShifting': 'Prepared Elements',
-            'MentorShifting': 'Prepared Elements',
-            'Waters': 'Healing Markers',
-        }
-        return d.get(self.full_name())
+        return spirit_to_spirit_specific_resource_name_map.get(self.full_name())
 
     # these spirits use the spirit-specific resource field to store a number of markers of each element.
     # since the integer field is only guaranteed to be 32 bits wide and there are eight elements,

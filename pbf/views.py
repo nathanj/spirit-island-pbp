@@ -1163,6 +1163,8 @@ def ready(request, player_id):
     if player.paid_this_turn:
         add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} pays {player.get_play_cost()} energy')
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} started with {player.last_unready_energy_friendly} energy and now has {player.energy} energy')
+    if player.has_spirit_specific_resource():
+        add_spirit_specific_resource_msgs(player)
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} is ready')
 
     if player.game.gameplayer_set.filter(ready=False).count() == 0:
@@ -1180,6 +1182,11 @@ def add_impending_log_msgs(player):
             add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} plays {card.name} from impending')
         else:
             add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} adjusts energy on impended card {card.name} ({impended_card_with_energy.energy}/{impended_card_with_energy.cost_with_scenario})')
+
+def add_spirit_specific_resource_msgs(player):
+    # TODO: Add support for logging spirit-specific elements for Memory and Wounded Waters
+    if player.spirit_specific_resource_elements() is None: 
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} has {player.spirit_specific_resource} {player.spirit_specific_resource_name()}')
 
 def change_energy(request, player_id, amount):
     amount = int(amount)
