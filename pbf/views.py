@@ -1080,9 +1080,7 @@ def reclaim_card(request, player_id, card_id):
 
 def reclaim_all(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    cards = list(player.discard.all())
-    for card in cards:
-        player.hand.add(card)
+    player.hand.add(*player.discard.all())
     player.discard.clear()
 
     compute_card_thresholds(player)
