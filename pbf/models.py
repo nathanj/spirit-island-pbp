@@ -325,7 +325,7 @@ class GamePlayer(models.Model):
         return str(self.game.id) + ' - ' + str(self.spirit.name)
 
     def has_spirit_specific_resource(self):
-        return spirit_to_spirit_specific_resource_name_map.__contains__(self.full_name())
+        return self.full_name() in spirit_to_spirit_specific_resource_name_map.keys()
 
     def spirit_specific_resource_name(self):
         return spirit_to_spirit_specific_resource_name_map.get(self.full_name())
