@@ -953,7 +953,8 @@ def gain_energy_on_impending(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     to_gain = player.impending_energy()
     # You only gain energy on cards made impending on previous turns.
-    for impending in player.gameplayerimpendingwithenergy_set.filter(this_turn=False):
+    impendings = player.gameplayerimpendingwithenergy_set.filter(this_turn=False)
+    for impending in impendings:
         # Let's cap the energy at the cost of the card.
         # There's no real harm in letting it exceed the cost
         # (the UI will still let you play it),
@@ -962,7 +963,7 @@ def gain_energy_on_impending(request, player_id):
         if impending.energy >= impending.cost_with_scenario:
             impending.energy = impending.cost_with_scenario
             impending.in_play = True
-        impending.save()
+    GamePlayerImpendingWithEnergy.objects.bulk_update(impendings, ['energy', 'in_play'])
     player.spirit_specific_per_turn_flags |= GamePlayer.SPIRIT_SPECIFIC_INCREMENTED_THIS_TURN
     player.save()
 
