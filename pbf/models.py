@@ -313,6 +313,9 @@ class GamePlayer(models.Model):
     def __str__(self):
         return str(self.game.id) + ' - ' + str(self.spirit.name)
 
+    def has_spirit_specific_resource(self):
+        return self.spirit_specific_resource_name() is not None
+
     def spirit_specific_resource_name(self):
         d = {
             'Rot': 'Rot',
