@@ -176,7 +176,11 @@ def match_game_url(s):
 
 async def link_channel_to_game(after, guid):
     LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
-    r = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}')
+    try:
+        r = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}')
+    except Exception as e:
+        await after.send(f"Couldn't link the channel to the game ({type(e).__name__}). The bot owner needs to check the logs for the site API and/or bot")
+        raise
     LOG.msg(r)
     if r.status_code == 200:
         await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
