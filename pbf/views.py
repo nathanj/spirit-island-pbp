@@ -1185,7 +1185,7 @@ def add_impending_log_msgs(player):
 
 def add_spirit_specific_resource_msgs(player):
     # TODO: Add support for logging spirit-specific elements for Memory and Wounded Waters
-    if player.spirit_specific_resource_elements() is None: 
+    if player.spirit_specific_resource_elements() is None:
         add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} has {player.spirit_specific_resource} {player.spirit_specific_resource_name()}')
 
 def change_energy(request, player_id, amount):
