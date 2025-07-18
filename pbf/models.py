@@ -430,6 +430,9 @@ class GamePlayer(models.Model):
         # which wouldn't be able to deconstruct a tuple of (total, temporary) in the value.
         return [(elt.name.lower(), elements[elt], getattr(self, 'temporary_' + elt.name.lower())) for elt in Elements]
 
+    def permanent_elements(self):
+        return {elt.name.lower(): getattr(self, 'permanent_' + elt.name.lower()) for elt in Elements}
+
     # Any code that creates a GamePlayer is expected to (manually) call this function once after creating it,
     # (currently add_player in views)
     # so it is suitable for any one-time setup.
