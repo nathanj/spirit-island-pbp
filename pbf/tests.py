@@ -309,6 +309,48 @@ class TestReshuffleOrNot(TestCase):
         self.assertEqual(game.major_deck.count(), 0)
         self.assertEqual(game.discard_pile.count(), available_cards)
 
+    # The other tests were all run on major powers,
+    # because historically the tests didn't have minor powers available.
+    # Now they are, but won't run the full battery of tests on minor powers,
+    # since the logic should all be the same.
+    # Just doing a few to make sure the basic functionality is there,
+    def test_reshuffle_minors_only(self):
+        client, game, player = self.setup_game(Card.objects.filter(type=Card.MAJOR).count())
+
+        cards = list(game.minor_deck.all())
+        game.minor_deck.set(cards[:2])
+        game.discard_pile.add(*cards[2:])
+
+        remaining = list(game.minor_deck.all())
+        available_cards = game.minor_deck.count() + game.discard_pile.filter(type=Card.MINOR).count()
+
+        client.post(f"/game/{player.id}/gain/minor/4")
+
+        sel = player.selection.all()
+        self.assertEqual(len(sel), 4)
+        for rem in remaining:
+            self.assertIn(rem, sel, "card in deck before reshuffle should have been drawn")
+        self.assertEqual(game.minor_deck.count(), available_cards - 4)
+        self.assertEqual(game.discard_pile.count(), 0)
+
+    def test_reshuffle_minors_doesnt_reshuffle_majors(self):
+        client, game, player = self.setup_game(30)
+
+        cards = list(game.minor_deck.all())
+        game.minor_deck.set(cards[:2])
+        game.discard_pile.add(*cards[2:])
+
+        remaining = list(game.minor_deck.all())
+        available_cards = game.minor_deck.count() + game.discard_pile.filter(type=Card.MINOR).count()
+        majors_in_discard = game.discard_pile.filter(type=Card.MAJOR).count()
+
+        client.post(f"/game/{player.id}/gain/minor/4")
+
+        self.assertEqual(player.selection.count(), 4)
+        self.assertEqual(game.minor_deck.count(), available_cards - 4)
+        self.assertEqual(game.discard_pile.count(), majors_in_discard)
+        self.assertEqual(set(game.discard_pile.values_list('type', flat=True)), {Card.MAJOR})
+
 class TestRot(TestCase):
     def assert_rot(self, rot, expected_rot_loss, expected_energy_gain, round_down=False):
         client = Client()
