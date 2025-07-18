@@ -543,6 +543,19 @@ class TestImpending(TestCase):
         self.assert_impending_energy(player, [1])
         self.assert_impending_in_play(player, [True])
 
+    def test_discard_impending_from_play(self):
+        client, player = self.setup_players()
+
+        cards = player.hand.filter(cost=1).values_list('id', flat=True)
+
+        client.post(f"/game/{player.id}/impend/{cards[0]}")
+        client.post(f"/game/{player.id}/discard/all")
+        self.assertEqual(player.discard.count(), 0)
+        client.post(f"/game/{player.id}/gain_energy_on_impending")
+        client.post(f"/game/{player.id}/discard/all")
+        self.assertEqual(player.impending_with_energy.count(), 0)
+        self.assertEqual(player.discard.count(), 1)
+
     def test_previous_turn_2_doesnt_autoplay(self):
         client, player = self.setup_players()
 

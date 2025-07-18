@@ -952,10 +952,9 @@ def compute_card_thresholds(player):
 def gain_energy_on_impending(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     to_gain = player.impending_energy()
-    for impending in player.gameplayerimpendingwithenergy_set.all():
-        if impending.this_turn:
-            # You only gain energy on cards made impending on previous turns.
-            continue
+    # You only gain energy on cards made impending on previous turns.
+    impendings = player.gameplayerimpendingwithenergy_set.filter(this_turn=False)
+    for impending in impendings:
         # Let's cap the energy at the cost of the card.
         # There's no real harm in letting it exceed the cost
         # (the UI will still let you play it),
@@ -964,7 +963,7 @@ def gain_energy_on_impending(request, player_id):
         if impending.energy >= impending.cost_with_scenario:
             impending.energy = impending.cost_with_scenario
             impending.in_play = True
-        impending.save()
+    GamePlayerImpendingWithEnergy.objects.bulk_update(impendings, ['energy', 'in_play'])
     player.spirit_specific_per_turn_flags |= GamePlayer.SPIRIT_SPECIFIC_INCREMENTED_THIS_TURN
     player.save()
 
@@ -1088,14 +1087,11 @@ def reclaim_all(request, player_id):
 
 def discard_all(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    cards = list(player.play.all())
-    for card in cards:
-        player.discard.add(card)
+    player.discard.add(*player.play.all())
 
     if player.spirit.name == 'Earthquakes':
-        played_impending = GamePlayerImpendingWithEnergy.objects.filter(gameplayer=player, in_play=True)
-        for i in played_impending.all():
-            player.discard.add(i.card)
+        played_impending = player.gameplayerimpendingwithenergy_set.filter(in_play=True)
+        player.discard.add(*played_impending.values_list('card_id', flat=True))
         played_impending.delete()
         player.gameplayerimpendingwithenergy_set.update(this_turn=False)
 
