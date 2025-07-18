@@ -712,14 +712,14 @@ def cards_from_deck(game, cards_needed, type):
 def reshuffle_discard(game, type):
     if type == 'minor':
         minors = game.discard_pile.filter(type=Card.MINOR).all()
-        for card in minors:
-            game.discard_pile.remove(card)
-            game.minor_deck.add(card)
-    else:
+        game.discard_pile.remove(*minors)
+        game.minor_deck.add(*minors)
+    elif type == 'major':
         majors = game.discard_pile.filter(type=Card.MAJOR).all()
-        for card in majors:
-            game.discard_pile.remove(card)
-            game.major_deck.add(card)
+        game.discard_pile.remove(*majors)
+        game.major_deck.add(*majors)
+    else:
+        raise ValueError(f"can't reshuffle {type} deck")
 
     add_log_msg(game, text=f'Re-shuffling {type} power deck')
 
