@@ -416,6 +416,20 @@ class TestPlayCost(TestCase):
     def test_slow_blitz(self):
         self.assert_cost(['Call to Vigilance'], 2, scenario='Blitz')
 
+class TestReclaim(TestCase):
+    def test_reclaim_all(self):
+        game = Game()
+        game.save()
+        player = GamePlayer(game=game, spirit=Spirit.objects.get(name='River'))
+        player.save()
+        player.hand.set([Card.objects.get(name="Boon of Vigor"), Card.objects.get(name="Flash Floods")])
+        player.discard.set([Card.objects.get(name="River's Bounty"), Card.objects.get(name="Wash Away")])
+
+        Client().post(f"/game/{player.id}/reclaim/all")
+
+        self.assertEqual(4, player.hand.count())
+        self.assertEqual(0, player.discard.count())
+
 class TestElements(TestCase):
     def setup_game(self, card_names):
         game = Game()
