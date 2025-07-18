@@ -116,6 +116,17 @@ class TestSetupPowerCards(TestCase):
         self.assertIn('Voracious Growth', card_names)
         self.assertEqual(0, game.minor_deck.filter(name='Voracious Growth').count())
 
+    def test_days_that_never_were(self):
+        client, game, player = self.setup_game('Fractured')
+        minors = game.minor_deck.count()
+        majors = game.major_deck.count()
+        client.post(f"/game/{player.id}/create_days/4")
+        self.assertEqual(game.minor_deck.count(), minors - 4)
+        self.assertEqual(game.major_deck.count(), majors - 4)
+        self.assertEqual(player.days.count(), 8)
+        self.assertEqual(player.days.filter(type=Card.MINOR).count(), 4)
+        self.assertEqual(player.days.filter(type=Card.MAJOR).count(), 4)
+
 class TestMatchSpirit(TestCase):
     from .views import try_match_spirit
     try_match_spirit = staticmethod(try_match_spirit)
