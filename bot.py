@@ -10,7 +10,6 @@ import async_timeout
 import re
 from dotenv import load_dotenv
 from PIL import Image
-import redis.asyncio as redis
 
 spirit_emoji_map = {
 'Behemoth': 'SpiritEmberEyedBehemothEEB',
@@ -122,8 +121,17 @@ DJANGO_PORT = int(os.getenv('DJANGO_PORT', 8000))
 NON_UPDATE_CHANNEL_PATTERN = re.compile(os.getenv('DISCORD_NON_UPDATE_CHANNEL_PATTERN', r'\A\d+-?dc'))
 GAME_URL = os.getenv('GAME_URL', 'si.bitcrafter.net')
 GUILD_ID = int(os.getenv('DISCORD_GUILD_ID', 846580409050857493))
-REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
-REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+
+if os.getenv('USE_REDIS', '').lower() in {'y', 'yes', 'true', '1'}:
+    import redis.asyncio as redis
+
+    REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+    REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+    SOCKET_PATH = None
+else:
+    import socket
+    import threading
+    SOCKET_PATH = os.getenv('SOCKET_PATH', 'si.sock')
 
 relay_task = None
 
@@ -397,6 +405,22 @@ game_log_buffer = {}
 # but we'll keep it in case there are other causes of duplicate messages.
 last_message = {}
 
+class SIDatagramProtocol(asyncio.DatagramProtocol):
+    def __init__(self, enqueue):
+        self.msgbuflock = threading.Lock()
+        self.enqueue = enqueue
+
+    def connection_made(self, transport):
+        self.transport = transport
+
+    def datagram_received(self, data, addr):
+        message = data.decode()
+        LOG.msg("got message (socket)", message=message)
+        with self.msgbuflock:
+            j = json.loads(message)
+            channel_id = int(j['channel'])
+            self.enqueue(channel_id, message, lambda _: j)
+
 async def logger():
     await client.wait_until_ready()
 
@@ -410,42 +434,70 @@ async def logger():
     if not correct_guild:
         LOG.warn("Not in the correct guild! Won't be able to use any spirit emojis!")
 
-    redis_obj = await redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}", decode_responses=True)
-    pubsub = redis_obj.pubsub()
-    await pubsub.psubscribe("log-relay:*")
+    def enqueue(channel_id, raw, parse):
+        if channel_id in game_log_buffer:
+            game_log_buffer[channel_id]['timestamp'] = datetime.datetime.utcnow()
+        else:
+            game_log_buffer[channel_id] = {'timestamp': datetime.datetime.utcnow(), 'logs': []}
 
-    while True:
-        try:
-            async with async_timeout.timeout(30):
-                message = await pubsub.get_message(ignore_subscribe_messages=True)
-                if message is not None:
-                    LOG.msg("got message", message=message)
-                    channel_id = int(message['channel'].split(':')[1])
-                    if channel_id in game_log_buffer:
-                        game_log_buffer[channel_id]['timestamp'] = datetime.datetime.utcnow()
-                    else:
-                        game_log_buffer[channel_id] = {'timestamp': datetime.datetime.utcnow(), 'logs': []}
+        if last_message.get(channel_id) == raw:
+            LOG.msg('drop duplicate message')
+        else:
+            game_log_buffer[channel_id]['logs'].append(parse(raw))
+            last_message[channel_id] = raw
 
-                    if last_message.get(channel_id) == message['data']:
-                        LOG.msg('drop duplicate message')
-                    else:
-                        game_log_buffer[channel_id]['logs'].append(json.loads(message['data']))
-                        last_message[channel_id] = message['data']
+    async def dequeue():
+        keys = list(game_log_buffer.keys())
+        for channel_id in keys:
+            if game_log_buffer[channel_id]['timestamp'] + datetime.timedelta(seconds=20) < datetime.datetime.utcnow():
+                LOG.msg('sending', channel_id=channel_id)
+                logs = game_log_buffer[channel_id]['logs']
+                del game_log_buffer[channel_id]
+                await relay_game(channel_id, logs)
 
-                keys = list(game_log_buffer.keys())
-                for channel_id in keys:
-                    if game_log_buffer[channel_id]['timestamp'] + datetime.timedelta(seconds=20) < datetime.datetime.utcnow():
-                        LOG.msg('sending', channel_id=channel_id)
-                        logs = game_log_buffer[channel_id]['logs']
-                        del game_log_buffer[channel_id]
-                        await relay_game(channel_id, logs)
+    if SOCKET_PATH:
+        loop = asyncio.get_running_loop()
+
+        if os.path.exists(SOCKET_PATH):
+            os.remove(SOCKET_PATH)
+        transport, protocol = await loop.create_datagram_endpoint(
+            lambda: SIDatagramProtocol(enqueue),
+            local_addr=SOCKET_PATH,
+            family=socket.AF_UNIX,
+        )
+
+        while True:
+            try:
+                with protocol.msgbuflock:
+                    await dequeue()
                 await asyncio.sleep(1)
-        except asyncio.TimeoutError:
-            LOG.msg('timeout')
-            pass
-        except Exception as ex:
-            LOG.exception(ex)
-            pass
+            except Exception as ex:
+                LOG.exception(ex)
+                pass
+
+    else:
+        redis_obj = await redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}", decode_responses=True)
+        pubsub = redis_obj.pubsub()
+        await pubsub.psubscribe("log-relay:*")
+
+        while True:
+            try:
+                async with async_timeout.timeout(30):
+                    message = await pubsub.get_message(ignore_subscribe_messages=True)
+                    if message is not None:
+                        LOG.msg("got message (Redis)", message=message)
+                        channel_id = int(message['channel'].split(':')[1])
+                        enqueue(channel_id, message, lambda msg: json.loads(msg['data']))
+
+                    await dequeue()
+
+                    await asyncio.sleep(1)
+            except asyncio.TimeoutError:
+                LOG.msg('timeout')
+                pass
+            except Exception as ex:
+                LOG.exception(ex)
+                pass
 
 if __name__ == '__main__':
     #combine_images(["./pbf/static/pbf/settle_into_huntinggrounds.jpg","./pbf/static/pbf/flocking_redtalons.jpg","./pbf/static/pbf/vigor_of_the_breaking_dawn.jpg","./pbf/static/pbf/vengeance_of_the_dead.jpg"])
