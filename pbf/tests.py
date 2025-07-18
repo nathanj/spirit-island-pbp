@@ -472,6 +472,38 @@ class TestReclaim(TestCase):
         self.assertEqual(4, player.hand.count())
         self.assertEqual(0, player.discard.count())
 
+class TestUndoGain(TestCase):
+    def setup_game(self, card_names, spirit='River'):
+        game = Game()
+        game.save()
+        player = GamePlayer(game=game, spirit=Spirit.objects.get(name=spirit))
+        player.save()
+        cards = [Card.objects.get(name=name) for name in card_names]
+        player.selection.set(cards)
+
+        return (game, player)
+
+    def test_undo_minor(self):
+        game, player = self.setup_game(['Call to Ferocity', 'Call to Isolation'])
+        Client().post(f"/game/{player.id}/undo-gain-card")
+        self.assertEqual(0, player.selection.count())
+        self.assertEqual(2, game.minor_deck.count())
+        self.assertEqual(0, game.major_deck.count())
+
+    def test_undo_major(self):
+        game, player = self.setup_game(['Accelerated Rot', 'Angry Bears'])
+        Client().post(f"/game/{player.id}/undo-gain-card")
+        self.assertEqual(0, player.selection.count())
+        self.assertEqual(0, game.minor_deck.count())
+        self.assertEqual(2, game.major_deck.count())
+
+    def test_undo_healing(self):
+        game, player = self.setup_game(['Roiling Waters', 'Serene Waters'], 'Waters')
+        Client().post(f"/game/{player.id}/undo-gain-card")
+        self.assertEqual(0, player.selection.count())
+        self.assertEqual(0, game.minor_deck.count())
+        self.assertEqual(0, game.major_deck.count())
+
 class TestElements(TestCase):
     def setup_game(self, card_names):
         game = Game()
