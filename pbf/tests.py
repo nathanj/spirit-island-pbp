@@ -55,6 +55,67 @@ class TestSetupEnergyAndBaseGain(TestCase):
     def test_spirit_with_initial_2(self):
         s = self.assert_spirit("Waters", per_turn=0, setup=4)
 
+class TestSetupPowerCards(TestCase):
+    NUM_MINORS = Card.objects.filter(type=Card.MINOR).count()
+
+    def setup_game(self, spirit):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        r = client.post(f"/game/{game.id}/add-player", {"spirit": spirit, "color": "random"})
+        v = game.gameplayer_set.all()
+        self.assertEqual(len(v), 1, "didn't find one game player; spirit not created successfully?")
+        player = v[0]
+        return (client, game, player)
+
+    def test_base_of_aspect_remove_card(self):
+        _, game, player = self.setup_game('River')
+        self.assertEqual(4, player.hand.count())
+        self.assertEqual(self.NUM_MINORS, game.minor_deck.count())
+        card_names = player.hand.values_list('name', flat=True)
+        self.assertIn('Boon of Vigor', card_names)
+
+    def test_aspect_remove_card(self):
+        _, game, player = self.setup_game('River - Sunshine')
+        self.assertEqual(3, player.hand.count())
+        self.assertEqual(self.NUM_MINORS, game.minor_deck.count())
+        card_names = player.hand.values_list('name', flat=True)
+        self.assertNotIn('Boon of Vigor', card_names)
+
+    def test_base_of_aspect_add_card(self):
+        _, game, player = self.setup_game('Shadows')
+        self.assertEqual(4, player.hand.count())
+        self.assertEqual(self.NUM_MINORS, game.minor_deck.count())
+        card_names = player.hand.values_list('name', flat=True)
+        self.assertNotIn('Unquenchable Flames', card_names)
+        self.assertEqual(1, game.minor_deck.filter(name='Unquenchable Flames').count())
+
+    def test_aspect_add_card(self):
+        _, game, player = self.setup_game('Shadows - Dark Fire')
+        self.assertEqual(5, player.hand.count())
+        self.assertEqual(self.NUM_MINORS - 1, game.minor_deck.count())
+        card_names = player.hand.values_list('name', flat=True)
+        self.assertIn('Unquenchable Flames', card_names)
+        self.assertEqual(0, game.minor_deck.filter(name='Unquenchable Flames').count())
+
+    def test_base_of_aspect_replace_card(self):
+        _, game, player = self.setup_game('Earth')
+        self.assertEqual(4, player.hand.count())
+        self.assertEqual(self.NUM_MINORS, game.minor_deck.count())
+        card_names = player.hand.values_list('name', flat=True)
+        self.assertIn('A Year of Perfect Stillness', card_names)
+        self.assertNotIn('Voracious Growth', card_names)
+        self.assertEqual(1, game.minor_deck.filter(name='Voracious Growth').count())
+
+    def test_aspect_replace_card(self):
+        _, game, player = self.setup_game('Earth - Nourishing')
+        self.assertEqual(4, player.hand.count())
+        self.assertEqual(self.NUM_MINORS - 1, game.minor_deck.count())
+        card_names = player.hand.values_list('name', flat=True)
+        self.assertNotIn('A Year of Perfect Stillness', card_names)
+        self.assertIn('Voracious Growth', card_names)
+        self.assertEqual(0, game.minor_deck.filter(name='Voracious Growth').count())
+
 class TestMatchSpirit(TestCase):
     from .views import try_match_spirit
     try_match_spirit = staticmethod(try_match_spirit)
