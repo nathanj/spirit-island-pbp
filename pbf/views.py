@@ -1,6 +1,6 @@
 import json
 import itertools
-from random import sample, shuffle
+import random
 import os
 
 from django.db import transaction
@@ -388,8 +388,7 @@ def add_player(request, game_id):
     # this automatically handles random by virtue of random not being in colors.
     # TODO: maybe consider showing an error if they select a color already in use?
     if color not in colors:
-        shuffle(colors)
-        color = colors[0]
+        color = random.choice(colors)
     spirit_name = request.POST['spirit']
     spirit_and_aspect = spirit_name
     aspect = None
@@ -691,7 +690,7 @@ def cards_from_deck(game, cards_needed, type):
     cards_have = deck.count()
 
     if cards_have >= cards_needed:
-        cards_drawn = sample(list(deck.all()), cards_needed)
+        cards_drawn = random.sample(list(deck.all()), cards_needed)
         deck.remove(*cards_drawn)
     else:
         # reshuffle needed, but first draw all the cards we do have
@@ -700,7 +699,7 @@ def cards_from_deck(game, cards_needed, type):
         deck.clear()
         reshuffle_discard(game, type)
         if deck.count() >= cards_remain:
-            new_cards = sample(list(deck.all()), cards_remain)
+            new_cards = random.sample(list(deck.all()), cards_remain)
             cards_drawn.extend(new_cards)
             deck.remove(*new_cards)
         else:
@@ -925,7 +924,7 @@ def create_days(request, player_id, num):
     game = player.game
 
     for deck in [game.minor_deck, game.major_deck]:
-        days = sample(list(deck.all()), num)
+        days = random.sample(list(deck.all()), num)
         deck.remove(*days)
         player.days.add(*days)
 
