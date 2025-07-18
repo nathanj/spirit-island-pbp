@@ -424,14 +424,11 @@ class GamePlayer(models.Model):
         if self.aspect == 'Dark Fire': return "MF"
         return None
 
-    def sun(self): return self.elements[Elements.Sun]
-    def moon(self): return self.elements[Elements.Moon]
-    def fire(self): return self.elements[Elements.Fire]
-    def air(self): return self.elements[Elements.Air]
-    def water(self): return self.elements[Elements.Water]
-    def earth(self): return self.elements[Elements.Earth]
-    def plant(self): return self.elements[Elements.Plant]
-    def animal(self): return self.elements[Elements.Animal]
+    def total_and_temporary_elements(self):
+        elements = self.elements
+        # not a dictionary because this is used in the template,
+        # which wouldn't be able to deconstruct a tuple of (total, temporary) in the value.
+        return [(elt.name.lower(), elements[elt], getattr(self, 'temporary_' + elt.name.lower())) for elt in Elements]
 
     # Any code that creates a GamePlayer is expected to (manually) call this function once after creating it,
     # (currently add_player in views)
