@@ -185,6 +185,10 @@ class Game(models.Model):
     def player_count(self):
         return self.gameplayer_set.count()
 
+    def player_summary(self):
+        players = self.gameplayer_set.values_list('id', 'name', 'spirit__name', 'aspect', 'color', named=True)
+        return [p._replace(color=colors_to_circle_color_map[p.color] if p.color else p.color) for p in players]
+
 colors_to_circle_color_map = {
         'blue': '#705dff',
         'green': '#0d9501',
@@ -391,9 +395,6 @@ class GamePlayer(models.Model):
 
     def disk_url(self):
         return 'pbf/disk_' + self.color + '.png'
-
-    def circle_color(self):
-        return colors_to_circle_color_map[self.color]
 
     @property
     def circle_emoji(self):
