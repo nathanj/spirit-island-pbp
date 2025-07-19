@@ -173,6 +173,10 @@ class TestMatchSpirit(TestCase):
         (game, ids) = self.setup_game([('River', 'Haven')])
         self.assertEqual(self.try_match_spirit(game, 'Haven'), ids[0])
 
+    def test_spirit_can_refer_to_aspect(self):
+        (game, ids) = self.setup_game([('River', 'Haven')])
+        self.assertEqual(self.try_match_spirit(game, 'River'), ids[0])
+
     def test_base_is_preferred(self):
         (game, ids) = self.setup_game([('River', 'Haven'), 'River'])
         self.assertEqual(GamePlayer.objects.get(id=self.try_match_spirit(game, 'River')).aspect, None)
