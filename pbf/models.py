@@ -418,7 +418,10 @@ class GamePlayer(models.Model):
             for card in played_impending.all():
                 counter += card.get_elements()
         for presence in self.presences_off_track:
-            counter += presence.get_elements()
+            if presence.elements:
+                # Kind of hacky: storing Rot in the same field as elements.
+                # Making a new field for Rot just seemed sort of wasteful.
+                counter.update(Elements[e] for e in presence.elements.split(',') if e != 'Rot')
         return defaultdict(int, counter)
 
     def equiv_elements(self):
@@ -436,7 +439,7 @@ class GamePlayer(models.Model):
 
     @functools.cached_property
     def presences_off_track(self):
-        return self.presence_set.filter(opacity=0.0)
+        return self.presence_set.filter(opacity=0.0).exclude(energy='', elements='').values_list('energy', 'elements', named=True)
 
     # Any code that creates a GamePlayer is expected to (manually) call this function once after creating it,
     # (currently add_player in views)
@@ -461,7 +464,10 @@ class GamePlayer(models.Model):
         return sum([card.cost - (1 if blitz and card.speed == Card.FAST else 0) for card in self.play.all()])
 
     def get_gain_energy(self):
-        amount = max([self.base_energy_per_turn] + [p.get_energy() for p in self.presences_off_track]) + sum([p.get_plus_energy() for p in self.presences_off_track])
+        energy_revealed = [p.energy for p in self.presences_off_track if p.energy]
+        largest_showing = max((int(en) for en in energy_revealed if en.isdigit()), default=self.base_energy_per_turn)
+        plus_energy = sum(int(en) for en in energy_revealed if en[0] == '+')
+        amount = largest_showing + plus_energy
         if self.aspect == 'Immense':
             return amount * 2
         elif self.aspect == 'Spreading Hostility':
@@ -472,10 +478,11 @@ class GamePlayer(models.Model):
             return amount
 
     def impending_energy(self):
-        return max(1, max((p.impending_energy() for p in self.presences_off_track), default=1))
+        return max((int(p.energy[6:]) for p in self.presences_off_track if p.energy.startswith('Impend')), default=1)
 
     def rot_gain(self):
-        return sum(p.rot() for p in self.presences_off_track)
+        # no presence grants > 1 Rot, so just check `in` rather than count
+        return sum('Rot' in p.elements for p in self.presences_off_track)
 
     def rot_loss(self):
         return (self.spirit_specific_resource + (0 if self.aspect == 'Round Down' else 1)) // 2
@@ -1223,52 +1230,6 @@ class Presence(models.Model):
     opacity = models.FloatField(default=1.0)
     energy = models.CharField(max_length=255, blank=True)
     elements = models.CharField(max_length=255, blank=True)
-
-    def get_energy(self):
-        if self.opacity == 1.0:
-            return 0
-        try:
-            if self.energy[0].isdigit():
-                return int(self.energy)
-        except:
-            pass
-        return 0
-
-    def get_plus_energy(self):
-        if self.opacity == 1.0:
-            return 0
-        try:
-            if self.energy[0] == '+':
-                return int(self.energy)
-        except:
-            pass
-        return 0
-
-    def impending_energy(self):
-        if self.opacity == 1.0:
-            return 0
-        if self.energy and self.energy.startswith("Impend"):
-            return int(self.energy[6:])
-        return 0
-
-    def get_elements(self):
-        counter = Counter()
-        if self.opacity == 1.0:
-            return counter
-        for e in self.elements.split(','):
-            # Kind of hacky: storing Rot in the same field as elements.
-            # Making a new field for Rot just seemed sort of wasteful.
-            if e == 'Rot':
-                continue
-            if len(e) > 0:
-                counter[Elements[e]] += 1
-        return counter
-
-    def rot(self):
-        if self.opacity == 1.0:
-            return 0
-        # no presence grants > 1 rot, so just check `in` rather than count
-        return 1 if 'Rot' in self.elements.split(',') else 0
 
 class GameLog(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
