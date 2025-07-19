@@ -439,7 +439,7 @@ class GamePlayer(models.Model):
 
     @functools.cached_property
     def presences_off_track(self):
-        return self.presence_set.filter(opacity=0.0).values_list('energy', 'elements', named=True)
+        return self.presence_set.filter(opacity=0.0).exclude(energy='', elements='').values_list('energy', 'elements', named=True)
 
     # Any code that creates a GamePlayer is expected to (manually) call this function once after creating it,
     # (currently add_player in views)
