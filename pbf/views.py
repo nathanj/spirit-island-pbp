@@ -640,26 +640,26 @@ def try_match_spirit(game, spirit_spec):
         elif spirit_spec in player_ids:
             return spirit_spec
     else:
-        aspect_match = game.gameplayer_set.filter(aspect__iexact=spirit_spec)
-        if aspect_match.exists():
-            return aspect_match.first().id
+        aspect_match = game.gameplayer_set.filter(aspect__iexact=spirit_spec).values_list('id', flat=True).first()
+        if aspect_match:
+            return aspect_match
         # prefer the base spirit if they search for a spirit name,
         # in case there is one base and one aspected spirit in the same game.
-        base_spirit_match = game.gameplayer_set.filter(spirit__name__iexact=spirit_spec, aspect=None)
-        if base_spirit_match.exists():
-            return base_spirit_match.first().id
-        spirit_match = game.gameplayer_set.filter(spirit__name__iexact=spirit_spec)
-        if spirit_match.exists():
-            return spirit_match.first().id
+        base_spirit_match = game.gameplayer_set.filter(spirit__name__iexact=spirit_spec, aspect=None).values_list('id', flat=True).first()
+        if base_spirit_match:
+            return base_spirit_match
+        spirit_match = game.gameplayer_set.filter(spirit__name__iexact=spirit_spec).values_list('id', flat=True).first()
+        if spirit_match:
+            return spirit_match
 
         # look for an exact match first, in case someone's name is a substring of another
         # on the other hand, if someone's name is exactly a spirit or aspect's name, not much we can do!
-        player_exact_match = game.gameplayer_set.filter(name__iexact=spirit_spec)
-        if player_exact_match.exists():
-            return player_exact_match.first().id
-        player_match = game.gameplayer_set.filter(name__icontains=spirit_spec)
-        if player_match.exists():
-            return player_match.first().id
+        player_exact_match = game.gameplayer_set.filter(name__iexact=spirit_spec).values_list('id', flat=True).first()
+        if player_exact_match:
+            return player_exact_match
+        player_match = game.gameplayer_set.filter(name__icontains=spirit_spec).values_list('id', flat=True).first()
+        if player_match:
+            return player_match
 
 def draw_cards(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
