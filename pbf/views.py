@@ -624,7 +624,7 @@ def view_game(request, game_id, spirit_spec=None):
 
         return redirect(reverse('view_game', args=[game.id, spirit_spec] if spirit_spec else [game.id]))
 
-    tab_id = try_match_spirit(game, spirit_spec) or (game.gameplayer_set.first().id if game.gameplayer_set.exists() else None)
+    tab_id = try_match_spirit(game, spirit_spec) or game.gameplayer_set.values_list('id', flat=True).first()
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
     return render(request, 'game.html', { 'game': game, 'logs': logs, 'tab_id': tab_id, 'spirit_spec': spirit_spec })
 
