@@ -21,7 +21,7 @@
 	</a>
 	{% endif %}
 
-	{% if game.gameplayer_set.count > 0 %}
+	{% if game.player_count %}
 	<div id="tabs" hx-get="{% url 'tab' game.id tab_id %}" hx-trigger="load after:100ms" hx-target="#tabs" hx-swap="innerHTML"></div>
 	{% endif %}
 
@@ -49,7 +49,7 @@
       <label for="host-draw-num">Discard top</label>
       <div>
         <input id="host-draw-num" type="number" name="num_cards" min="0" max="100" value="0" />
-        <button onclick="document.getElementById('host-draw-num').value='{{game.gameplayer_set.count}}'; return false">Set to {{game.gameplayer_set.count}}</button>
+        <button onclick="document.getElementById('host-draw-num').value='{{game.player_count}}'; return false">Set to {{game.player_count}}</button>
       </div>
       <div>
         <label><input type="radio" name="type" value="minor" checked> minor</label>

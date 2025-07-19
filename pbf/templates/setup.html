@@ -21,25 +21,25 @@
     </tr>
   </thead>
   <tbody>
-    {% for player in game.gameplayer_set.all %}
+    {% for player in game.player_summary %}
     <tr>
-      {% with "pbf/spirit-icon-"|add:player.spirit.name|add:".png" as spirit_icon %}
-      <td><img src="{% static spirit_icon %}" alt="{{player.spirit.name}}" height="30" /></td>
+      {% with "pbf/spirit-icon-"|add:player.spirit__name|add:".png" as spirit_icon %}
+      <td><img src="{% static spirit_icon %}" alt="{{player.spirit__name}}" height="30" /></td>
       {% endwith %}
-      <td>{{player.spirit.name}}</td>
+      <td>{{player.spirit__name}}</td>
       <td>{% if player.aspect %}{{player.aspect}}{% endif %}</td>
       <td>
         <input type="hidden" name="id" value="{{player.id}}" />
         <input type="text" name="name" value="{{player.name}}" />
       </td>
       <td>
-        <select name="color" style="background-color: {{player.circle_color}};" onChange="this.style.backgroundColor = this.options[this.selectedIndex].style.backgroundColor">
-          {% for color, freq, code in player.game.color_freq %}
+        <select name="color" style="background-color: {{player.color}};" onChange="this.style.backgroundColor = this.options[this.selectedIndex].style.backgroundColor">
+          {% for color, freq, code in game.color_freq %}
           {# Probably not necessary to show in-use indicators. #}
           {# The host can see all the players in the table, #}
           {# so they are capable of making this judgment themselves. #}
           {# Besides, if we showed it we'd have to use JS to update it#}
-          <option style="background-color: {{code}};" value="{{color}}" {% if color == player.color %}selected{% endif %}>{{color.capitalize}}</option>
+          <option style="background-color: {{code}};" value="{{color}}" {% if code == player.color %}selected{% endif %}>{{color.capitalize}}</option>
           {% endfor %}
         </select>
       </td>
