@@ -34,7 +34,7 @@
       </td>
       <td>
         <select name="color" style="background-color: {{player.circle_color}};" onChange="this.style.backgroundColor = this.options[this.selectedIndex].style.backgroundColor">
-          {% for color, freq, code in player.game.color_freq %}
+          {% for color, freq, code in game.color_freq %}
           {# Probably not necessary to show in-use indicators. #}
           {# The host can see all the players in the table, #}
           {# so they are capable of making this judgment themselves. #}
