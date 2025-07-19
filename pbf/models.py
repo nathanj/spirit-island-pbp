@@ -1,3 +1,4 @@
+import functools
 import os
 import uuid
 from enum import Enum
@@ -395,7 +396,7 @@ class GamePlayer(models.Model):
     def circle_emoji(self):
         return colors_to_emoji_map[self.color]
 
-    @property
+    @functools.cached_property
     def elements(self):
         counter = Counter()
         counter[Elements.Sun] += self.temporary_sun + self.permanent_sun
@@ -416,7 +417,7 @@ class GamePlayer(models.Model):
             played_impending = self.impending_with_energy.filter(gameplayerimpendingwithenergy__in_play=True)
             for card in played_impending.all():
                 counter += card.get_elements()
-        for presence in self.presence_set.all():
+        for presence in self.presences_off_track:
             counter += presence.get_elements()
         return defaultdict(int, counter)
 
@@ -432,6 +433,10 @@ class GamePlayer(models.Model):
 
     def permanent_elements(self):
         return {elt.name.lower(): getattr(self, 'permanent_' + elt.name.lower()) for elt in Elements}
+
+    @functools.cached_property
+    def presences_off_track(self):
+        return self.presence_set.filter(opacity=0.0)
 
     # Any code that creates a GamePlayer is expected to (manually) call this function once after creating it,
     # (currently add_player in views)
@@ -456,7 +461,7 @@ class GamePlayer(models.Model):
         return sum([card.cost - (1 if blitz and card.speed == Card.FAST else 0) for card in self.play.all()])
 
     def get_gain_energy(self):
-        amount = max([self.base_energy_per_turn] + [p.get_energy() for p in self.presence_set.all()]) + sum([p.get_plus_energy() for p in self.presence_set.all()])
+        amount = max([self.base_energy_per_turn] + [p.get_energy() for p in self.presences_off_track]) + sum([p.get_plus_energy() for p in self.presences_off_track])
         if self.aspect == 'Immense':
             return amount * 2
         elif self.aspect == 'Spreading Hostility':
@@ -467,10 +472,10 @@ class GamePlayer(models.Model):
             return amount
 
     def impending_energy(self):
-        return max(1, max(p.impending_energy() for p in self.presence_set.all()))
+        return max(1, max((p.impending_energy() for p in self.presences_off_track), default=1))
 
     def rot_gain(self):
-        return sum(p.rot() for p in self.presence_set.all())
+        return sum(p.rot() for p in self.presences_off_track)
 
     def rot_loss(self):
         return (self.spirit_specific_resource + (0 if self.aspect == 'Round Down' else 1)) // 2
