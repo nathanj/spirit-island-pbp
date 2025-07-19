@@ -4,6 +4,109 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from .models import Card, Elements, Game, GamePlayer, Spirit
 
+class TestPresence(TestCase):
+    def test_irrelevant_presence_energy(self):
+        game = Game()
+        game.save()
+        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player.save()
+        player.presence_set.create(left=0, top=0, opacity=0.0)
+        self.assertEqual(player.get_gain_energy(), 1)
+
+    def test_presence_covering_energy(self):
+        game = Game()
+        game.save()
+        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player.save()
+        player.presence_set.create(left=0, top=0, opacity=1.0, energy='2')
+        self.assertEqual(player.get_gain_energy(), 1)
+
+    def test_max_energy(self):
+        game = Game()
+        game.save()
+        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player.save()
+        player.presence_set.create(left=0, top=0, opacity=0.0, energy='2')
+        player.presence_set.create(left=0, top=0, opacity=0.0, energy='3')
+        self.assertEqual(player.get_gain_energy(), 3)
+
+    def test_presence_covering_plus_energy(self):
+        game = Game()
+        game.save()
+        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player.save()
+        player.presence_set.create(left=0, top=0, opacity=1.0, energy='+2')
+        self.assertEqual(player.get_gain_energy(), 1)
+
+    def test_plus_energy(self):
+        game = Game()
+        game.save()
+        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player.save()
+        player.presence_set.create(left=0, top=0, opacity=0.0, energy='+2')
+        player.presence_set.create(left=0, top=0, opacity=0.0, energy='+4')
+        self.assertEqual(player.get_gain_energy(), 7)
+
+    def test_max_and_plus_energy(self):
+        game = Game()
+        game.save()
+        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player.save()
+        player.presence_set.create(left=0, top=0, opacity=0.0, energy='2')
+        player.presence_set.create(left=0, top=0, opacity=0.0, energy='3')
+        player.presence_set.create(left=0, top=0, opacity=0.0, energy='+4')
+        player.presence_set.create(left=0, top=0, opacity=0.0, energy='+8')
+        self.assertEqual(player.get_gain_energy(), 15)
+
+    def test_no_rot(self):
+        game = Game()
+        game.save()
+        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player.save()
+        player.presence_set.create(left=0, top=0, opacity=0.0)
+        self.assertEqual(player.rot_gain(), 0)
+
+    def test_irrelevant_rot(self):
+        game = Game()
+        game.save()
+        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player.save()
+        player.presence_set.create(left=0, top=0, opacity=0.0, elements='Fire')
+        self.assertEqual(player.rot_gain(), 0)
+
+    def test_covered_rot(self):
+        game = Game()
+        game.save()
+        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player.save()
+        player.presence_set.create(left=0, top=0, opacity=1.0, elements='Rot')
+        self.assertEqual(player.rot_gain(), 0)
+
+    def test_rot(self):
+        game = Game()
+        game.save()
+        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player.save()
+        player.presence_set.create(left=0, top=0, opacity=0.0, elements='Rot')
+        self.assertEqual(player.rot_gain(), 1)
+
+    def test_rot_and_something_else(self):
+        game = Game()
+        game.save()
+        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player.save()
+        player.presence_set.create(left=0, top=0, opacity=0.0, elements='Rot,Fire')
+        self.assertEqual(player.rot_gain(), 1)
+
+    def test_many_rot(self):
+        game = Game()
+        game.save()
+        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player.save()
+        player.presence_set.create(left=0, top=0, opacity=0.0, elements='Rot')
+        player.presence_set.create(left=0, top=0, opacity=0.0, elements='Rot')
+        self.assertEqual(player.rot_gain(), 2)
+
 class TestSetupEnergyAndBaseGain(TestCase):
     def assert_spirit(self, spirit, per_turn=0, setup=0):
         client = Client()
@@ -558,6 +661,54 @@ class TestElements(TestCase):
 
         player = self.setup_game(["Wash Away", "Flow Downriver, Blow Downwind", "Ravaged Undergrowth Slithers Back to Life"])
         player.temporary_animal += 1
+        self.assert_elements(player, expected_elements)
+
+    def test_elements_irrelevant_presence(self):
+        expected_elements = Counter()
+
+        # If we have no cards, we get back a counter with eight 0s, which isn't the same as an empty counter.
+        player = self.setup_game(['Elemental Boon'])
+        player.presence_set.create(left=0, top=0, opacity=0.0)
+        self.assert_elements(player, expected_elements)
+
+    def test_elements_covered_presence(self):
+        expected_elements = Counter()
+
+        player = self.setup_game(['Elemental Boon'])
+        player.presence_set.create(left=0, top=0, opacity=1.0, elements='Water')
+        self.assert_elements(player, expected_elements)
+
+    def test_elements_presence(self):
+        expected_elements = Counter()
+        expected_elements[Elements.Water] = 1
+
+        player = self.setup_game(['Elemental Boon'])
+        player.presence_set.create(left=0, top=0, opacity=0.0, elements='Water')
+        self.assert_elements(player, expected_elements)
+
+    def test_elements_presence_two_different(self):
+        expected_elements = Counter()
+        expected_elements[Elements.Water] = 1
+        expected_elements[Elements.Animal] = 1
+
+        player = self.setup_game(['Elemental Boon'])
+        player.presence_set.create(left=0, top=0, opacity=0.0, elements='Water,Animal')
+        self.assert_elements(player, expected_elements)
+
+    def test_elements_presence_two_same(self):
+        expected_elements = Counter()
+        expected_elements[Elements.Water] = 2
+
+        player = self.setup_game(['Elemental Boon'])
+        player.presence_set.create(left=0, top=0, opacity=0.0, elements='Water,Water')
+        self.assert_elements(player, expected_elements)
+
+    def test_elements_presence_ignore_rot(self):
+        expected_elements = Counter()
+        expected_elements[Elements.Water] = 1
+
+        player = self.setup_game(['Elemental Boon'])
+        player.presence_set.create(left=0, top=0, opacity=0.0, elements='Water,Rot')
         self.assert_elements(player, expected_elements)
 
 class TestImpending(TestCase):
