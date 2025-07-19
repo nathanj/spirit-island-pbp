@@ -58,8 +58,7 @@ def new_game(request):
 def edit_players(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
     players = zip(request.POST.getlist('id'), request.POST.getlist('name'), request.POST.getlist('color'))
-    for (id, name, color) in players:
-        game.gameplayer_set.filter(id=id).update(name=name, color=color)
+    GamePlayer.objects.bulk_update([GamePlayer(id=id, name=name, color=color) for id, name, color in players], ['name', 'color'])
 
     return redirect(reverse('game_setup', args=[game.id]))
 
