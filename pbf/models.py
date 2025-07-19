@@ -1,3 +1,4 @@
+import functools
 import os
 import uuid
 from enum import Enum
@@ -395,7 +396,7 @@ class GamePlayer(models.Model):
     def circle_emoji(self):
         return colors_to_emoji_map[self.color]
 
-    @property
+    @functools.cached_property
     def elements(self):
         counter = Counter()
         counter[Elements.Sun] += self.temporary_sun + self.permanent_sun
