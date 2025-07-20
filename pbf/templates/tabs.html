@@ -1,6 +1,6 @@
 <div class="tab-list mt-15">
 	{% for p in game.player_summary %}
-	<a hx-get="{% url 'tab' game.id p.id %}" class="{% if p.id == player.id %}selected{% endif %}"><span style="color: {{p.color}};">⬤</span> {% if p.aspect %}{{p.aspect}} {% endif %}{{p.spirit__name}}{% if p.name %} ({{p.name}}){% endif %}</a>
+	<a hx-get="{% url 'tab' game.id p.id %}" class="{% if p.id == player.id %}selected{% endif %}"><span style="color: {{p.color}};">⬤</span> <span class="{% if p.ready %}player-ready{% endif %}">{% if p.aspect %}{{p.aspect}} {% endif %}{{p.spirit__name}}</span>{% if p.name %} ({{p.name}}){% endif %}</a>
 	{% endfor %}
 </div>
 
