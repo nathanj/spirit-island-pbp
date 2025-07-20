@@ -41,6 +41,8 @@ form#host-draw label {
 	margin-left: 5px;
 }
 
+.player-ready { font-weight: bold; }
+
 @media screen and (max-device-width:1400px), screen and (max-width:1400px) {
 	.spirit-image-single {
 		/* A spirit panel is by default 630 pixels. We multiply 630 * 0.8 to arrive at the below number.

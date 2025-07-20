@@ -186,7 +186,7 @@ class Game(models.Model):
         return self.gameplayer_set.count()
 
     def player_summary(self):
-        players = self.gameplayer_set.values_list('id', 'name', 'spirit__name', 'aspect', 'color', named=True)
+        players = self.gameplayer_set.values_list('id', 'name', 'spirit__name', 'aspect', 'color', 'ready', named=True)
         return [p._replace(color=colors_to_circle_color_map[p.color] if p.color else p.color) for p in players]
 
 colors_to_circle_color_map = {
