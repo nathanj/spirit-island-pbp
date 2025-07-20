@@ -20,7 +20,6 @@ spirit_emoji_map = {
 'Downpour': 'SpiritDownpourDrenchesWorld',
 'Earthquakes': 'SpiritDancesUpEarthquakesDUE',
 'Earth': 'SpiritVitalStrengthEarth',
-'Exploratory Bringer': 'SpiritBringerDreamNightmareBoDaN',
 'Eyes': 'SpiritEyesWatchTrees',
 'Fangs': 'SpiritSharpFangsLeaves',
 'Finder': 'SpiritFinderPathsUnseen',
