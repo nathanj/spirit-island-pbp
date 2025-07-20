@@ -32,8 +32,7 @@ def add_log_msg(game, text, images=None, spoiler=False):
         # not requiring the caller to change the text they specify.
         before_colon, after_colon = text.split(': ', maxsplit=1)
         discord_text = f"{before_colon}: ||{after_colon}||"
-        # TODO: Maybe we can do some HTML for this.
-        game.gamelog_set.create(text=f"{before_colon}: (spoiler)", images=images)
+        game.gamelog_set.create(text=f"{before_colon}:", spoiler_text=after_colon, images=images)
     else:
         discord_text = text
         game.gamelog_set.create(text=text, images=images)
