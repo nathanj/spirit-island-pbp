@@ -20,7 +20,7 @@ class GameAdmin(admin.ModelAdmin):
 class GamePlayerAdmin(admin.ModelAdmin):
     search_fields = ('game__id', 'name')
     search_help_text = 'Search by game ID or player name'
-    list_display = ('id', 'game', 'spirit', 'name')
+    list_display = ('id', 'game', 'spirit__name', 'name')
     autocomplete_fields = ('hand', 'discard', 'play', 'selection', 'days')
 
 admin.site.register(Card, CardAdmin)
