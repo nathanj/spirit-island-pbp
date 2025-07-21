@@ -6,12 +6,12 @@
      hx-indicator="#energy-spinner">
   <p>
     Energy: {{ player.energy }} 
-    <button class="btn" hx-get="{% url 'change_energy' player.id '1' %}">+1</button>
+    <button class="btn" hx-get="{% url 'change_energy' player.id '1' %}">+1{% if player.remaining_bargain_cost > 0 %} (⚠️ debt){% endif %}</button>
     <button class="btn" hx-get="{% url 'change_energy' player.id '-1' %}">-1</button>
     {% if player.gained_this_turn %}
       Gained!
     {% else %}
-      <button class="btn" hx-get="{% url 'gain_energy' player.id %}">Gain Energy ({{player.get_gain_energy}})</button>
+      <button class="btn" hx-get="{% url 'gain_energy' player.id %}">Gain Energy ({{player.get_gain_energy}}{% if player.remaining_bargain_cost > 0 %} - {% if player.remaining_bargain_cost > player.get_gain_energy %}{{player.get_gain_energy}}{% else %}{{player.remaining_bargain_cost}}{% endif %}{% endif %})</button>
     {% endif %}
     {% if player.paid_this_turn %}
       Paid!
@@ -27,6 +27,16 @@
 
     <span id="energy-spinner" class="htmx-indicator"><img src="{% static "pbf/bars.svg" %}" /></span>
   </p>
+
+  {% if player.bargain_cost_per_turn %}
+  <p>
+  Bargain cost: {{ player.bargain_paid_this_turn }} paid this turn / {{ player.bargain_cost_per_turn }} per turn
+  <button class="btn" hx-get="{% url 'change_bargain_paid_this_turn' player.id '1' %}" {% if player.remaining_bargain_cost <= 0 %}disabled{% endif %}>+1 paid</button>
+  <button class="btn" hx-get="{% url 'change_bargain_paid_this_turn' player.id '-1' %}" {% if player.bargain_paid_this_turn <= 0 %}disabled{% endif %}>-1 paid</button>
+  <button class="btn" hx-get="{% url 'change_bargain_cost_per_turn' player.id '1' %}">+1 cost</button>
+  <button class="btn" hx-get="{% url 'change_bargain_cost_per_turn' player.id '-1' %}">-1 cost</button>
+  </p>
+  {% endif %}
 
   {% if player.spirit_specific_resource_name %}
     <p>
@@ -76,7 +86,7 @@
         {% if player.rot_converted_this_turn %}
           Converted!
         {% else %}
-          <button class="btn" hx-get="{% url 'convert_rot' player.id %}">Convert Rot (-{{player.rot_loss}} Rot, +{{player.energy_from_rot}} Energy)</button>
+          <button class="btn" hx-get="{% url 'convert_rot' player.id %}">Convert Rot (-{{player.rot_loss}} Rot, +{{player.energy_from_rot}}{% if player.remaining_bargain_cost > 0 %} - {% if player.remaining_bargain_cost > player.energy_from_rot%}{{player.energy_from_rot}}{% else %}{{player.remaining_bargain_cost}}{% endif %}{% endif %} Energy)</button>
         {% endif %}
       {% endif %}
         </p>
