@@ -1239,4 +1239,5 @@ class GameLog(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True, blank=True)
     text = models.CharField(max_length=255, blank=False)
+    spoiler_text = models.CharField(max_length=255, blank=True)
     images = models.CharField(max_length=1024, blank=True, null=True)

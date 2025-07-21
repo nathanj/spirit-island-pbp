@@ -9,6 +9,7 @@
     {% for log in logs %}
     <li class="p-0 m-0">
       {{ log.text }}
+      {% if log.spoiler_text %}<details><summary>Card names hidden</summary>{{log.spoiler_text}}</details>{% endif %}
     </li>
     {% endfor %}
   </ul>

@@ -68,7 +68,7 @@ class GameDetailSchema(ModelSchema):
 class GameLogSchema(ModelSchema):
     class Meta:
         model = GameLog
-        fields = ['id', 'date', 'text', 'images']
+        fields = ['id', 'date', 'text', 'spoiler_text', 'images']
 
 class InvalidIP(Exception):
     pass

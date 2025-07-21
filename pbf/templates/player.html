@@ -133,6 +133,7 @@
   </ul>
   <button class="btn" hx-get="{% url 'undo_gain_card' player.id %}" hx-confirm="Are you sure?">Oops! Undo gain card</button>
   {% else %}
+  <span hx-include="[name='spoiler_power_gain']">
   <p>Gain Minor ({{ player.game.minor_deck.count }} in deck):
   {% if player.aspect == 'Mentor' %}
   <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' '2' %}">2 Cards (keep 2)</button>
@@ -170,6 +171,12 @@
 
   <button class="btn" hx-get="{% url 'major_deck' player.game.id %}" hx-target="#Major-deck" hx-swap="innerHTML">Show deck</button>
   <div id="Major-deck"></div>
+
+  <p>
+    <input type="checkbox" id="spoiler_power_gain" name="spoiler_power_gain" />
+    <label for="spoiler_power_gain"><span title="Useful for gaining a power in the fast or slow phase while another player hasn't locked decisions from an earlier phase (growth or invader respectively)">Spoiler power gain (?)</span></label>
+  </p>
+  </span>
 
   {% if player.spirit.name == 'Waters' %}
   <p>Gain Healing Card: <button class="btn" hx-get="{% url 'gain_healing' player.id %}">Gain Healing Card</button>
