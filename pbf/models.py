@@ -587,7 +587,7 @@ spirit_thresholds = {
             (370, 480, '2S3E2P'),
             (370, 520, '2S4E3P'),
             ],
-        'ResilenceEarth': [
+        'ResilienceEarth': [
             (370, 440, '1S2E2P'),
             (370, 480, '2S3E2P'),
             (370, 520, '2S4E3P'),
