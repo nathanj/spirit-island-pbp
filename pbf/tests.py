@@ -230,6 +230,37 @@ class TestSetupPowerCards(TestCase):
         self.assertEqual(player.days.filter(type=Card.MINOR).count(), 4)
         self.assertEqual(player.days.filter(type=Card.MAJOR).count(), 4)
 
+class TestEnergyGainAndBargainDebt(TestCase):
+    def test_no_debt(self):
+        player = GamePlayer(energy=1)
+        player.gain_energy_or_pay_debt(2)
+        self.assertEqual(player.energy, 3)
+        self.assertEqual(player.bargain_paid_this_turn, 0)
+
+    def test_debt_fully_paid(self):
+        player = GamePlayer(energy=1, bargain_cost_per_turn=2, bargain_paid_this_turn=2)
+        player.gain_energy_or_pay_debt(4)
+        self.assertEqual(player.energy, 5)
+        self.assertEqual(player.bargain_paid_this_turn, 2)
+
+    def test_gain_less_than_remaining_debt(self):
+        player = GamePlayer(energy=1, bargain_cost_per_turn=8, bargain_paid_this_turn=2)
+        player.gain_energy_or_pay_debt(4)
+        self.assertEqual(player.energy, 1)
+        self.assertEqual(player.bargain_paid_this_turn, 6)
+
+    def test_gain_exactly_remaining_debt(self):
+        player = GamePlayer(energy=1, bargain_cost_per_turn=8, bargain_paid_this_turn=2)
+        player.gain_energy_or_pay_debt(6)
+        self.assertEqual(player.energy, 1)
+        self.assertEqual(player.bargain_paid_this_turn, 8)
+
+    def test_gain_more_than_remaining_debt(self):
+        player = GamePlayer(energy=1, bargain_cost_per_turn=8, bargain_paid_this_turn=2)
+        player.gain_energy_or_pay_debt(10)
+        self.assertEqual(player.energy, 5)
+        self.assertEqual(player.bargain_paid_this_turn, 8)
+
 class TestMatchSpirit(TestCase):
     from .views import try_match_spirit
     try_match_spirit = staticmethod(try_match_spirit)
