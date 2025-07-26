@@ -132,6 +132,14 @@
     </div>
   </ul>
   <button class="btn" hx-get="{% url 'undo_gain_card' player.id %}" hx-confirm="Are you sure?">Oops! Undo gain card</button>
+
+  <p>Minor powers ({{ player.game.minor_deck.count }} in deck):
+  <button class="btn" hx-get="{% url 'minor_deck' player.game.id %}" hx-target="#Minor-deck" hx-swap="innerHTML">Show deck</button>
+  <div id="Minor-deck"></div>
+  <p>Major powers ({{ player.game.major_deck.count }} in deck):
+  <button class="btn" hx-get="{% url 'major_deck' player.game.id %}" hx-target="#Major-deck" hx-swap="innerHTML">Show deck</button>
+  <div id="Major-deck"></div>
+
   {% else %}
   <span hx-include="[name='spoiler_power_gain']">
   <p>Gain Minor ({{ player.game.minor_deck.count }} in deck):
