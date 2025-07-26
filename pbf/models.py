@@ -415,7 +415,7 @@ class GamePlayer(models.Model):
         if self.aspect in ('Dark Fire', 'Intensify'):
             counter[Elements.Moon] += 1
 
-        for card in self.play.all():
+        for card in self.cards_in_play:
             counter += card.get_elements()
         if self.spirit.name == 'Earthquakes':
             played_impending = self.impending_with_energy.filter(gameplayerimpendingwithenergy__in_play=True)
@@ -427,6 +427,10 @@ class GamePlayer(models.Model):
                 # Making a new field for Rot just seemed sort of wasteful.
                 counter.update(Elements[e] for e in presence.elements.split(',') if e != 'Rot')
         return defaultdict(int, counter)
+
+    @functools.cached_property
+    def cards_in_play(self):
+        return self.play.all()
 
     def equiv_elements(self):
         if self.aspect == 'Dark Fire': return "MF"
@@ -465,7 +469,7 @@ class GamePlayer(models.Model):
 
     def get_play_cost(self):
         blitz = self.game.scenario == 'Blitz'
-        return sum([card.cost - (1 if blitz and card.speed == Card.FAST else 0) for card in self.play.all()])
+        return sum([card.cost - (1 if blitz and card.speed == Card.FAST else 0) for card in self.cards_in_play])
 
     def get_gain_energy(self):
         energy_revealed = [p.energy for p in self.presences_off_track if p.energy]

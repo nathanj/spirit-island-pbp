@@ -955,7 +955,7 @@ def create_days(request, player_id, num):
 def compute_card_thresholds(player):
     equiv_elements = player.equiv_elements()
     player.play_cards = []
-    for card in player.play.all():
+    for card in player.cards_in_play:
         card.computed_thresholds = card.thresholds(player.elements, equiv_elements)
         player.play_cards.append(card)
     player.hand_cards = []
@@ -1111,6 +1111,8 @@ def reclaim_all(request, player_id):
 
 def discard_all(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
+    # if we used the cached property cards_in_play here, we'd have to clear it,
+    # so let's just not use it.
     player.discard.add(*player.play.all())
 
     if player.spirit.name == 'Earthquakes':
@@ -1164,7 +1166,7 @@ def ready(request, player_id):
 
     if player.gained_this_turn:
         add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {player.get_gain_energy()} energy')
-    for card in player.play.all():
+    for card in player.cards_in_play:
         add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} plays {card.name}')
     if player.spirit.name == 'Earthquakes':
         add_impending_log_msgs(player)
