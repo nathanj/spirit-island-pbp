@@ -11,11 +11,18 @@ from django.urls import reverse
 
 from .models import *
 
-import redis
+if os.getenv('USE_REDIS', '').lower() in {'y', 'yes', 'true', '1'}:
+    import redis
 
-REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
-REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
-redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1)
+    REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+    REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+    bot_socket = None
+    redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1)
+else:
+    SOCKET_PATH = os.getenv('SOCKET_PATH', 'si.sock')
+    import socket
+    bot_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+    redis_client = None
 
 def add_log_msg(game, text, images=None, spoiler=False):
     if spoiler:
@@ -42,7 +49,18 @@ def add_log_msg(game, text, images=None, spoiler=False):
             j['images'] = images
         if spoiler:
             j['spoiler'] = True
-        redis_client.publish(f'log-relay:{game.discord_channel}', json.dumps(j))
+        if redis_client:
+            redis_client.publish(f'log-relay:{game.discord_channel}', json.dumps(j))
+        elif bot_socket:
+            j['channel'] = game.discord_channel
+            try:
+                bot_socket.sendto(json.dumps(j).encode(), SOCKET_PATH)
+            except ConnectionRefusedError:
+                print("nobody there")
+            except FileNotFoundError:
+                print("no file")
+        else:
+            print("Neither Redis nor socket?")
 
 class GameForm(ModelForm):
     class Meta:
