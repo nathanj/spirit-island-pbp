@@ -95,6 +95,34 @@ class Card(models.Model):
     SLOW = 2
     speed = models.IntegerField(choices=[(0, 'Unknown'), (FAST, 'Fast'), (SLOW, 'Slow')])
 
+    @classmethod
+    def check(cls, **kwargs):
+        from django.core import checks
+        from django.db import connection
+
+        errors = super().check(**kwargs)
+
+        if cls._meta.db_table not in connection.introspection.table_names():
+            # Need to prevent this check from running on first migrate
+            # (before the table has been created),
+            # otherwise it will error and prevent the migrate from creating the table.
+            return errors
+
+        not_healing = cls.objects.exclude(name__in=cls.HEALING_NAMES)
+
+        unknown_speed = not_healing.exclude(speed__in=(cls.FAST, cls.SLOW))
+        errors.extend(checks.Warning('unknown speed', obj=card) for card in unknown_speed)
+
+        no_elements = not_healing.filter(elements='').exclude(name__in=('Elemental Boon', "Gift of Nature's Connection", 'Draw Towards a Consuming Void'))
+        errors.extend(checks.Warning('no elements', obj=card) for card in no_elements)
+
+        for card in cls.objects.filter(elements__contains=','):
+            elements = card.elements.split(',')
+            if len(elements) != len(set(elements)):
+                errors.append(checks.Warning('duplicate elements', obj=card))
+
+        return errors
+
     def __str__(self):
         return self.name
 
