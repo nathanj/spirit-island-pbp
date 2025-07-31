@@ -959,6 +959,8 @@ def compute_card_thresholds(player):
     for card in player.cards_in_play:
         card.computed_thresholds = card.thresholds(player.elements, equiv_elements)
         player.play_cards.append(card)
+        if card.name.startswith('Bargain'):
+            player.bargain_in_play = True
     player.hand_cards = []
     for card in player.hand.all():
         card.computed_thresholds = card.thresholds(player.elements, equiv_elements)
