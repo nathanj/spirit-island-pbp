@@ -233,6 +233,7 @@ async def on_message(message):
             "Use `$pin` (reply to message) to pin the message",
             "Use `$unpin` (reply to message) to unpin the message, or `$unpin N` to unpin the last N messages",
             "Use `$delete` (reply to message) to delete a message (only messages posted by the bot)",
+            "Use `$rename (new name)` to set the channel name",
             "Use `$topic (new topic)` to set the channel topic",
         ))
         await message.channel.send(text)
@@ -280,6 +281,42 @@ async def on_message(message):
             await report_success(message, 'set as topic')
         except discord.Forbidden:
             await message.channel.send("I don't have permission to set the channel topic")
+    elif message.content.startswith('$rename'):
+        existing_name = message.channel.name
+        if len(parts) == 1:
+            # no argument given: try to clear the channel name.
+            if '-' in existing_name:
+                new_name = existing_name[:existing_name.index('-')]
+            else:
+                # this would result in no change, so no need to try editing
+                return
+        else:
+            # TODO: Too specific to one guild's naming conventions?
+            # Consider the first dash-separated word of the channel name.
+            # Always keep this the same.
+            # But don't duplicate the prefix if the user specifies it again.
+            # Given a channel currently named either 1up or 1up-aaa,
+            # requesting the following names will have these results:
+            #
+            # Requested name | Resulting name
+            # ---------------|---------------
+            # 1up            | 1up
+            # bbb            | 1up-bbb
+            # 1up-bbb        | 1up-bbb (and tell them they don't need to include 1up)
+            # hello-world    | 1up-hello-world
+            # (a request to rename 1up-aaa to 1up-1up will behave oddly, but this shouldn't normally happen)
+            existing_prefix = existing_name[:existing_name.index('-')] if '-' in existing_name else existing_name
+            new_suffix = parts[1]
+            if '-' in new_suffix and new_suffix[:new_suffix.index('-')] == existing_prefix:
+                await message.reply(f"You don't need to include the {existing_prefix}- prefix; it's automatically added")
+                new_suffix = new_suffix[new_suffix.index('-') + 1:]
+            new_name = existing_prefix if new_suffix == existing_prefix else f"{existing_prefix}-{new_suffix}"
+
+        try:
+            await message.channel.edit(name=new_name, reason=f"{message.author.display_name} ({message.author.name}) requested")
+            await report_success(message, 'set as channel name')
+        except discord.Forbidden:
+            await message.channel.send("I don't have permission to rename the channel")
 
 async def referenced_message(message, command):
     if message.reference:
