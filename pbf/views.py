@@ -827,6 +827,8 @@ def return_to_deck(request, player_id, card_id):
     else:
         raise ValueError(f"Can't return {card}")
 
+    add_log_msg(game, text=f'{card.name} returned to the deck')
+
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
