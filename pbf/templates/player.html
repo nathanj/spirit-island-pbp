@@ -230,6 +230,7 @@
 		<button class="btn" hx-get="{% url 'unplay_card' player.id card.id %}">Unplay</button>
 		<button class="btn" hx-get="{% url 'discard_card' player.id card.id %}">Discard</button>
 		<button class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure?">Forget</button>
+		{% if 'Bargain' in card.name %}<button class="btn" hx-target="#spirit-energy-{{player.id}}" hx-get="{% url 'change_bargain_cost_per_turn' player.id '1' %}">+Debt</button>{% endif %}
 	      </div>
 	    </div>
 	  </div>
@@ -293,6 +294,7 @@
 			{% if i.energy >= i.cost_with_scenario %}
 				{% if i.in_play %}
 					<button class="btn" hx-get="{% url 'unplay_from_impending' player.id i.card.id %}">Unplay</button>
+					{% if 'Bargain' in i.card.name %}<button class="btn" hx-target="#spirit-energy-{{player.id}}" hx-get="{% url 'change_bargain_cost_per_turn' player.id '1' %}">+Debt</button>{% endif %}
 				{% else %}
 		   			<button class="btn" hx-get="{% url 'play_from_impending' player.id i.card.id %}">Play</button>
 				{% endif %}
