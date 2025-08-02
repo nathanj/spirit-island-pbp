@@ -1175,6 +1175,8 @@ def ready(request, player_id):
     if player.paid_this_turn:
         add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} pays {player.get_play_cost()} energy')
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} started with {player.last_unready_energy_friendly} energy and now has {player.energy} energy')
+    if player.spirit.name == 'Fractured':
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} has {player.time} Time')
     if player.has_spirit_specific_resource():
         add_spirit_specific_resource_msgs(player)
     add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} is ready')

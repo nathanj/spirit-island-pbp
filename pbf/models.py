@@ -529,6 +529,16 @@ class GamePlayer(models.Model):
     def days_ordered(self):
         return self.days.order_by('type', 'cost')
 
+    @functools.cached_property
+    def time(self):
+        # Time being tracked by presence discs was added before the general spirit_specific_resource was added.
+        # Tracking it via presence matches the physical game,
+        # but it may be confusing that this one spirit uses a different system.
+        # TODO: Should we switch Time to use spirit_specific_resource for uniformity?
+        # The other benefit is that it's more obvious how to add Time with +1 / -1 buttons,
+        # rather than having to know to click a specific area of the spirit panel.
+        return self.presence_set.filter(opacity=1.0, left__lte=300).count()
+
     def thresholds(self):
         elements = self.elements
         thresholds = []
