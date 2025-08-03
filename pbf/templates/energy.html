@@ -52,7 +52,7 @@
         {{player.spirit_specific_resource}}
         {% if player.increment_decrement_specific_resource %}
           <button class="btn" hx-get="{% url 'change_spirit_specific_resource' player.id '1' %}">+1</button>
-          <button class="btn" hx-get="{% url 'change_spirit_specific_resource' player.id '-1' %}">-1</button>
+          <button class="btn" hx-get="{% url 'change_spirit_specific_resource' player.id '-1' %}" {% if player.spirit_specific_resource <= 0 %}disabled{% endif %}>-1</button>
         {% endif %}
       {% endfor %}
 

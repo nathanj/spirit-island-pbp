@@ -1229,7 +1229,8 @@ def gain_energy(request, player_id):
 def change_spirit_specific_resource(request, player_id, amount):
     amount = int(amount)
     player = get_object_or_404(GamePlayer, pk=player_id)
-    player.spirit_specific_resource += amount
+    # no known spirit's spirit-specific-resource can go below 0
+    player.spirit_specific_resource = max(player.spirit_specific_resource + amount, 0)
     if amount > 0:
         player.spirit_specific_per_turn_flags |= GamePlayer.SPIRIT_SPECIFIC_INCREMENTED_THIS_TURN
     elif amount < 0:
