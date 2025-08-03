@@ -1237,6 +1237,12 @@ def change_spirit_specific_resource(request, player_id, amount):
         player.spirit_specific_per_turn_flags |= GamePlayer.SPIRIT_SPECIFIC_DECREMENTED_THIS_TURN
     player.save()
 
+    if player.spirit.name == 'Fractured':
+        player.sync_time_discs_with_resource()
+        # Have to render the spirit panel to show the change in discs.
+        compute_card_thresholds(player)
+        return with_log_trigger(render(request, 'player.html', {'player': player}))
+
     # The spirit-specific resource is displayed in energy.html,
     # because some of them can change simultaneously with energy (e.g. Rot).
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
@@ -1265,6 +1271,13 @@ def toggle_presence(request, player_id, left, top):
     presence = get_object_or_404(player.presence_set, left=left, top=top)
     presence.opacity = abs(1.0 - presence.opacity)
     presence.save()
+    if player.spirit.name == 'Fractured' and left <= Presence.FRACTURED_DAYS_TIME_X:
+        # See sync_time_discs_with_resource on GamePlayer model for the sync in the other direction,
+        # and reasoning why we do this.
+        # You'd think we could just +/- 1 depending on the new opacity,
+        # But we do have to handle the case where they had more Time than discs (10).
+        player.spirit_specific_resource = player.presence_set.filter(opacity=1.0, left__lte=Presence.FRACTURED_DAYS_TIME_X).count()
+        player.save(update_fields=['spirit_specific_resource'])
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
