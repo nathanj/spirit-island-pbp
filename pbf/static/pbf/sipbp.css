@@ -41,6 +41,12 @@ form#host-draw label {
 	margin-left: 5px;
 }
 
+img.card-thresh {
+	position: absolute;
+	width: 2vmin;
+	height: 2vmin;
+}
+
 .player-ready { font-weight: bold; }
 
 @media screen and (max-device-width:1400px), screen and (max-width:1400px) {
