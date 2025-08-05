@@ -45,6 +45,8 @@ img.card-thresh {
 	position: absolute;
 	width: 2vmin;
 	height: 2vmin;
+	max-height: 20px;
+	max-width: 20px;
 }
 
 .player-ready { font-weight: bold; }
