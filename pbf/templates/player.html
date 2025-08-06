@@ -80,7 +80,7 @@
 	{% endfor %}
       {% endif %}
       {% for threshold in player.thresholds %}
-      <img style="position: absolute; left: {{threshold.x}}px; top: {{threshold.y}}px;" src="{% if threshold.achieved %}{% static "pbf/green.png" %}{% else %}{% static "pbf/red.svg" %}{% endif %}" width="20" height="20" />
+      <img style="position: absolute; left: {{threshold.x}}px; top: {{threshold.y}}px;" src="{% if threshold.achieved %}{% static "pbf/green.svg" %}{% else %}{% static "pbf/red.svg" %}{% endif %}" width="20" height="20" />
       {% endfor %}
       <img src="{% static player.spirit.url %}" width="957" height="{% if player.spirit.name == "Covets" %}1260{% else %}630{% endif %}" />
     </div>
@@ -114,7 +114,7 @@
 	    <div class="card p-0 m-5 m-md-10">
 	      <div style="position: relative">
 		{% for threshold in card.computed_thresholds %}
-		<img style="position: absolute; left: {{threshold.x}}%; top: {{threshold.y}}%; width: 2vmin; height: 2vmin;" src="{% if threshold.achieved %}{% static "pbf/green.png" %}{% else %}{% static "pbf/red.svg" %}{% endif %}" />
+		<img style="position: absolute; left: {{threshold.x}}%; top: {{threshold.y}}%; width: 2vmin; height: 2vmin;" src="{% if threshold.achieved %}{% static "pbf/green.svg" %}{% else %}{% static "pbf/red.svg" %}{% endif %}" />
 		{% endfor %}
 		<img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      </div>
@@ -221,7 +221,7 @@
 	      <div style="position: relative">
 
 		{% for threshold in card.computed_thresholds %}
-		<img style="position: absolute; left: {{threshold.x}}%; top: {{threshold.y}}%; width: 2vmin; height: 2vmin;" src="{% if threshold.achieved %}{% static "pbf/green.png" %}{% else %}{% static "pbf/red.svg" %}{% endif %}" />
+		<img style="position: absolute; left: {{threshold.x}}%; top: {{threshold.y}}%; width: 2vmin; height: 2vmin;" src="{% if threshold.achieved %}{% static "pbf/green.svg" %}{% else %}{% static "pbf/red.svg" %}{% endif %}" />
 		{% endfor %}
 
 		<img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
@@ -242,7 +242,7 @@
 	      <div style="position: relative">
 
 		{% for threshold in card.computed_thresholds %}
-		<img style="position: absolute; left: {{threshold.x}}%; top: {{threshold.y}}%; width: 2vmin; height: 2vmin;" src="{% if threshold.achieved %}{% static "pbf/green.png" %}{% else %}{% static "pbf/red.svg" %}{% endif %}" />
+		<img style="position: absolute; left: {{threshold.x}}%; top: {{threshold.y}}%; width: 2vmin; height: 2vmin;" src="{% if threshold.achieved %}{% static "pbf/green.svg" %}{% else %}{% static "pbf/red.svg" %}{% endif %}" />
 		{% endfor %}
 
 		<img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
@@ -283,7 +283,7 @@
 	      <div style="position: relative">
 
 		{% for threshold in i.card.computed_thresholds %}
-		<img style="position: absolute; left: {{threshold.x}}%; top: {{threshold.y}}%; width: 2vmin; height: 2vmin;" src="{% if threshold.achieved %}{% static "pbf/green.png" %}{% else %}{% static "pbf/red.svg" %}{% endif %}" />
+		<img style="position: absolute; left: {{threshold.x}}%; top: {{threshold.y}}%; width: 2vmin; height: 2vmin;" src="{% if threshold.achieved %}{% static "pbf/green.svg" %}{% else %}{% static "pbf/red.svg" %}{% endif %}" />
 		{% endfor %}
 
 		<img src="{% static i.card.url %}" class="img-fluid rounded-top" alt="{{i.card.name}}">
