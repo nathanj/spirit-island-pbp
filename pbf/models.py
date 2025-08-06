@@ -354,6 +354,7 @@ class GamePlayer(models.Model):
 
     def spirit_specific_resource_name(self):
         d = {
+            'Fractured': 'Time',
             'Rot': 'Rot',
             'Round DownRot': 'Rot',
             'Covets': 'Metal',
@@ -528,6 +529,29 @@ class GamePlayer(models.Model):
 
     def days_ordered(self):
         return self.days.order_by('type', 'cost')
+
+    # Time was originally added before the spirit_specific_resource field.
+    # It was tracked by presence discs on the spirit's portrait.
+    # We'll allow players to either use +1/-1 buttons OR clicking the presence discs.
+    # 1. It's a nice visual aid
+    # 2. Players who are used to doing it one way aren't forced to switch to the other.
+    # As a result, when one changes, we want to sync it with the other.
+    # This is used when spirit_specific_resource is changed with the +1/-1 buttons,
+    # and adjusts presence discs to match the count (or as close as possible).
+    def sync_time_discs_with_resource(self):
+        if self.spirit.name != 'Fractured':
+            raise ValueError('Only Fractured Days has Time')
+        time_discs = self.presence_set.filter(opacity=1.0, left__lte=Presence.FRACTURED_DAYS_TIME_X).count()
+        if time_discs > self.spirit_specific_resource:
+            to_remove = time_discs - self.spirit_specific_resource
+            # Would like to just do an .update(opacity=0.0) after the slice, but that's not supported.
+            discs = self.presence_set.filter(opacity=1.0, left__lte=Presence.FRACTURED_DAYS_TIME_X).order_by('-id')[:to_remove]
+            self.presence_set.filter(id__in=discs).update(opacity=0.0)
+        elif time_discs < self.spirit_specific_resource:
+            to_add = self.spirit_specific_resource - time_discs
+            # Would like to just do an .update(opacity=1.0) after the slice, but that's not supported.
+            discs = self.presence_set.filter(opacity=0.0, left__lte=Presence.FRACTURED_DAYS_TIME_X)[:to_add]
+            self.presence_set.filter(id__in=discs).update(opacity=1.0)
 
     def thresholds(self):
         elements = self.elements
@@ -1260,6 +1284,9 @@ card_thresholds = {
 
 
 class Presence(models.Model):
+    # Presence to the left of this X are Time
+    FRACTURED_DAYS_TIME_X = 300
+
     game_player = models.ForeignKey(GamePlayer, on_delete=models.CASCADE)
     left = models.IntegerField()
     top = models.IntegerField()
