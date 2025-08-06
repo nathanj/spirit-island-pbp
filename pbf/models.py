@@ -299,6 +299,8 @@ class GamePlayer(models.Model):
     permanent_earth = models.IntegerField(default=0)
     permanent_plant = models.IntegerField(default=0)
     permanent_animal = models.IntegerField(default=0)
+    bargain_cost_per_turn = models.IntegerField(default=0)
+    bargain_paid_this_turn = models.IntegerField(default=0)
     aspect = models.CharField(max_length=255, default=None, null=True, blank=True)
     # "base" means "when no presence has been removed from the tracks"
     # set once at creation based on the spirit and should never change afterward
@@ -499,6 +501,19 @@ class GamePlayer(models.Model):
     def get_play_cost(self):
         blitz = self.game.scenario == 'Blitz'
         return sum([card.cost - (1 if blitz and card.speed == Card.FAST else 0) for card in self.cards_in_play])
+
+    @property
+    def remaining_bargain_cost(self):
+        return self.bargain_cost_per_turn - self.bargain_paid_this_turn
+
+    def gain_energy_or_pay_debt(self, energy):
+        if energy < 0:
+            raise ValueError(f"gained negative energy {energy}")
+        if energy > self.remaining_bargain_cost:
+            self.energy += energy - self.remaining_bargain_cost
+            self.bargain_paid_this_turn = self.bargain_cost_per_turn
+        else:
+            self.bargain_paid_this_turn += energy
 
     def get_gain_energy(self):
         energy_revealed = [p.energy for p in self.presences_off_track if p.energy]

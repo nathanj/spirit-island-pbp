@@ -517,6 +517,7 @@ def import_game(request):
             'name', 'aspect', 'energy',
             'ready', 'paid_this_turn', 'gained_this_turn',
             'last_unready_energy', 'last_ready_energy',
+            'bargain_paid_this_turn', 'bargain_cost_per_turn',
             'spirit_specific_resource', 'spirit_specific_per_turn_flags',
             *elts,
             ) if attr in player}
@@ -960,6 +961,8 @@ def compute_card_thresholds(player):
     for card in player.cards_in_play:
         card.computed_thresholds = card.thresholds(player.elements, equiv_elements)
         player.play_cards.append(card)
+        if card.name.startswith('Bargain'):
+            player.bargain_in_play = True
     player.hand_cards = []
     for card in player.hand.all():
         card.computed_thresholds = card.thresholds(player.elements, equiv_elements)
@@ -1136,6 +1139,7 @@ def discard_all(request, player_id):
     player.temporary_earth = 0
     player.temporary_plant = 0
     player.temporary_animal = 0
+    player.bargain_paid_this_turn = 0
     player.spirit_specific_per_turn_flags = 0
     player.save()
 
@@ -1220,11 +1224,28 @@ def pay_energy(request, player_id):
 def gain_energy(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     amount = player.get_gain_energy()
-    player.energy += amount
+    player.gain_energy_or_pay_debt(amount)
     player.gained_this_turn = True
     player.save()
 
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
+
+def change_bargain_cost_per_turn(request, player_id, amount):
+    amount = int(amount)
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    player.bargain_cost_per_turn = max(0, player.bargain_cost_per_turn + amount)
+    # what if they adjust bargain_cost_per_turn to be less than bargain_paid_this_turn?
+    # should we adjust bargain_paid_this_turn down?
+    # let's say no for now, because the player may need to adjust their energy count
+    player.save()
+    return render(request, 'energy.html', {'player': player})
+
+def change_bargain_paid_this_turn(request, player_id, amount):
+    amount = int(amount)
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    player.bargain_paid_this_turn = max(0, min(player.bargain_paid_this_turn + amount, player.bargain_cost_per_turn))
+    player.save()
+    return render(request, 'energy.html', {'player': player})
 
 def change_spirit_specific_resource(request, player_id, amount):
     amount = int(amount)
@@ -1259,7 +1280,7 @@ def convert_rot(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     # be sure to change energy before rot,
     # because energy gain is based on rot.
-    player.energy += player.energy_from_rot()
+    player.gain_energy_or_pay_debt(player.energy_from_rot())
     player.spirit_specific_resource -= player.rot_loss()
     player.spirit_specific_per_turn_flags |= GamePlayer.ROT_CONVERTED_THIS_TURN
     player.save()
