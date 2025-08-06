@@ -2,6 +2,8 @@
 {% if player.spirit_specific_resource_name %}
 <div id="spirit-specific-resource-{{player.id}}"
   class="pt-200"
+  hx-target="#spirit-specific-resource-{{player.id}}"
+  hx-swap="outerHTML"
   hx-indicator="#specific-resource-spinner">
 <p>
 {{player.spirit_specific_resource_name}}:
@@ -49,7 +51,7 @@
   {% if player.rot_converted_this_turn %}
     Converted!
   {% else %}
-    <button class="btn" hx-get="{% url 'convert_rot' player.id %}">Convert Rot (-{{player.rot_loss}} Rot, +{{player.energy_from_rot}}{% if player.remaining_bargain_cost > 0 %} - {% if player.remaining_bargain_cost > player.energy_from_rot%}{{player.energy_from_rot}}{% else %}{{player.remaining_bargain_cost}}{% endif %}{% endif %} Energy)</button>
+    <button class="btn" hx-get="{% url 'convert_rot' player.id %}" hx-target="#spirit-energy-and-resource-{{player.id}}">Convert Rot (-{{player.rot_loss}} Rot, +{{player.energy_from_rot}}{% if player.remaining_bargain_cost > 0 %} - {% if player.remaining_bargain_cost > player.energy_from_rot%}{{player.energy_from_rot}}{% else %}{{player.remaining_bargain_cost}}{% endif %}{% endif %} Energy)</button>
   {% endif %}
 {% endif %}
 

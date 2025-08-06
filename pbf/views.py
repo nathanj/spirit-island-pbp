@@ -1238,14 +1238,14 @@ def change_bargain_cost_per_turn(request, player_id, amount):
     # should we adjust bargain_paid_this_turn down?
     # let's say no for now, because the player may need to adjust their energy count
     player.save()
-    return render(request, 'energy.html', {'player': player})
+    return render(request, 'energy_and_spirit_resource.html' if player.spirit_specific_resource_gives_energy else 'energy.html', {'player': player})
 
 def change_bargain_paid_this_turn(request, player_id, amount):
     amount = int(amount)
     player = get_object_or_404(GamePlayer, pk=player_id)
     player.bargain_paid_this_turn = max(0, min(player.bargain_paid_this_turn + amount, player.bargain_cost_per_turn))
     player.save()
-    return render(request, 'energy.html', {'player': player})
+    return render(request, 'energy_and_spirit_resource.html' if player.spirit_specific_resource_gives_energy else 'energy.html', {'player': player})
 
 def change_spirit_specific_resource(request, player_id, amount):
     amount = int(amount)
@@ -1264,9 +1264,7 @@ def change_spirit_specific_resource(request, player_id, amount):
         compute_card_thresholds(player)
         return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-    # The spirit-specific resource is displayed in energy.html,
-    # because some of them can change simultaneously with energy (e.g. Rot).
-    return render(request, 'energy.html', {'player': player})
+    return render(request, 'spirit_specific_resource.html', {'player': player})
 
 def gain_rot(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -1274,7 +1272,7 @@ def gain_rot(request, player_id):
     player.spirit_specific_per_turn_flags |= GamePlayer.ROT_GAINED_THIS_TURN
     player.save()
 
-    return render(request, 'energy.html', {'player': player})
+    return render(request, 'spirit_specific_resource.html', {'player': player})
 
 def convert_rot(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -1285,7 +1283,7 @@ def convert_rot(request, player_id):
     player.spirit_specific_per_turn_flags |= GamePlayer.ROT_CONVERTED_THIS_TURN
     player.save()
 
-    return render(request, 'energy.html', {'player': player})
+    return render(request, 'energy_and_spirit_resource.html', {'player': player})
 
 def toggle_presence(request, player_id, left, top):
     player = get_object_or_404(GamePlayer, pk=player_id)
