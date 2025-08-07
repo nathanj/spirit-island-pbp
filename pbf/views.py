@@ -1313,6 +1313,7 @@ def add_element(request, player_id, element):
     if element == 'earth': player.temporary_earth += 1
     if element == 'plant': player.temporary_plant += 1
     if element == 'animal': player.temporary_animal += 1
+    if element == 'moonfire': player.temporary_moon += 1
     player.save()
 
     compute_card_thresholds(player)
@@ -1328,6 +1329,11 @@ def remove_element(request, player_id, element):
     if element == 'earth': player.temporary_earth -= 1
     if element == 'plant': player.temporary_plant -= 1
     if element == 'animal': player.temporary_animal -= 1
+    if element == 'moonfire':
+        if player.temporary_moon > 0:
+            player.temporary_moon -= 1
+        elif player.temporary_fire > 0:
+            player.temporary_fire -= 1
     player.save()
 
     compute_card_thresholds(player)
@@ -1343,6 +1349,7 @@ def add_element_permanent(request, player_id, element):
     if element == 'earth': player.permanent_earth += 1
     if element == 'plant': player.permanent_plant += 1
     if element == 'animal': player.permanent_animal += 1
+    if element == 'moonfire': player.permanent_moon += 1
     player.save()
 
     compute_card_thresholds(player)
@@ -1358,6 +1365,11 @@ def remove_element_permanent(request, player_id, element):
     if element == 'earth': player.permanent_earth -= 1
     if element == 'plant': player.permanent_plant -= 1
     if element == 'animal': player.permanent_animal -= 1
+    if element == 'moonfire':
+        if player.permanent_moon > 0:
+            player.permanent_moon -= 1
+        elif player.permanent_fire > 0:
+            player.permanent_fire -= 1
     player.save()
 
     compute_card_thresholds(player)

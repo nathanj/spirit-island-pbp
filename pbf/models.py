@@ -471,10 +471,17 @@ class GamePlayer(models.Model):
         elements = self.elements
         # not a dictionary because this is used in the template,
         # which wouldn't be able to deconstruct a tuple of (total, temporary) in the value.
-        return [(elt.name.lower(), elements[elt], getattr(self, 'temporary_' + elt.name.lower())) for elt in Elements]
+        result = [(elt.name.lower(), elements[elt], getattr(self, 'temporary_' + elt.name.lower())) for elt in Elements]
+        if self.aspect == 'Dark Fire':
+            result[1:3] = [('moonfire', elements[Elements.Moon] + elements[Elements.Fire], self.temporary_moon + self.temporary_fire)]
+        return result
 
     def permanent_elements(self):
-        return {elt.name.lower(): getattr(self, 'permanent_' + elt.name.lower()) for elt in Elements}
+        result = [(elt.name.lower(), getattr(self, 'permanent_' + elt.name.lower())) for elt in Elements]
+        if self.aspect == 'Dark Fire':
+            result[1:3] = [('moonfire', self.permanent_moon + self.permanent_fire)]
+        return {k: v for (k, v) in result}
+
 
     @functools.cached_property
     def presences_off_track(self):
