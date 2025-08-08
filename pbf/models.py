@@ -393,6 +393,13 @@ class GamePlayer(models.Model):
             e,
         ) for (i, e) in zip(range(0, ELEMENT_WIDTH * len(elts), ELEMENT_WIDTH), elts)]
 
+    # For spirits whose spirit-specific resource can give energy
+    # (currently only Spreading Rot Renews the Earth),
+    # set this to true so that the site re-renders the spirit-specific resource when bargain debt changes.
+    @property
+    def spirit_specific_resource_gives_energy(self):
+        return self.spirit.name == 'Rot'
+
     # If true, it makes sense to +1/-1 the spirit-specific resource
     # Assumed to be true unless a spirit specifically specifies not.
     # (also has no effect for spirits using spirit_specific_resource_elements)

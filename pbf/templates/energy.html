@@ -29,70 +29,13 @@
   </p>
 
   {% if player.bargain_cost_per_turn or player.bargain_in_play %}
-  <p>
+  <p{% if player.spirit_specific_resource_gives_energy %} hx-target="#spirit-energy-and-resource-{{player.id}}"{% endif %}>
   Bargain cost: {{ player.bargain_paid_this_turn }} paid this turn / {{ player.bargain_cost_per_turn }} per turn
   <button class="btn" hx-get="{% url 'change_bargain_paid_this_turn' player.id '1' %}" {% if player.remaining_bargain_cost <= 0 %}disabled{% endif %}>+1 paid</button>
   <button class="btn" hx-get="{% url 'change_bargain_paid_this_turn' player.id '-1' %}" {% if player.bargain_paid_this_turn <= 0 %}disabled{% endif %}>-1 paid</button>
   <button class="btn" hx-get="{% url 'change_bargain_cost_per_turn' player.id '1' %}">+1 cost</button>
   <button class="btn" hx-get="{% url 'change_bargain_cost_per_turn' player.id '-1' %}">-1 cost</button>
   </p>
-  {% endif %}
-
-  {% if player.spirit_specific_resource_name %}
-    <p>
-      {{player.spirit_specific_resource_name}}:
-
-      {% for plus, minus, current, elt in player.spirit_specific_resource_elements %}
-        {% if current < 15 %}
-          <a hx-get="{% url 'change_spirit_specific_resource' player.id plus %}" style="cursor: pointer">
-        {% endif %}
-        {% with "pbf/element-"|add:elt|add:".png" as elt_img %}
-          <img src="{% static elt_img %}" alt="{{elt}}" style="width: 1.8em; height: 1.8em" />
-        {% endwith %}
-        <span style="font-size: 2em;">{{ current }}</span>
-        {% if current < 15 %}
-          </a>
-        {% endif %}
-
-        {% if current > 0 %}
-          <a style="color: gray; font-size: 0.8em; cursor: pointer;" hx-get="{% url 'change_spirit_specific_resource' player.id minus %}">(-1)</a>
-        {% endif %}
-        <span style="padding-right: 1em"></span>
-      {% empty %}
-        {{player.spirit_specific_resource}}
-        {% if player.increment_decrement_specific_resource %}
-          {# Fractured Days +/-1 changes discs on the spirit panel, so it must change spirit-image #}
-          <span{% if player.spirit.name == 'Fractured' %} hx-target="#spirit-image-{{player.id}}"{% endif %}>
-          <button class="btn" hx-get="{% url 'change_spirit_specific_resource' player.id '1' %}">+1</button>
-          <button class="btn" hx-get="{% url 'change_spirit_specific_resource' player.id '-1' %}" {% if player.spirit_specific_resource <= 0 %}disabled{% endif %}>-1</button>
-          </span>
-        {% endif %}
-      {% endfor %}
-
-      {% if player.aspect == 'Unconstrained' %}
-        {# intentionally do not block the player from making changes (in case of mistakes) #}
-        {# just show the indicators #}
-        {% if player.spirit_specific_incremented_this_turn %}
-          Prepared this turn!
-        {% endif %}
-        {% if player.spirit_specific_decremented_this_turn %}
-          Added to board this turn!
-        {% endif %}
-      {% endif %}
-
-      {% if player.spirit.name == 'Rot' %}
-        {% if player.rot_gained_this_turn %}
-          Gained!
-        {% else %}
-          <button class="btn" hx-get="{% url 'gain_rot' player.id %}">Gain Rot ({{player.rot_gain}})</button>
-        {% endif %}
-        {% if player.rot_converted_this_turn %}
-          Converted!
-        {% else %}
-          <button class="btn" hx-get="{% url 'convert_rot' player.id %}">Convert Rot (-{{player.rot_loss}} Rot, +{{player.energy_from_rot}}{% if player.remaining_bargain_cost > 0 %} - {% if player.remaining_bargain_cost > player.energy_from_rot%}{{player.energy_from_rot}}{% else %}{{player.remaining_bargain_cost}}{% endif %}{% endif %} Energy)</button>
-        {% endif %}
-      {% endif %}
-        </p>
   {% endif %}
 </div>
 
