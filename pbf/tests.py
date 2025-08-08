@@ -1171,6 +1171,20 @@ class TestLog(TestCase):
         self.assertEqual(game.gamelog_set.last().text, 'hello world')
         self.assertEqual(game.gamelog_set.last().images, 'asdf.jpg')
 
+    def test_cards(self):
+        game = Game.objects.create()
+        self.add_log_msg(game, text='look, cards', cards=[Card.objects.get(name="Gift of Living Energy"), Card.objects.get(name="Gift of Power")])
+        self.assertEqual(game.gamelog_set.last().text, 'look, cards: Gift of Living Energy, Gift of Power')
+        self.assertEqual(game.gamelog_set.last().spoiler_text, '')
+        self.assertEqual(game.gamelog_set.last().images, './pbf/static/pbf/gift_of_living_energy.jpg,./pbf/static/pbf/gift_of_power.jpg')
+
+    def test_cards_spoiler(self):
+        game = Game.objects.create()
+        self.add_log_msg(game, text='look, cards', cards=[Card.objects.get(name="Gift of Living Energy"), Card.objects.get(name="Gift of Power")], spoiler=True)
+        self.assertEqual(game.gamelog_set.last().text, 'look, cards:')
+        self.assertEqual(game.gamelog_set.last().spoiler_text, 'Gift of Living Energy, Gift of Power')
+        self.assertEqual(game.gamelog_set.last().images, './pbf/static/pbf/gift_of_living_energy.jpg,./pbf/static/pbf/gift_of_power.jpg')
+
     def test_gain_power(self):
         client = Client()
         client.post('/new')

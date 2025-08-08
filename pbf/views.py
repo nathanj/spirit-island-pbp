@@ -17,23 +17,29 @@ REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
 redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1)
 
-def add_log_msg(game, text, images=None, spoiler=False):
-    if spoiler:
+# If cards is set:
+# * The log message will automatically have a : and the card names appended to it.
+# * The images will automatically be set to the images of the cards.
+#
+# Setting spoiler to True will hide the card names (if any) and the image.
+#
+# It's an error to set both cards and images.
+# images may be set by itself if there are images not associated with a card (example: screenshot)
+def add_log_msg(game, text, cards=None, images=None, spoiler=False):
+    if cards and images:
+        raise TypeError("specified both cards and images, but cards would overwrite images")
+    card_names = cards and ', '.join(card.name for card in cards)
+    if cards:
+        images = ','.join('./pbf/static' + card.url() for card in cards)
+    if spoiler and cards:
         # We only need to spoiler certain information.
         # For the things we're spoilering (gain power, take power),
         # that's just the card names (it's okay not to spoiler who gains the card).
-        #
-        # This is a little dependent on our current implementation,
-        # but currently that's just everything after the colon.
-        #
-        # If our message format ever changes,
-        # we can look into letting callers explicitly specify text and spoiler_text,
-        # but for now splitting on colon is a low-friction way to add spoiler functionality,
-        # not requiring the caller to change the text they specify.
-        before_colon, after_colon = text.split(': ', maxsplit=1)
-        discord_text = f"{before_colon}: ||{after_colon}||"
-        game.gamelog_set.create(text=f"{before_colon}:", spoiler_text=after_colon, images=images)
+        discord_text = f"{text}: ||{card_names}||"
+        game.gamelog_set.create(text=f"{text}:", spoiler_text=card_names, images=images)
     else:
+        if cards:
+            text += ': ' + card_names
         discord_text = text
         game.gamelog_set.create(text=text, images=images)
     if len(game.discord_channel) > 0:
@@ -692,10 +698,10 @@ def draw_cards(request, game_id):
 
     draw_result = f"drew {len(cards_drawn)} {type} power card{'s' if len(cards_drawn) != 1 else ''}"
     draw_result_explain = "" if len(cards_drawn) == cards_needed else f" (there were not enough cards to draw all {cards_needed})"
+
+    add_log_msg(game, text=f'Host {draw_result}', cards=cards_drawn)
+
     card_names = ', '.join(card.name for card in cards_drawn)
-
-    add_log_msg(game, text=f'Host {draw_result}: {card_names}', images=",".join('./pbf/static' + card.url() for card in cards_drawn))
-
     return with_log_trigger(render(request, 'host_draw.html', {'msg': f"You {draw_result}{draw_result_explain}: {card_names}", 'cards': cards_drawn}))
 
 def cards_from_deck(game, cards_needed, type):
@@ -749,8 +755,7 @@ def take_powers(request, player_id, type, num):
     player.hand.add(*taken_cards)
 
     if num == 1:
-        card = taken_cards[0]
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes a {type} power: {card.name}', images='./pbf/static' + card.url(), spoiler=spoiler)
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes a {type} power', cards=taken_cards, spoiler=spoiler)
     else:
         # There's a bit of tension between the function's name/functionality and game terminology.
         #
@@ -765,8 +770,7 @@ def take_powers(request, player_id, type, num):
         # The alternative is to special-case gain_power to not use selection if it's Mentor and num == 2.
         # Either way we have to make some special cases,
         # and doing it here at least matches in mechanism better.
-        card_names = ', '.join(card.name for card in taken_cards)
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {num} {type} powers: {card_names}', images=",".join('./pbf/static' + card.url() for card in taken_cards), spoiler=spoiler)
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {num} {type} powers', cards=taken_cards, spoiler=spoiler)
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
@@ -792,11 +796,8 @@ def gain_power(request, player_id, type, num):
     selection = cards_from_deck(player.game, num, type)
     player.selection.set(selection)
 
-    cards_str = ", ".join([str(card) for card in selection])
-    images = ",".join(['./pbf/static' + card.url() for card in selection])
     # TODO: Should we set a flag on the player, such that when they actually select the card, it is also spoilered?
-    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains a {type} power. Choices: {cards_str}',
-            images=images, spoiler=spoiler)
+    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains a {type} power. Choices', cards=selection, spoiler=spoiler)
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
@@ -951,9 +952,7 @@ def create_days(request, player_id, num):
         days = random.sample(list(deck.all()), num)
         deck.remove(*days)
         player.days.add(*days)
-        card_names = ", ".join([str(card) for card in days])
-        images = ",".join(['./pbf/static' + card.url() for card in days])
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} starts with {num} {name} powers in the Days That Never Were: {card_names}', images=images)
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} starts with {num} {name} powers in the Days That Never Were', cards=days)
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
