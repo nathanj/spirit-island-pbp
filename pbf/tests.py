@@ -1155,3 +1155,40 @@ class TestImport(TestCase):
         # Other tests have already tested that the card is in the player's impending
         self.assertEqual(game.minor_deck.count(), self.NUM_MINORS - 1)
         self.assertEqual(list(game.minor_deck.filter(id=minor.id)), [])
+
+class TestLog(TestCase):
+    from .views import add_log_msg
+    add_log_msg = staticmethod(add_log_msg)
+
+    def test_just_message(self):
+        game = Game.objects.create()
+        self.add_log_msg(game, text='hello world')
+        self.assertEqual(game.gamelog_set.last().text, 'hello world')
+
+    def test_image(self):
+        game = Game.objects.create()
+        self.add_log_msg(game, text='hello world', images='asdf.jpg')
+        self.assertEqual(game.gamelog_set.last().text, 'hello world')
+        self.assertEqual(game.gamelog_set.last().images, 'asdf.jpg')
+
+    def test_gain_power(self):
+        client = Client()
+        client.post('/new')
+        game = Game.objects.last()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='River'), color='red')
+        client.get(f"/game/{player.id}/gain/minor/4")
+        self.assertIn('River gains a minor power. Choices: ', game.gamelog_set.last().text)
+        self.assertIn(player.selection.first().name, game.gamelog_set.last().text)
+        self.assertIn(player.selection.first().url(), game.gamelog_set.last().images)
+        self.assertEqual('', game.gamelog_set.last().spoiler_text)
+
+    def test_gain_power_spoiler(self):
+        client = Client()
+        client.post('/new')
+        game = Game.objects.last()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='River'), color='red')
+        client.get(f"/game/{player.id}/gain/minor/4?spoiler_power_gain=true")
+        self.assertIn('River gains a minor power. Choices:', game.gamelog_set.last().text)
+        self.assertNotIn(player.selection.first().name, game.gamelog_set.last().text)
+        self.assertIn(player.selection.first().url(), game.gamelog_set.last().images)
+        self.assertIn(player.selection.first().name, game.gamelog_set.last().spoiler_text)
