@@ -17,6 +17,8 @@ REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
 redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1)
 
+# If player is set, the text will be prefixed with their colour and spirit name.
+#
 # If cards is set:
 # * The log message will automatically have a : and the card names appended to it.
 # * The images will automatically be set to the images of the cards.
@@ -25,7 +27,9 @@ redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1)
 #
 # It's an error to set both cards and images.
 # images may be set by itself if there are images not associated with a card (example: screenshot)
-def add_log_msg(game, text, cards=None, images=None, spoiler=False):
+def add_log_msg(game, *, text, player=None, cards=None, images=None, spoiler=False):
+    if player:
+        text = f'{player.circle_emoji} {player.spirit.name} {text}'
     if cards and images:
         raise TypeError("specified both cards and images, but cards would overwrite images")
     card_names = cards and ', '.join(card.name for card in cards)
@@ -755,7 +759,7 @@ def take_powers(request, player_id, type, num):
     player.hand.add(*taken_cards)
 
     if num == 1:
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes a {type} power', cards=taken_cards, spoiler=spoiler)
+        add_log_msg(player.game, player=player, text=f'takes a {type} power', cards=taken_cards, spoiler=spoiler)
     else:
         # There's a bit of tension between the function's name/functionality and game terminology.
         #
@@ -770,7 +774,7 @@ def take_powers(request, player_id, type, num):
         # The alternative is to special-case gain_power to not use selection if it's Mentor and num == 2.
         # Either way we have to make some special cases,
         # and doing it here at least matches in mechanism better.
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {num} {type} powers', cards=taken_cards, spoiler=spoiler)
+        add_log_msg(player.game, player=player, text=f'gains {num} {type} powers', cards=taken_cards, spoiler=spoiler)
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
@@ -797,7 +801,7 @@ def gain_power(request, player_id, type, num):
     player.selection.set(selection)
 
     # TODO: Should we set a flag on the player, such that when they actually select the card, it is also spoilered?
-    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains a {type} power. Choices', cards=selection, spoiler=spoiler)
+    add_log_msg(player.game, player=player, text=f'gains a {type} power. Choices', cards=selection, spoiler=spoiler)
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
@@ -840,7 +844,7 @@ def choose_from_discard(request, player_id, card_id):
     player.hand.add(card)
     player.game.discard_pile.remove(card)
 
-    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} takes {card.name} from the power discard pile')
+    add_log_msg(player.game, player=player, text=f'takes {card.name} from the power discard pile')
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
@@ -856,7 +860,7 @@ def send_days(request, player_id, card_id):
         except:
             pass
 
-    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} sends {card.name} to the Days That Never Were')
+    add_log_msg(player.game, player=player, text=f'sends {card.name} to the Days That Never Were')
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
@@ -887,7 +891,7 @@ def choose_card(request, player_id, card_id):
         player.game.discard_pile.add(*player.selection.all())
         player.selection.clear()
 
-    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {card.name}')
+    add_log_msg(player.game, player=player, text=f'gains {card.name}')
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
@@ -928,7 +932,7 @@ def choose_healing_card(request, player, card):
     player.healing.add(card)
     player.selection.clear()
 
-    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} claims {card.name}')
+    add_log_msg(player.game, player=player, text=f'claims {card.name}')
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
@@ -939,7 +943,7 @@ def choose_days(request, player_id, card_id):
     player.hand.add(card)
     player.days.remove(card)
 
-    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {card.name} from the Days That Never Were')
+    add_log_msg(player.game, player=player, text=f'gains {card.name} from the Days That Never Were')
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
@@ -952,7 +956,7 @@ def create_days(request, player_id, num):
         days = random.sample(list(deck.all()), num)
         deck.remove(*days)
         player.days.add(*days)
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} starts with {num} {name} powers in the Days That Never Were', cards=days)
+        add_log_msg(player.game, player=player, text=f'starts with {num} {name} powers in the Days That Never Were', cards=days)
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
@@ -1093,7 +1097,7 @@ def forget_card(request, player_id, card_id):
         except:
             pass
 
-    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} forgets {card.name}')
+    add_log_msg(player.game, player=player, text=f'forgets {card.name}')
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
@@ -1173,17 +1177,17 @@ def ready(request, player_id):
     player.save()
 
     if player.gained_this_turn:
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} gains {player.get_gain_energy()} energy')
+        add_log_msg(player.game, player=player, text=f'gains {player.get_gain_energy()} energy')
     for card in player.cards_in_play:
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} plays {card.name}')
+        add_log_msg(player.game, player=player, text=f'plays {card.name}')
     if player.spirit.name == 'Earthquakes':
         add_impending_log_msgs(player)
     if player.paid_this_turn:
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} pays {player.get_play_cost()} energy')
-    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} started with {player.last_unready_energy_friendly} energy and now has {player.energy} energy')
+        add_log_msg(player.game, player=player, text=f'pays {player.get_play_cost()} energy')
+    add_log_msg(player.game, player=player, text=f'started with {player.last_unready_energy_friendly} energy and now has {player.energy} energy')
     if player.has_spirit_specific_resource():
         add_spirit_specific_resource_msgs(player)
-    add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} is ready')
+    add_log_msg(player.game, player=player, text=f'is ready')
 
     if player.game.gameplayer_set.filter(ready=False).count() == 0:
         add_log_msg(player.game, text=f'All spirits are ready!')
@@ -1195,16 +1199,16 @@ def add_impending_log_msgs(player):
     for impended_card_with_energy in player.gameplayerimpendingwithenergy_set.all().prefetch_related('card'):
         card = impended_card_with_energy.card
         if impended_card_with_energy.this_turn:
-            add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} impends {card.name}')
+            add_log_msg(player.game, player=player, text=f'impends {card.name}')
         elif impended_card_with_energy.in_play:
-            add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} plays {card.name} from impending')
+            add_log_msg(player.game, player=player, text=f'plays {card.name} from impending')
         else:
-            add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} adjusts energy on impended card {card.name} ({impended_card_with_energy.energy}/{impended_card_with_energy.cost_with_scenario})')
+            add_log_msg(player.game, player=player, text=f'adjusts energy on impended card {card.name} ({impended_card_with_energy.energy}/{impended_card_with_energy.cost_with_scenario})')
 
 def add_spirit_specific_resource_msgs(player):
     # TODO: Add support for logging spirit-specific elements for Memory and Wounded Waters
     if player.spirit_specific_resource_elements() is None:
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} has {player.spirit_specific_resource} {player.spirit_specific_resource_name()}')
+        add_log_msg(player.game, player=player, text=f'has {player.spirit_specific_resource} {player.spirit_specific_resource_name()}')
 
 def change_energy(request, player_id, amount):
     amount = int(amount)

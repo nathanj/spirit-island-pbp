@@ -1165,6 +1165,12 @@ class TestLog(TestCase):
         self.add_log_msg(game, text='hello world')
         self.assertEqual(game.gamelog_set.last().text, 'hello world')
 
+    def test_player(self):
+        game = Game.objects.create()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='Keeper'), color='green')
+        self.add_log_msg(game, player=player, text='drives the invaders from its forbidden grounds')
+        self.assertEqual('💚 Keeper drives the invaders from its forbidden grounds', game.gamelog_set.last().text)
+
     def test_image(self):
         game = Game.objects.create()
         self.add_log_msg(game, text='hello world', images='asdf.jpg')
