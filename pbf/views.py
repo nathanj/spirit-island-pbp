@@ -947,10 +947,13 @@ def create_days(request, player_id, num):
     player = get_object_or_404(GamePlayer, pk=player_id)
     game = player.game
 
-    for deck in [game.minor_deck, game.major_deck]:
+    for (deck, name) in [(game.minor_deck, 'minor'), (game.major_deck, 'major')]:
         days = random.sample(list(deck.all()), num)
         deck.remove(*days)
         player.days.add(*days)
+        card_names = ", ".join([str(card) for card in days])
+        images = ",".join(['./pbf/static' + card.url() for card in days])
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} starts with {num} {name} powers in the Days That Never Were: {card_names}', images=images)
 
     compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
