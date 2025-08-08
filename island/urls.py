@@ -47,6 +47,7 @@ urlpatterns = [
     path('game/<int:player_id>/forget/<int:card_id>', views.forget_card, name='forget_card'),
     path('game/<int:player_id>/reclaim/<int:card_id>', views.reclaim_card, name='reclaim_card'),
     path('game/<int:player_id>/reclaim/all', views.reclaim_all, name='reclaim_all'),
+    path('game/<int:player_id>/reclaim/all/<str:element>', views.reclaim_all, name='reclaim_all'),
     path('game/<int:player_id>/discard/all', views.discard_all, name='discard_all'),
     path('game/<int:player_id>/discard/<int:card_id>', views.discard_card, name='discard_card'),
     path('game/<int:player_id>/energy/pay', views.pay_energy, name='pay_energy'),

@@ -322,6 +322,7 @@
   <ul>
     {% if player.discard.count > 0 %}
     <button class="btn" hx-get="{% url 'reclaim_all' player.id %}">Reclaim All</button>
+    {% if player.spirit.name == 'Behemoth' %}<button class="btn" hx-get="{% url 'reclaim_all' player.id 'fire' %}">Reclaim All with Fire</button>{% endif %}
     {% endif %}
 
 
