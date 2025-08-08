@@ -696,7 +696,7 @@ def draw_cards(request, game_id):
 
     add_log_msg(game, text=f'Host {draw_result}: {card_names}', images=",".join('./pbf/static' + card.url() for card in cards_drawn))
 
-    return render(request, 'host_draw.html', {'msg': f"You {draw_result}{draw_result_explain}: {card_names}", 'cards': cards_drawn})
+    return with_log_trigger(render(request, 'host_draw.html', {'msg': f"You {draw_result}{draw_result_explain}: {card_names}", 'cards': cards_drawn}))
 
 def cards_from_deck(game, cards_needed, type):
     if type == 'minor':
