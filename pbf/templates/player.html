@@ -102,13 +102,14 @@
   {% include "elements.html" %}
   {% include "energy_and_spirit_resource.html" %}
 
-  {% if player.selection.count > 0 %}
+	{% for card in player.selection_cards %}
+	{% if forloop.first %}
   <p>
   <h4>Selection:</h4>
   <ul>
     <div class="container-fluid">
       <div class="row">
-	{% for card in player.selection_cards %}
+	{% endif %}
 	<div class="col-auto">
 	  <div class="w-100 w-md-200 mw-full">
 	    <div class="card p-0 m-5 m-md-10">
@@ -127,7 +128,7 @@
 	    </div>
 	  </div>
 	</div>
-	{% endfor %}
+	{% if forloop.last %}
       </div>
     </div>
   </ul>
@@ -139,8 +140,9 @@
   <p>Major powers ({{ player.game.major_deck.count }} in deck):
   <button class="btn" hx-get="{% url 'major_deck' player.game.id %}" hx-target="#Major-deck" hx-swap="innerHTML">Show deck</button>
   <div id="Major-deck"></div>
+	{% endif %}
 
-  {% else %}
+  {% empty %}
   <span hx-include="[name='spoiler_power_gain']">
   <p>Gain Minor ({{ player.game.minor_deck.count }} in deck):
   {% if player.aspect == 'Mentor' %}
@@ -189,7 +191,7 @@
   {% if player.spirit.name == 'Waters' %}
   <p>Gain Healing Card: <button class="btn" hx-get="{% url 'gain_healing' player.id %}">Gain Healing Card</button>
   {% endif %}
-  {% endif %}
+  {% endfor %}
 
   {% if taken_cards %}
   <div id="taken_cards">
