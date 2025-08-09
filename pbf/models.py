@@ -585,6 +585,46 @@ class GamePlayer(models.Model):
             discs = self.presence_set.filter(opacity=0.0, left__lte=Presence.FRACTURED_DAYS_TIME_X)[:to_add]
             self.presence_set.filter(id__in=discs).update(opacity=1.0)
 
+    def bargain_in_play(self):
+        return any(card.name.startswith('Bargain') for card in self.cards_in_play)
+
+    def cards_with_thresholds(self, cards):
+        # cards_in_play is a cached property returning a QuerySet,
+        # and the others are all QuerySet as well.
+        # Modifying the Card object in these QuerySet appears to work as expected,
+        # so we'll go with that.
+        # If that ever stops working, we could convert them using list().
+        for card in cards:
+            card.computed_thresholds = card.thresholds(self.elements, self.equiv_elements())
+        return cards
+
+    def played_cards_with_thresholds(self):
+        return self.cards_with_thresholds(self.cards_in_play)
+
+    def hand_cards_with_thresholds(self):
+        return self.cards_with_thresholds(self.hand.all())
+
+    def selection_with_thresholds(self):
+        sel = self.cards_with_thresholds(self.selection.all())
+        num_healing = None
+        for card in sel:
+            if card.is_healing():
+                if num_healing is None:
+                    num_healing = self.healing.count()
+                card.computed_thresholds.extend(card.healing_thresholds(num_healing, self.spirit_specific_resource_elements()))
+        return sel
+
+    def impending_with_thresholds(self):
+        # We could check the spirit and return an empty list if not Dances Up Earthquakes,
+        # to save a database query if called on any other spirit.
+        # But in this case the contract is that the template will check the spirit,
+        # so this method will not check, as it'd be redundant.
+        impends = self.gameplayerimpendingwithenergy_set.all().prefetch_related('card')
+        # Just need the side-effect of modifying the cards.
+        # still need to return the list of Impending object (not Card).
+        _ = self.cards_with_thresholds(imp.card for imp in impends)
+        return impends
+
     def thresholds(self):
         elements = self.elements
         thresholds = []

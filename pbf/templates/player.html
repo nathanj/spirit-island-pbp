@@ -102,13 +102,14 @@
   {% include "elements.html" %}
   {% include "energy_and_spirit_resource.html" %}
 
-  {% if player.selection_cards %}
+  {% with selection=player.selection_with_thresholds %}
+  {% if selection %}
   <p>
   <h4>Selection:</h4>
   <ul>
     <div class="container-fluid">
       <div class="row">
-	{% for card in player.selection_cards %}
+	{% for card in selection %}
 	<div class="col-auto">
 	  <div class="w-100 w-md-200 mw-full">
 	    <div class="card p-0 m-5 m-md-10">
@@ -208,13 +209,14 @@
     <button class="btn" onClick="document.getElementById('taken_cards').remove();">OK (dismiss)</button>
   </div>
   {% endif %}
+  {% endwith %}
 
   <p>
   <h4>Play/Hand:</h4>
   <ul>
     <div class="container-fluid">
       <div class="row">
-	{% for card in player.play_cards %}
+	{% for card in player.played_cards_with_thresholds %}
 	<div class="col-auto">
 	  <div class="w-100 w-md-200 mw-full">
 	    <div class="card p-0 m-5 m-md-10" style="background-color: #040;">
@@ -236,7 +238,7 @@
 	  </div>
 	</div>
 	{% endfor %}
-	{% for card in player.hand_cards %}
+	{% for card in player.hand_cards_with_thresholds %}
 	<div class="col-auto">
 	  <div class="w-100 w-md-200 mw-full">
 	    <div class="card p-0 m-5 m-md-10">
@@ -277,7 +279,7 @@
   <ul>
     <div class="container-fluid">
       <div class="row">
-	{% for i in player.computed_impending %}
+	{% for i in player.impending_with_thresholds %}
 	<div class="col-auto">
 	  <div class="w-100 w-md-200 mw-full">
 	    <div class="card p-0 m-5 m-md-10" {% if i.in_play %}style="background-color: #040;"{% endif %}>
