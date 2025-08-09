@@ -974,10 +974,13 @@ def compute_card_thresholds(player):
         card.computed_thresholds = card.thresholds(player.elements, equiv_elements)
         player.hand_cards.append(card)
     player.selection_cards = []
+    num_healing = None
     for card in player.selection.all():
         card.computed_thresholds = card.thresholds(player.elements, equiv_elements)
         if card.is_healing():
-            card.computed_thresholds.extend(card.healing_thresholds(player.healing.count(), player.spirit_specific_resource_elements()))
+            if num_healing is None:
+                num_healing = player.healing.count()
+            card.computed_thresholds.extend(card.healing_thresholds(num_healing, player.spirit_specific_resource_elements()))
         player.selection_cards.append(card)
     # we could just unconditionally set this, but I guess we'll save a database query if they're not Dances Up Earthquakes.
     player.computed_impending = player.gameplayerimpendingwithenergy_set.all().prefetch_related('card') if player.spirit.name == 'Earthquakes' else []
