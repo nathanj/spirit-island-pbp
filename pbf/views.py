@@ -1112,10 +1112,17 @@ def reclaim_card(request, player_id, card_id):
     # no log message but deciding to keep with_log_trigger anyway as they could affect what cards the player wants to play
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def reclaim_all(request, player_id):
+def reclaim_all(request, player_id, element=None):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    player.hand.add(*player.discard.all())
-    player.discard.clear()
+    if element:
+        # just validate that it's an element, don't need to keep the value
+        _ = Elements[element.capitalize()]
+        with_element = player.discard.filter(elements__contains=element.capitalize())
+        player.hand.add(*with_element)
+        player.discard.remove(*with_element)
+    else:
+        player.hand.add(*player.discard.all())
+        player.discard.clear()
 
     compute_card_thresholds(player)
     # no log message but deciding to keep with_log_trigger anyway as they could affect what cards the player wants to play
