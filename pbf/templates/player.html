@@ -352,10 +352,6 @@
   <ul>
     <div class="container-fluid">
       <div class="row">
-	{% if player.days_ordered.count == 0 %}
-	<button class="btn" hx-get="{% url 'create_days' player.id 6 %}">Create Days (1 or 2 player game)</button><br>
-	<button class="btn" hx-get="{% url 'create_days' player.id 4 %}">Create Days (3+ player game)</button>
-	{% else %}
 	{% for card in player.days_ordered.all %}
 	<div class="col-auto">
 	  <div class="w-100 w-md-200 mw-full">
@@ -367,8 +363,10 @@
 	    </div>
 	  </div>
 	</div>
+	{% empty %}
+	<button class="btn" hx-get="{% url 'create_days' player.id 6 %}">Create Days (1 or 2 player game)</button><br>
+	<button class="btn" hx-get="{% url 'create_days' player.id 4 %}">Create Days (3+ player game)</button>
 	{% endfor %}
-	{% endif %}
       </div>
     </div>
 
