@@ -601,7 +601,7 @@ class GamePlayer(models.Model):
             #
             # Therefore, it seems the least-surprising thing is just to show separate indicators.
             # They are placed right over the icon for card plays.
-            cards_in_play = self.play.count() + self.impending_with_energy.filter(gameplayerimpendingwithenergy__in_play=True).count()
+            cards_in_play = self.cards_in_play.count() + self.impending_with_energy.filter(gameplayerimpendingwithenergy__in_play=True).count()
             for (y, n) in ((475, 3), (525, 5), (580, 7)):
                 thresholds.append(Threshold(737, y, cards_in_play >= n))
         if name in spirit_thresholds:
