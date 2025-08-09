@@ -582,6 +582,43 @@ class GamePlayer(models.Model):
             discs = self.presence_set.filter(opacity=0.0, left__lte=Presence.FRACTURED_DAYS_TIME_X)[:to_add]
             self.presence_set.filter(id__in=discs).update(opacity=1.0)
 
+    # player template will automatically call this to compute info it needs to display the player,
+    # including thresholds on cards (as the name suggests).
+    def with_computed_thresholds(self):
+        equiv_elements = self.equiv_elements()
+
+        self.bargain_in_play = any(card.name.startswith('Bargain') for card in self.cards_in_play)
+
+        # NB: cards_in_play is a cached property returning a QuerySet,
+        # and the others are all QuerySet as well.
+        # Modifying the Card object in these QuerySet appears to work as expected,
+        # so we'll go with that.
+        # If that ever stops working, we could convert them using list().
+
+        self.play_cards = self.cards_in_play
+        for card in self.play_cards:
+            card.computed_thresholds = card.thresholds(self.elements, equiv_elements)
+
+        self.hand_cards = self.hand.all()
+        for card in self.hand_cards:
+            card.computed_thresholds = card.thresholds(self.elements, equiv_elements)
+
+        self.selection_cards = self.selection.all()
+        num_healing = None
+        for card in self.selection_cards:
+            card.computed_thresholds = card.thresholds(self.elements, equiv_elements)
+            if card.is_healing():
+                if num_healing is None:
+                    num_healing = self.healing.count()
+                card.computed_thresholds.extend(card.healing_thresholds(num_healing, self.spirit_specific_resource_elements()))
+
+        # we could just unconditionally set this, but I guess we'll save a database query if they're not Dances Up Earthquakes.
+        self.computed_impending = self.gameplayerimpendingwithenergy_set.all().prefetch_related('card') if self.spirit.name == 'Earthquakes' else []
+        for imp in self.computed_impending:
+            imp.card.computed_thresholds = imp.card.thresholds(self.elements, equiv_elements)
+
+        return self
+
     def thresholds(self):
         elements = self.elements
         thresholds = []

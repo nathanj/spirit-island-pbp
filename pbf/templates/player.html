@@ -1,4 +1,5 @@
 {% load static %}
+{% with player=player.with_computed_thresholds %}
 <div id="spirit-image-{{player.id}}"
      class="content"
      hx-target="#spirit-image-{{player.id}}"
@@ -317,6 +318,8 @@
 
   </ul>
   {% endif %}
+
+  {% endwith %}{# player=player.with_computed_thresholds #}
 
   <p>
   <h4>Discard:</h4>
