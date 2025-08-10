@@ -456,8 +456,7 @@ class GamePlayer(models.Model):
         for card in self.cards_in_play:
             counter += card.get_elements()
         if self.spirit.name == 'Earthquakes':
-            played_impending = self.impending_with_energy.filter(gameplayerimpendingwithenergy__in_play=True)
-            for card in played_impending.all():
+            for card in self.played_impending:
                 counter += card.get_elements()
         for presence in self.presences_off_track:
             if presence.elements:
@@ -469,6 +468,10 @@ class GamePlayer(models.Model):
     @functools.cached_property
     def cards_in_play(self):
         return self.play.all()
+
+    @functools.cached_property
+    def played_impending(self):
+        return self.impending_with_energy.filter(gameplayerimpendingwithenergy__in_play=True)
 
     def equiv_elements(self):
         if self.aspect == 'Dark Fire': return "MF"
@@ -601,7 +604,12 @@ class GamePlayer(models.Model):
             #
             # Therefore, it seems the least-surprising thing is just to show separate indicators.
             # They are placed right over the icon for card plays.
-            cards_in_play = self.play.count() + self.impending_with_energy.filter(gameplayerimpendingwithenergy__in_play=True).count()
+            #
+            # Query efficiency note:
+            # count() won't query the database if the QuerySet have already been retrieved.
+            # We evaluate elements (which will retrieve cards in play and played impending cards) at the top of this function.
+            # So this is certain to not query.
+            cards_in_play = self.cards_in_play.count() + self.played_impending.count()
             for (y, n) in ((475, 3), (525, 5), (580, 7)):
                 thresholds.append(Threshold(737, y, cards_in_play >= n))
         if name in spirit_thresholds:
