@@ -31,6 +31,9 @@ django-prometheus = "^2.2.0"
 async-timeout = "^5.0.0"
 
 [tool.poetry.group.dev.dependencies]
+# django-debug-toolbar 6.0.0 is released,
+# but trying to view a spirit's tab results in a SuspiciousFileOperation,
+# so this will have to be resolved before upgrading to that version
 django-debug-toolbar = "^5.0.0"
 
 [build-system]
