@@ -776,7 +776,6 @@ def take_powers(request, player_id, type, num):
         # and doing it here at least matches in mechanism better.
         add_log_msg(player.game, player=player, text=f'gains {num} {type} powers', cards=taken_cards, spoiler=spoiler)
 
-    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
 
 def gain_healing(request, player_id):
@@ -790,7 +789,6 @@ def gain_healing(request, player_id):
 
     player.selection.set(selection)
 
-    compute_card_thresholds(player)
     return render(request, 'player.html', {'player': player})
 
 def gain_power(request, player_id, type, num):
@@ -803,7 +801,6 @@ def gain_power(request, player_id, type, num):
     # TODO: Should we set a flag on the player, such that when they actually select the card, it is also spoilered?
     add_log_msg(player.game, player=player, text=f'gains a {type} power. Choices', cards=selection, spoiler=spoiler)
 
-    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def minor_deck(request, game_id):
@@ -835,7 +832,6 @@ def return_to_deck(request, player_id, card_id):
 
     add_log_msg(game, text=f'{card.name} returned to the deck')
 
-    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def choose_from_discard(request, player_id, card_id):
@@ -846,7 +842,6 @@ def choose_from_discard(request, player_id, card_id):
 
     add_log_msg(player.game, player=player, text=f'takes {card.name} from the power discard pile')
 
-    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def send_days(request, player_id, card_id):
@@ -862,7 +857,6 @@ def send_days(request, player_id, card_id):
 
     add_log_msg(player.game, player=player, text=f'sends {card.name} to the Days That Never Were')
 
-    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def choose_card(request, player_id, card_id):
@@ -893,7 +887,6 @@ def choose_card(request, player_id, card_id):
 
     add_log_msg(player.game, player=player, text=f'gains {card.name}')
 
-    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def undo_gain_card(request, player_id):
@@ -921,7 +914,6 @@ def undo_gain_card(request, player_id):
     game.major_deck.add(*majors)
     player.selection.remove(*to_remove)
 
-    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def choose_healing_card(request, player, card):
@@ -934,7 +926,6 @@ def choose_healing_card(request, player, card):
 
     add_log_msg(player.game, player=player, text=f'claims {card.name}')
 
-    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def choose_days(request, player_id, card_id):
@@ -945,7 +936,6 @@ def choose_days(request, player_id, card_id):
 
     add_log_msg(player.game, player=player, text=f'gains {card.name} from the Days That Never Were')
 
-    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def create_days(request, player_id, num):
@@ -958,31 +948,7 @@ def create_days(request, player_id, num):
         player.days.add(*days)
         add_log_msg(player.game, player=player, text=f'starts with {num} {name} powers in the Days That Never Were', cards=days)
 
-    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
-
-def compute_card_thresholds(player):
-    equiv_elements = player.equiv_elements()
-    player.play_cards = []
-    for card in player.cards_in_play:
-        card.computed_thresholds = card.thresholds(player.elements, equiv_elements)
-        player.play_cards.append(card)
-        if card.name.startswith('Bargain'):
-            player.bargain_in_play = True
-    player.hand_cards = []
-    for card in player.hand.all():
-        card.computed_thresholds = card.thresholds(player.elements, equiv_elements)
-        player.hand_cards.append(card)
-    player.selection_cards = []
-    for card in player.selection.all():
-        card.computed_thresholds = card.thresholds(player.elements, equiv_elements)
-        if card.is_healing():
-            card.computed_thresholds.extend(card.healing_thresholds(player.healing.count(), player.spirit_specific_resource_elements()))
-        player.selection_cards.append(card)
-    # we could just unconditionally set this, but I guess we'll save a database query if they're not Dances Up Earthquakes.
-    player.computed_impending = player.gameplayerimpendingwithenergy_set.all().prefetch_related('card') if player.spirit.name == 'Earthquakes' else []
-    for imp in player.computed_impending:
-        imp.card.computed_thresholds = imp.card.thresholds(player.elements, equiv_elements)
 
 def gain_energy_on_impending(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -1002,7 +968,6 @@ def gain_energy_on_impending(request, player_id):
     player.spirit_specific_per_turn_flags |= GamePlayer.SPIRIT_SPECIFIC_INCREMENTED_THIS_TURN
     player.save()
 
-    compute_card_thresholds(player)
     return render(request, 'player.html', {'player': player})
 
 def impend_card(request, player_id, card_id):
@@ -1011,7 +976,6 @@ def impend_card(request, player_id, card_id):
     player.impending_with_energy.add(card)
     player.hand.remove(card)
 
-    compute_card_thresholds(player)
     return render(request, 'player.html', {'player': player})
 
 def unimpend_card(request, player_id, card_id):
@@ -1020,7 +984,6 @@ def unimpend_card(request, player_id, card_id):
     player.impending_with_energy.remove(card)
     player.hand.add(card)
 
-    compute_card_thresholds(player)
     return render(request, 'player.html', {'player': player})
 
 def add_energy_to_impending(request, player_id, card_id):
@@ -1031,7 +994,6 @@ def add_energy_to_impending(request, player_id, card_id):
         impending_with_energy.energy += 1
         impending_with_energy.save()
 
-    compute_card_thresholds(player)
     return render(request, 'player.html', {'player': player})
 
 def remove_energy_from_impending(request, player_id, card_id):
@@ -1042,7 +1004,6 @@ def remove_energy_from_impending(request, player_id, card_id):
         impending_with_energy.energy -= 1
         impending_with_energy.save()
 
-    compute_card_thresholds(player)
     return render(request, 'player.html', {'player': player})
 
 def play_from_impending(request, player_id, card_id):
@@ -1053,7 +1014,6 @@ def play_from_impending(request, player_id, card_id):
         impending_with_energy.in_play = True
         impending_with_energy.save()
 
-    compute_card_thresholds(player)
     return render(request, 'player.html', {'player': player})
 
 def unplay_from_impending(request, player_id, card_id):
@@ -1064,7 +1024,6 @@ def unplay_from_impending(request, player_id, card_id):
         impending_with_energy.in_play = False
         impending_with_energy.save()
 
-    compute_card_thresholds(player)
     return render(request, 'player.html', {'player': player})
 
 def play_card(request, player_id, card_id):
@@ -1073,7 +1032,6 @@ def play_card(request, player_id, card_id):
     player.play.add(card)
     player.hand.remove(card)
 
-    compute_card_thresholds(player)
     # no log message but deciding to keep with_log_trigger anyway as they could affect what cards the player wants to play
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -1083,7 +1041,6 @@ def unplay_card(request, player_id, card_id):
     player.hand.add(card)
     player.play.remove(card)
 
-    compute_card_thresholds(player)
     # no log message but deciding to keep with_log_trigger anyway as they could affect what cards the player wants to play
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -1101,7 +1058,6 @@ def forget_card(request, player_id, card_id):
 
     add_log_msg(player.game, player=player, text=f'forgets {card.name}')
 
-    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 
@@ -1111,7 +1067,6 @@ def reclaim_card(request, player_id, card_id):
     player.hand.add(card)
     player.discard.remove(card)
 
-    compute_card_thresholds(player)
     # no log message but deciding to keep with_log_trigger anyway as they could affect what cards the player wants to play
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -1127,7 +1082,6 @@ def reclaim_all(request, player_id, element=None):
         player.hand.add(*player.discard.all())
         player.discard.clear()
 
-    compute_card_thresholds(player)
     # no log message but deciding to keep with_log_trigger anyway as they could affect what cards the player wants to play
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -1160,7 +1114,6 @@ def discard_all(request, player_id):
     player.spirit_specific_per_turn_flags = 0
     player.save()
 
-    compute_card_thresholds(player)
     # no log message but deciding to keep with_log_trigger anyway as an update is useful at the end of the turn
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -1179,7 +1132,6 @@ def discard_card(request, player_id, card_id):
     except:
         pass
 
-    compute_card_thresholds(player)
     # no log message but deciding to keep with_log_trigger anyway as they could affect what cards the player wants to play
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -1205,7 +1157,6 @@ def ready(request, player_id):
     if player.game.gameplayer_set.filter(ready=False).count() == 0:
         add_log_msg(player.game, text=f'All spirits are ready!')
 
-    compute_card_thresholds(player)
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def add_impending_log_msgs(player):
@@ -1281,7 +1232,6 @@ def change_spirit_specific_resource(request, player_id, amount):
     if player.spirit.name == 'Fractured':
         player.sync_time_discs_with_resource()
         # Have to render the spirit panel to show the change in discs.
-        compute_card_thresholds(player)
         return render(request, 'player.html', {'player': player})
 
     return render(request, 'spirit_specific_resource.html', {'player': player})
@@ -1318,7 +1268,6 @@ def toggle_presence(request, player_id, left, top):
         player.spirit_specific_resource = player.presence_set.filter(opacity=1.0, left__lte=Presence.FRACTURED_DAYS_TIME_X).count()
         player.save(update_fields=['spirit_specific_resource'])
 
-    compute_card_thresholds(player)
     return render(request, 'player.html', {'player': player})
 
 def add_element(request, player_id, element):
@@ -1334,7 +1283,6 @@ def add_element(request, player_id, element):
     if element == 'moonfire': player.temporary_moon += 1
     player.save()
 
-    compute_card_thresholds(player)
     return render(request, 'player.html', {'player': player})
 
 def remove_element(request, player_id, element):
@@ -1354,7 +1302,6 @@ def remove_element(request, player_id, element):
             player.temporary_fire -= 1
     player.save()
 
-    compute_card_thresholds(player)
     return render(request, 'player.html', {'player': player})
 
 def add_element_permanent(request, player_id, element):
@@ -1370,7 +1317,6 @@ def add_element_permanent(request, player_id, element):
     if element == 'moonfire': player.permanent_moon += 1
     player.save()
 
-    compute_card_thresholds(player)
     return render(request, 'player.html', {'player': player})
 
 def remove_element_permanent(request, player_id, element):
@@ -1390,13 +1336,11 @@ def remove_element_permanent(request, player_id, element):
             player.permanent_fire -= 1
     player.save()
 
-    compute_card_thresholds(player)
     return render(request, 'player.html', {'player': player})
 
 def tab(request, game_id, player_id):
     game = get_object_or_404(Game, pk=game_id)
     player = get_object_or_404(GamePlayer, pk=player_id)
-    compute_card_thresholds(player)
     return render(request, 'tabs.html', {'game': game, 'player': player})
 
 def game_logs(request, game_id):
