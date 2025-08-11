@@ -69,8 +69,7 @@ def with_log_trigger(response):
     return response
 
 def home(request):
-    games = Game.objects.all()
-    return render(request, 'index.html', { 'games': games })
+    return render(request, 'index.html')
 
 # For use in development only, not production.
 def view_screenshot(request, game_id=None, filename=None):
