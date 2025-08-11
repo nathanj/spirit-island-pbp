@@ -3,6 +3,10 @@ name = "spirit-island"
 version = "0.1.0"
 description = ""
 authors = ["Nathan Jones <nathanj439@gmail.com>"]
+# TODO: We would like to be able to set this,
+# which would allow us to remove the --no-root flag,
+# but it requires Poetry 1.8.0, which not every instance of the site is using.
+# package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
