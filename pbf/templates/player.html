@@ -64,6 +64,8 @@
       <img style="position: absolute; left: 387px; top: 159px; height: 85px" src="{% static 'pbf/exploratory-shadows-energy.jpg' %}" />
       <img style="position: absolute; left: 588px; top: 254px; width: 72px" src="{% static 'pbf/exploratory-shadows-reclaim1.jpg' %}" />
     {% endif %}
+	{% elif player.spirit.name == 'Covets' %}
+    {# Do nothing! The aspect is handled at the img level #}
         {% else %}
           <img style="position: absolute; left: {{player.aspect_left}}px; top: {{player.aspect_top}}px;" src="{% static player.aspect_url %}" width="370" height="230" />
         {% endif %}
@@ -82,7 +84,16 @@
       {% for threshold in player.thresholds %}
       <img style="position: absolute; left: {{threshold.x}}px; top: {{threshold.y}}px;" src="{% if threshold.achieved %}{% static "pbf/green.svg" %}{% else %}{% static "pbf/red.svg" %}{% endif %}" width="20" height="20" />
       {% endfor %}
-      <img src="{% static player.spirit.url %}" width="957" height="{% if player.spirit.name == "Covets" %}1260{% else %}630{% endif %}" />
+      {% if player.spirit.name == "Covets" %}
+      {# We must not allow arbitrary aspect name to be interpolated into the path! Only allow known-good aspects. #}
+      {% if player.aspect == 'v1.2.1' %}
+      <img src="{% static 'pbf/covets_v1.2.1.jpg' %}" width="957" height="1260" />
+      {% else %}
+      <img src="{% static player.spirit.url %}" width="957" height="1260" />
+      {% endif %}
+      {% else %}
+      <img src="{% static player.spirit.url %}" width="957" height="630" />
+      {% endif %}
     </div>
   </div>
 
@@ -172,7 +183,11 @@
   {% else %}
   <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}">4 Cards</button>
   {% if player.spirit.name == 'Covets' %}
+  {% if player.aspect == 'v1.2.1' %}
   <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '6' %}">6 Cards</button>
+  {% elif player.aspect >= 'v1.3' %}
+  <button class="btn" hx-get="{% url 'take_powers' player.id 'major' '3' %}">Take 3</button>
+  {% endif %}
   {% endif %}
   <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards</button>
   {% endif %}
