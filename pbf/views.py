@@ -96,6 +96,7 @@ def game_setup(request, game_id):
     spirits_by_expansion = {
         # Short name, full name, aspects (if any)
         # Within an expansion, sorted alphabetically
+        # Base is automatically included, unless the first element of aspects is 'NO BASE'
         #
         # Should we sort by complexity?
         # Don't think so; not everyone knows the complexities by heart,
@@ -158,11 +159,8 @@ def game_setup(request, game_id):
             ('Rot', 'Spreading Rot Renews the Earth [Apocrypha]', ('Round Down',)),
         ],
         'Exploratory Testing': [
-            # Note that the template has logic to not show the base spirit for this category,
-            # because the base spirit is assumed to be in a different expansion.
-            # In other words, this category only shows aspects.
-            ('Shadows', 'Shadows Flicker Like Flame', ('Exploratory', )),
-            ('Bringer', 'Bringer of Dreams and Nightmares', ('Exploratory', )),
+            ('Shadows', 'Shadows Flicker Like Flame', ('NO BASE', 'Exploratory', )),
+            ('Bringer', 'Bringer of Dreams and Nightmares', ('NO BASE', 'Exploratory', )),
         ],
     }
     spirits_present = [spirit for (expansion, spirits) in spirits_by_expansion.items() for (spirit, _, _) in spirits]

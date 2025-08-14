@@ -60,12 +60,15 @@
     <optgroup label="{{expansion}}">
       {% for spirit in spirits %}
       {% with "pbf/spirit-icon-"|add:spirit.0|add:".png" as spirit_icon %}
-      {% if expansion != 'Exploratory Testing' %}
-      {# exploratory spirits are implemented as aspects of the original so don't show the original in the exploratory category #}
+      {% for aspect in spirit.2 %}
+      {% if aspect != 'NO BASE' %}
+      {% if forloop.first %}
       <option value="{{spirit.0}}" data-image="{% static spirit_icon %}">{{spirit.1}}</option>
       {% endif %}
-      {% for aspect in spirit.2 %}
       <option value="{{spirit.0}} - {{aspect}}" data-image="{% static spirit_icon %}">{{spirit.1}} [{{aspect}}]</option>
+      {% endif %}
+      {% empty %}
+      <option value="{{spirit.0}}" data-image="{% static spirit_icon %}">{{spirit.1}}</option>
       {% endfor %}
       {% endwith %}
       {% endfor %}
