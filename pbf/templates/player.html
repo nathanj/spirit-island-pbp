@@ -399,7 +399,8 @@
 
   <p>
   Direct link to spirit:
-  <a href="{% if player.aspect %}{% url 'view_game' player.game.id player.aspect %}{% else %}{% url 'view_game' player.game.id player.spirit.name %}{% endif %}">by spirit</a>
+  {# Aesthetic preference: Don't use aspect for Covets Gleaming Shards of Earth (which we use to store the version). Using the aspect would work, but seems less clear. #}
+  <a href="{% if player.aspect and player.spirit.name != 'Covets' %}{% url 'view_game' player.game.id player.aspect %}{% else %}{% url 'view_game' player.game.id player.spirit.name %}{% endif %}">by spirit</a>
   {% if player.name %}
   <a href="{% url 'view_game' player.game.id player.name %}">by player name</a>
   {% endif %}
