@@ -607,6 +607,40 @@ class TestHealing(TestCase):
         client, game, player = self.setup_game(['Serene Waters', 'Waters Taste of Ruin', 'Waters Renew'])
         self.assertEqual(list(player.healing.values_list('name', flat=True)), ['Serene Waters', 'Waters Renew'])
 
+class TestDoubleGain(TestCase):
+    def test_gain_and_gain(self):
+        client = Client()
+        client.post('/new')
+        game = Game.objects.last()
+        deck_size = game.minor_deck.count()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='River'), color='blue')
+
+        # first gain normal
+        client.get(f"/game/{player.id}/gain/minor/4")
+        self.assertEqual(player.selection.count(), 4)
+        self.assertEqual(game.minor_deck.count(), deck_size - 4)
+        sel = list(player.selection.all())
+
+        # second gain doesn't change it
+        client.get(f"/game/{player.id}/gain/minor/4")
+        self.assertEqual(game.minor_deck.count(), deck_size - 4)
+        self.assertEqual(list(player.selection.all()), sel)
+
+    def test_gain_and_heal(self):
+        client = Client()
+        client.post('/new')
+        game = Game.objects.last()
+        deck_size = game.minor_deck.count()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='Waters'), color='blue')
+
+        client.get(f"/game/{player.id}/gain/minor/4")
+        self.assertEqual(player.selection.count(), 4)
+        self.assertEqual(game.minor_deck.count(), deck_size - 4)
+        sel = list(player.selection.all())
+
+        client.get(f"/game/{player.id}/gain_healing")
+        self.assertEqual(list(player.selection.all()), sel)
+
 class TestPlayCost(TestCase):
     def assert_cost(self, card_names, expected_cost, scenario=''):
         game = Game(scenario=scenario)
