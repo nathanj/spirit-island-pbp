@@ -574,6 +574,39 @@ class TestChooseCard(TestCase):
     def test_covets_major(self):
         self.assert_cards_gained('major', 6, 1)
 
+class TestHealing(TestCase):
+    def setup_game(self, cards=()):
+        client = Client()
+        client.post('/new')
+        game = Game.objects.last()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='Waters'), color='blue')
+        for card_name in cards:
+            card = Card.objects.get(name=card_name)
+            client.get(f"/game/{player.id}/gain_healing")
+            client.get(f"/game/{player.id}/choose/{card.id}")
+        return (client, game, player)
+
+    def test_gain(self):
+        client, game, player = self.setup_game()
+        client.get(f"/game/{player.id}/gain_healing")
+        self.assertEqual([True, True, True, True], [card.is_healing() for card in player.selection.all()])
+
+    def test_choose_1(self):
+        client, game, player = self.setup_game(['Roiling Waters'])
+        self.assertEqual(list(player.healing.values_list('name', flat=True)), ['Roiling Waters'])
+
+    def test_choose_2(self):
+        client, game, player = self.setup_game(['Roiling Waters', 'Waters Taste of Ruin'])
+        self.assertEqual(list(player.healing.values_list('name', flat=True)), ['Roiling Waters', 'Waters Taste of Ruin'])
+
+    def test_change_1(self):
+        client, game, player = self.setup_game(['Roiling Waters', 'Serene Waters'])
+        self.assertEqual(list(player.healing.values_list('name', flat=True)), ['Serene Waters'])
+
+    def test_change_2(self):
+        client, game, player = self.setup_game(['Serene Waters', 'Waters Taste of Ruin', 'Waters Renew'])
+        self.assertEqual(list(player.healing.values_list('name', flat=True)), ['Serene Waters', 'Waters Renew'])
+
 class TestPlayCost(TestCase):
     def assert_cost(self, card_names, expected_cost, scenario=''):
         game = Game(scenario=scenario)
