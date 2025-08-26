@@ -359,7 +359,8 @@ class GamePlayer(models.Model):
             'Fractured': 'Time',
             'Rot': 'Rot',
             'Round DownRot': 'Rot',
-            'Covets': 'Metal',
+            'v1.2.1Covets': 'Metal',
+            'v1.3Covets': 'Metal',
             'UnconstrainedFangs': 'Prepared Beasts',
             'Shifting': 'Prepared Elements',
             'IntensifyShifting': 'Prepared Elements',
@@ -1233,7 +1234,7 @@ spirit_thresholds = {
             (645, 555, '2W'),
             (645, 590, '4W3P'),
             ],
-        'Covets': [
+        'v1.2.1Covets': [
             (360, 487, '1E'),
             (360, 522, '1F2A2E'),
             (360, 580, '2S2F3E'),
@@ -1248,6 +1249,28 @@ spirit_thresholds = {
             (667, 1052, '1S1E1N'),
             (667, 1081, '3S1E2N'),
             (667, 1110, '3S2E3N'),
+            ],
+        'v1.3Covets': [
+            # Scent of Shining Earth
+            (360, 487, '1E'),
+            (360, 522, '2F2E'),
+            (360, 555, '2A3E'),
+            (360, 590, '4E'),
+            # Threats, Demands, and Intimidation
+            (650, 487, '2S2E'),
+            (650, 522, '2E2N'),
+            # Violent Outburst
+            (667, 750, '2F'),
+            (667, 779, '3F2E2N'),
+            (667, 807, '4F3E3N'),
+            # Harrowing Gaze
+            (667, 902, '2A'),
+            (667, 931, '3A2E2N'),
+            (667, 960, '4A3E3N'),
+            # Imposing Demands
+            (667, 1052, '2S'),
+            (667, 1081, '3S2E2N'),
+            (667, 1110, '4S3E3N'),
             ],
         }
 
