@@ -779,6 +779,11 @@ def take_powers(request, player_id, type, num):
 
 def gain_healing(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
+    if player.selection.exists():
+        # Don't set a new selection while the player already has one.
+        # Otherwise, cards in the previous selection would no longer be accessible.
+        return render(request, 'player.html', {'player': player})
+
     selection = [
             Card.objects.get(name="Serene Waters"),
             Card.objects.get(name="Waters Renew"),
@@ -792,6 +797,11 @@ def gain_healing(request, player_id):
 
 def gain_power(request, player_id, type, num):
     player = get_object_or_404(GamePlayer, pk=player_id)
+    if player.selection.exists():
+        # Don't set a new selection while the player already has one.
+        # Otherwise, cards in the previous selection would no longer be accessible.
+        return render(request, 'player.html', {'player': player})
+
     spoiler = request.GET.get('spoiler_power_gain', False)
 
     selection = cards_from_deck(player.game, num, type)
