@@ -362,9 +362,9 @@ class GamePlayer(models.Model):
             'v1.2.1Covets': 'Metal',
             'v1.3Covets': 'Metal',
             'UnconstrainedFangs': 'Prepared Beasts',
-            'Shifting': 'Prepared Elements',
-            'IntensifyShifting': 'Prepared Elements',
-            'MentorShifting': 'Prepared Elements',
+            'Memory': 'Prepared Elements',
+            'IntensifyMemory': 'Prepared Elements',
+            'MentorMemory': 'Prepared Elements',
             'Waters': 'Healing Markers',
         }
         return d.get(self.full_name())
@@ -374,7 +374,7 @@ class GamePlayer(models.Model):
     # we can use four bits per element (a max of 15 of each).
     def spirit_specific_resource_elements(self):
         d = {
-            'Shifting': ('sun', 'moon', 'fire', 'air', 'water', 'earth', 'plant', 'animal'),
+            'Memory': ('sun', 'moon', 'fire', 'air', 'water', 'earth', 'plant', 'animal'),
             'Waters': ('water', 'animal'),
         }
         # Currently doesn't change based on aspect, so just uses spirit name instead of spirit + aspect
@@ -505,7 +505,7 @@ class GamePlayer(models.Model):
     # https://docs.djangoproject.com/en/5.1/ref/models/instances/
     def init_spirit(self):
         self.last_unready_energy = self.energy
-        if self.spirit.name == "Shifting":
+        if self.spirit.name == "Memory":
             for e in (Elements.Moon, Elements.Air, Elements.Earth):
                 # Prepare one of each.
                 self.spirit_specific_resource += 1 << (ELEMENT_WIDTH * (e.value - 1))
@@ -988,14 +988,14 @@ spirit_thresholds = {
             (365, 475, '3M2F'),
             (365, 515, '4M3F2A'),
             ],
-        'IntensifyShifting': [
+        'IntensifyMemory': [
             (365, 430, '2E'),
             (365, 465, '1A2E'),
             (365, 500, '2M3A4E'),
             (645, 430, '1M'),
             (645, 465, '2M1A'),
             ],
-        'MentorShifting': [
+        'MentorMemory': [
             (365, 430, '2E'),
             (365, 465, '1A2E'),
             (365, 500, '2M3A4E'),
@@ -1004,7 +1004,7 @@ spirit_thresholds = {
             (645, 520, '1S4A3E'),
             (645, 575, '1A'),
             ],
-        'Shifting': [
+        'Memory': [
             (365, 430, '2E'),
             (365, 465, '1A2E'),
             (365, 500, '2M3A4E'),
