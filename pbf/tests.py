@@ -563,7 +563,7 @@ class TestChooseCard(TestCase):
         self.assert_cards_gained('minor', 6, 2)
 
     def test_mentor_shifting_memory_boon_of_reimagining(self):
-        self.assert_cards_gained('minor', 4, 3, spirit='Shifting - Mentor')
+        self.assert_cards_gained('minor', 4, 3, spirit='Memory - Mentor')
 
     def test_regular_major(self):
         self.assert_cards_gained('major', 4, 1)
