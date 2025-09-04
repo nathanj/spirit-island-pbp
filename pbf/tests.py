@@ -4,6 +4,16 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from .models import Card, Elements, Game, GamePlayer, Spirit
 
+class TestDecks(TestCase):
+    def test_decks_on_setup(self):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        # these numbers may need to change when an expansion is added,
+        # but would rather have to do that than risk other kinds of bugs.
+        self.assertEqual(game.minor_deck.count(), 100)
+        self.assertEqual(game.major_deck.count(), 78)
+
 class TestPresence(TestCase):
     def test_irrelevant_presence_energy(self):
         game = Game()
