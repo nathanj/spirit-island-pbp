@@ -1382,6 +1382,7 @@ card_thresholds = {
 "Utter a Curse of Dread and Bone": [ (35, 76, '3M2N') ],
 "Vanish Softly Away, Forgotten by All": [ (35, 78, '3M3A') ],
 "Vengeance of the Dead": [ (38, 76, '3N') ],
+"Vengeance of the Dead exploratory": [ (40, 77, '3N') ],
 "Vigor of the Breaking Dawn": [ (36, 72, '3S2N') ],
 "Voice of Command": [ (35, 78, '3S2A') ],
 "Volcanic Eruption": [ (35, 72, '4F3E') ],
