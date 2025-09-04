@@ -95,6 +95,19 @@ class Card(models.Model):
     SLOW = 2
     speed = models.IntegerField(choices=[(0, 'Unknown'), (FAST, 'Fast'), (SLOW, 'Slow')])
 
+    # A minor or major with exclude_from_deck is excluded by default.
+    # But if it is added to a given Game by the host's choice,
+    # it will be reshuffled with others of its type if that deck is reshuffled.
+    #
+    # This is unlike e.g. adding a unique card to the minor deck,
+    # which will not cause it to get reshuffled.
+    #
+    # This is used to implement alternative variants of minor or major powers,
+    # each being a separate Card that is excluded by default.
+    # This is the easiest way to implement this,
+    # because Cards are not aware of their Game when determining their URL.
+    exclude_from_deck = models.BooleanField(default=False)
+
     @classmethod
     def check(cls, **kwargs):
         from django.core import checks

@@ -79,8 +79,8 @@ def view_screenshot(request, game_id=None, filename=None):
 def new_game(request):
     game = Game(name='My Game')
     game.save()
-    game.minor_deck.set(Card.objects.filter(type=Card.MINOR))
-    game.major_deck.set(Card.objects.filter(type=Card.MAJOR))
+    game.minor_deck.set(Card.objects.filter(type=Card.MINOR, exclude_from_deck=False))
+    game.major_deck.set(Card.objects.filter(type=Card.MAJOR, exclude_from_deck=False))
     return redirect(reverse('game_setup', args=[game.id]))
 
 def edit_players(request, game_id):
@@ -598,7 +598,7 @@ def import_game(request):
         else:
             # if someone imports a discard pile and not a major/minor deck,
             # exclude discarded cards and cards being held by any player
-            deck.set(Card.objects.filter(type=type).exclude(id__in=cards_in_game))
+            deck.set(Card.objects.filter(type=type, exclude_from_deck=False).exclude(id__in=cards_in_game))
 
     return redirect(reverse('view_game', args=[game.id]))
 
