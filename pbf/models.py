@@ -99,6 +99,7 @@ class Card(models.Model):
     def check(cls, **kwargs):
         from django.core import checks
         from django.db import connection
+        from django.db.migrations.executor import MigrationExecutor
 
         errors = super().check(**kwargs)
 
@@ -106,6 +107,14 @@ class Card(models.Model):
             # Need to prevent this check from running on first migrate
             # (before the table has been created),
             # otherwise it will error and prevent the migrate from creating the table.
+            return errors
+
+        # Also need to prevent the check from running if there are unapplied migrations.
+        # If any migration adds a new field to Card,
+        # this check will attempt to use it before the migration is applied,
+        # and that would also error and prevent the migration from running.
+        executor = MigrationExecutor(connection)
+        if executor.migration_plan(executor.loader.graph.leaf_nodes()):
             return errors
 
         not_healing = cls.objects.exclude(name__in=cls.HEALING_NAMES)
