@@ -184,6 +184,28 @@ class Card(models.Model):
                 Threshold(2, y + 8, num_healing_cards == 0),
             ]
 
+    # Returns array of tuples: (class, IDs if applicable, attribute name, human-friendly name)
+    def location_in_game(self, game):
+        locs = []
+
+        # Game-wide locations
+        for loc in ('minor_deck', 'major_deck', 'discard_pile'):
+            if getattr(self, loc).filter(id=game.id).exists():
+                locs.append((Game, None, loc, loc.replace('_', ' ')))
+
+        # Player-specific locations, minus impending
+        # Not healing since nothing that uses this cares to know
+        for loc in ('hand', 'discard', 'play', 'selection', 'days'):
+            if (players := getattr(self, loc).filter(game=game).values_list('id', 'spirit__name', named=True)):
+                names = " and ".join(player.spirit__name for player in players)
+                locs.append((GamePlayer, [player.id for player in players], loc, f"{names}'s {loc}"))
+
+        # Impending
+        if (impends := self.gameplayerimpendingwithenergy_set.filter(gameplayer__game=game)):
+            locs.append((GamePlayerImpendingWithEnergy, [impend.id for impend in impends], None, 'impending'))
+
+        return locs
+
 class Game(models.Model):
     def screenshot_with_suffix(game, filename):
         # If the game is set to always suffix the screenshot, do so.
@@ -238,6 +260,10 @@ class Game(models.Model):
     def player_summary(self):
         players = self.gameplayer_set.values_list('id', 'name', 'spirit__name', 'aspect', 'color', 'ready', named=True)
         return [p._replace(color=colors_to_circle_color_map[p.color] if p.color else p.color) for p in players]
+
+    def exploratory_vengeance_location(self):
+        # Template only uses the name, so just give them that
+        return [locname for (_, _, _, locname) in Card.objects.get(name='Vengeance of the Dead exploratory').location_in_game(self)]
 
 colors_to_circle_color_map = {
         'blue': '#705dff',

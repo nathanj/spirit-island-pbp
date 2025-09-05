@@ -1,0 +1,11 @@
+<h5>Exploratory testing power cards</h5>
+
+Vengeance of the Dead:
+{% with locs=game.exploratory_vengeance_location %}
+{% for loc in locs %}
+{% if forloop.first %}using exploratory, currently in {% else %}, {% endif %}{{ loc }}
+{% empty %}
+using original
+{% endfor %}
+<button class="btn" hx-post="{% url 'toggle_deck_mod' game.id 'vengeance_of_the_dead' %}">Use {% if locs %}original{% else %}exploratory{% endif %}</button>
+{% endwith %}

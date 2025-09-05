@@ -189,6 +189,43 @@ def change_scenario(request, game_id):
     game.save()
     return redirect(reverse('game_setup', args=[game.id]))
 
+def deck_mods(request, game_id):
+    game = get_object_or_404(Game, pk=game_id)
+    return render(request, 'deck_mods.html', { 'game': game })
+
+def toggle_deck_mod(request, game_id, mod):
+    game = get_object_or_404(Game, pk=game_id)
+
+    def replace_card(cls, ids, attr, _human_friendly_name, old, new):
+        import pbf.models
+        match cls:
+            case pbf.models.Game:
+                getattr(old, attr).remove(game)
+                getattr(new, attr).add(game)
+            case pbf.models.GamePlayer:
+                getattr(old, attr).remove(*ids)
+                getattr(new, attr).add(*ids)
+            case pbf.models.GamePlayerImpendingWithEnergy:
+                # id__in should be the only condition necessary, but OK to make sure.
+                GamePlayerImpendingWithEnergy.objects.filter(id__in=ids, gameplayer__game=game, card=old).update(card=new)
+            case _:
+                raise TypeError(f'unknown card location class {cls}')
+
+    match mod:
+        case 'vengeance_of_the_dead':
+            original = Card.objects.get(name='Vengeance of the Dead')
+            exploratory = Card.objects.get(name='Vengeance of the Dead exploratory')
+            if (locs := exploratory.location_in_game(game)):
+                for loc in locs:
+                    replace_card(*loc, exploratory, original)
+            else:
+                for loc in original.location_in_game(game):
+                    replace_card(*loc, original, exploratory)
+        case _:
+            raise ValueError('unknown deck mod')
+
+    return render(request, 'deck_mods.html', { 'game': game })
+
 # Base energy gain per turn when no presence has been removed from tracks.
 # NOT to be used to indicate how much energy the spirit has at setup;
 # use spirit_setup_energy for that.

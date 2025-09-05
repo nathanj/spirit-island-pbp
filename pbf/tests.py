@@ -13,6 +13,48 @@ class TestDecks(TestCase):
         # but would rather have to do that than risk other kinds of bugs.
         self.assertEqual(game.minor_deck.count(), 100)
         self.assertEqual(game.major_deck.count(), 78)
+        self.assertEqual(list(game.major_deck.filter(name__startswith='Vengeance of the Dead').values_list('name', flat=True)), ['Vengeance of the Dead'])
+
+    def test_deck_mod(self):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        client.post(f"/game/{game.id}/deck_mod/vengeance_of_the_dead")
+        self.assertEqual(game.minor_deck.count(), 100)
+        self.assertEqual(game.major_deck.count(), 78)
+        self.assertEqual(list(game.major_deck.filter(name__startswith='Vengeance of the Dead').values_list('name', flat=True)), ['Vengeance of the Dead exploratory'])
+
+    def test_deck_mod_round_trip(self):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        client.post(f"/game/{game.id}/deck_mod/vengeance_of_the_dead")
+        client.post(f"/game/{game.id}/deck_mod/vengeance_of_the_dead")
+        self.assertEqual(game.minor_deck.count(), 100)
+        self.assertEqual(game.major_deck.count(), 78)
+        self.assertEqual(list(game.major_deck.filter(name__startswith='Vengeance of the Dead').values_list('name', flat=True)), ['Vengeance of the Dead'])
+
+    def test_deck_mod_card_in_hand(self):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.first())
+        player.hand.set([Card.objects.get(name='Vengeance of the Dead'), Card.objects.get(name="River's Bounty")])
+        client.post(f"/game/{game.id}/deck_mod/vengeance_of_the_dead")
+        self.assertEqual(list(player.hand.values_list('name', flat=True)), ["River's Bounty", 'Vengeance of the Dead exploratory'])
+
+    def test_deck_mod_card_impending(self):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.first())
+        card1 = Card.objects.get(name='Vengeance of the Dead')
+        card2 = Card.objects.get(name="River's Bounty")
+        player.hand.set([card1, card2])
+        client.post(f"/game/{player.id}/impend/{card1.id}")
+        client.post(f"/game/{player.id}/impend/{card2.id}")
+        client.post(f"/game/{game.id}/deck_mod/vengeance_of_the_dead")
+        self.assertEqual(list(player.impending_with_energy.values_list('name', flat=True)), ["River's Bounty", 'Vengeance of the Dead exploratory'])
 
 class TestPresence(TestCase):
     def test_irrelevant_presence_energy(self):
