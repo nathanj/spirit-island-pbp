@@ -11,6 +11,7 @@ authors = ["Nathan Jones <nathanj439@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.10"
 Django = "^5.0.0"
+django-cors-headers = "^4.0.0"
 django-cleanup = "^9.0.0"
 Pillow = "^11.0.0"
 django-ninja = "^1.0.0"
