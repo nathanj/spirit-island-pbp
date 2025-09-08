@@ -1177,9 +1177,15 @@ def add_impending_log_msgs(player):
             add_log_msg(player.game, player=player, text=f'adjusts energy on impended card {card.name} ({impended_card_with_energy.energy}/{impended_card_with_energy.cost_with_scenario})')
 
 def add_spirit_specific_resource_msgs(player):
-    # TODO: Add support for logging spirit-specific elements for Memory and Wounded Waters
     if player.spirit_specific_resource_elements() is None:
         add_log_msg(player.game, player=player, text=f'has {player.spirit_specific_resource} {player.spirit_specific_resource_name()}')
+    else:
+        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} {player.spirit_specific_resource_name()}:')
+        element_msg = ""
+        for plus, minus, current, elt in player.spirit_specific_resource_elements():
+            element_msg += f'{elt}: {current}  '
+
+        add_log_msg(player.game, text=element_msg)
 
 def change_energy(request, player_id, amount):
     amount = int(amount)
