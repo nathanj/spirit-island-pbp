@@ -1180,7 +1180,7 @@ def add_spirit_specific_resource_msgs(player):
     if player.spirit_specific_resource_elements() is None:
         add_log_msg(player.game, player=player, text=f'has {player.spirit_specific_resource} {player.spirit_specific_resource_name()}')
     else:
-        add_log_msg(player.game, text=f'{player.circle_emoji} {player.spirit.name} {player.spirit_specific_resource_name()}:')
+        add_log_msg(player.game, player=player, text=f'{player.spirit_specific_resource_name()}:')
         element_msg = ""
         for plus, minus, current, elt in player.spirit_specific_resource_elements():
             element_msg += f'{elt}: {current}  '
