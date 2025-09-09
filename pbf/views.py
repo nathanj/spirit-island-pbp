@@ -1181,9 +1181,7 @@ def add_spirit_specific_resource_msgs(player):
         add_log_msg(player.game, player=player, text=f'has {player.spirit_specific_resource} {player.spirit_specific_resource_name()}')
     else:
         add_log_msg(player.game, player=player, text=f'{player.spirit_specific_resource_name()}:')
-        element_msg = ""
-        for plus, minus, current, elt in player.spirit_specific_resource_elements():
-            element_msg += f'{elt}: {current}  '
+        element_msg = " ".join([f'{elt}: {current}' for plus, minus, current, elt in player.spirit_specific_resource_elements()])
 
         add_log_msg(player.game, text=element_msg)
 
