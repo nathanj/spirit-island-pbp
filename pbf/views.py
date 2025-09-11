@@ -1181,7 +1181,7 @@ def add_spirit_specific_resource_msgs(player):
         add_log_msg(player.game, player=player, text=f'has {player.spirit_specific_resource} {player.spirit_specific_resource_name()}')
     else:
         element_msg = ", ".join(f'{current} {elt}' for plus, minus, current, elt in player.spirit_specific_resource_elements() if current > 0)
-        if element_msg != "":
+        if element_msg:
             add_log_msg(player.game, player=player, text=f'{player.spirit_specific_resource_name()}: {element_msg}')
 
 def change_energy(request, player_id, amount):
