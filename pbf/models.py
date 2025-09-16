@@ -95,10 +95,24 @@ class Card(models.Model):
     SLOW = 2
     speed = models.IntegerField(choices=[(0, 'Unknown'), (FAST, 'Fast'), (SLOW, 'Slow')])
 
+    # A minor or major with exclude_from_deck is excluded by default.
+    # But if it is added to a given Game by the host's choice,
+    # it will be reshuffled with others of its type if that deck is reshuffled.
+    #
+    # This is unlike e.g. adding a unique card to the minor deck,
+    # which will not cause it to get reshuffled.
+    #
+    # This is used to implement alternative variants of minor or major powers,
+    # each being a separate Card that is excluded by default.
+    # This is the easiest way to implement this,
+    # because Cards are not aware of their Game when determining their URL.
+    exclude_from_deck = models.BooleanField(default=False)
+
     @classmethod
     def check(cls, **kwargs):
         from django.core import checks
         from django.db import connection
+        from django.db.migrations.executor import MigrationExecutor
 
         errors = super().check(**kwargs)
 
@@ -106,6 +120,14 @@ class Card(models.Model):
             # Need to prevent this check from running on first migrate
             # (before the table has been created),
             # otherwise it will error and prevent the migrate from creating the table.
+            return errors
+
+        # Also need to prevent the check from running if there are unapplied migrations.
+        # If any migration adds a new field to Card,
+        # this check will attempt to use it before the migration is applied,
+        # and that would also error and prevent the migration from running.
+        executor = MigrationExecutor(connection)
+        if executor.migration_plan(executor.loader.graph.leaf_nodes()):
             return errors
 
         not_healing = cls.objects.exclude(name__in=cls.HEALING_NAMES)
@@ -162,6 +184,28 @@ class Card(models.Model):
                 Threshold(2, y + 8, num_healing_cards == 0),
             ]
 
+    # Returns array of tuples: (class, IDs if applicable, attribute name, human-friendly name)
+    def location_in_game(self, game):
+        locs = []
+
+        # Game-wide locations
+        for loc in ('minor_deck', 'major_deck', 'discard_pile'):
+            if getattr(self, loc).filter(id=game.id).exists():
+                locs.append((Game, None, loc, loc.replace('_', ' ')))
+
+        # Player-specific locations, minus impending
+        # Not healing since nothing that uses this cares to know
+        for loc in ('hand', 'discard', 'play', 'selection', 'days'):
+            if (players := getattr(self, loc).filter(game=game).values_list('id', 'spirit__name', named=True)):
+                names = " and ".join(player.spirit__name for player in players)
+                locs.append((GamePlayer, [player.id for player in players], loc, f"{names}'s {loc}"))
+
+        # Impending
+        if (impends := self.gameplayerimpendingwithenergy_set.filter(gameplayer__game=game)):
+            locs.append((GamePlayerImpendingWithEnergy, [impend.id for impend in impends], None, 'impending'))
+
+        return locs
+
 class Game(models.Model):
     def screenshot_with_suffix(game, filename):
         # If the game is set to always suffix the screenshot, do so.
@@ -216,6 +260,10 @@ class Game(models.Model):
     def player_summary(self):
         players = self.gameplayer_set.values_list('id', 'name', 'spirit__name', 'aspect', 'color', 'ready', named=True)
         return [p._replace(color=colors_to_circle_color_map[p.color] if p.color else p.color) for p in players]
+
+    def exploratory_vengeance_location(self):
+        # Template only uses the name, so just give them that
+        return [locname for (_, _, _, locname) in Card.objects.get(name='Vengeance of the Dead exploratory').location_in_game(self)]
 
 colors_to_circle_color_map = {
         'blue': '#705dff',
@@ -1360,6 +1408,7 @@ card_thresholds = {
 "Utter a Curse of Dread and Bone": [ (35, 76, '3M2N') ],
 "Vanish Softly Away, Forgotten by All": [ (35, 78, '3M3A') ],
 "Vengeance of the Dead": [ (38, 76, '3N') ],
+"Vengeance of the Dead exploratory": [ (40, 77, '3N') ],
 "Vigor of the Breaking Dawn": [ (36, 72, '3S2N') ],
 "Voice of Command": [ (35, 78, '3S2A') ],
 "Volcanic Eruption": [ (35, 72, '4F3E') ],

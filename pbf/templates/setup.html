@@ -104,4 +104,8 @@
   <button type="submit" class="btn">Change scenario</button>
 </form>
 
+<div id="deck-mods" hx-target="#deck-mods">
+  <a hx-get="{% url 'deck_mods' game.id %}">Exploratory testing power cards</a>
+</div>
+
 {% endblock %}

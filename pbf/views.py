@@ -79,8 +79,8 @@ def view_screenshot(request, game_id=None, filename=None):
 def new_game(request):
     game = Game(name='My Game')
     game.save()
-    game.minor_deck.set(Card.objects.filter(type=Card.MINOR))
-    game.major_deck.set(Card.objects.filter(type=Card.MAJOR))
+    game.minor_deck.set(Card.objects.filter(type=Card.MINOR, exclude_from_deck=False))
+    game.major_deck.set(Card.objects.filter(type=Card.MAJOR, exclude_from_deck=False))
     return redirect(reverse('game_setup', args=[game.id]))
 
 def edit_players(request, game_id):
@@ -188,6 +188,43 @@ def change_scenario(request, game_id):
     game.scenario = request.POST['scenario']
     game.save()
     return redirect(reverse('game_setup', args=[game.id]))
+
+def deck_mods(request, game_id):
+    game = get_object_or_404(Game, pk=game_id)
+    return render(request, 'deck_mods.html', { 'game': game })
+
+def toggle_deck_mod(request, game_id, mod):
+    game = get_object_or_404(Game, pk=game_id)
+
+    def replace_card(cls, ids, attr, _human_friendly_name, old, new):
+        import pbf.models
+        match cls:
+            case pbf.models.Game:
+                getattr(old, attr).remove(game)
+                getattr(new, attr).add(game)
+            case pbf.models.GamePlayer:
+                getattr(old, attr).remove(*ids)
+                getattr(new, attr).add(*ids)
+            case pbf.models.GamePlayerImpendingWithEnergy:
+                # id__in should be the only condition necessary, but OK to make sure.
+                GamePlayerImpendingWithEnergy.objects.filter(id__in=ids, gameplayer__game=game, card=old).update(card=new)
+            case _:
+                raise TypeError(f'unknown card location class {cls}')
+
+    match mod:
+        case 'vengeance_of_the_dead':
+            original = Card.objects.get(name='Vengeance of the Dead')
+            exploratory = Card.objects.get(name='Vengeance of the Dead exploratory')
+            if (locs := exploratory.location_in_game(game)):
+                for loc in locs:
+                    replace_card(*loc, exploratory, original)
+            else:
+                for loc in original.location_in_game(game):
+                    replace_card(*loc, original, exploratory)
+        case _:
+            raise ValueError('unknown deck mod')
+
+    return render(request, 'deck_mods.html', { 'game': game })
 
 # Base energy gain per turn when no presence has been removed from tracks.
 # NOT to be used to indicate how much energy the spirit has at setup;
@@ -598,7 +635,7 @@ def import_game(request):
         else:
             # if someone imports a discard pile and not a major/minor deck,
             # exclude discarded cards and cards being held by any player
-            deck.set(Card.objects.filter(type=type).exclude(id__in=cards_in_game))
+            deck.set(Card.objects.filter(type=type, exclude_from_deck=False).exclude(id__in=cards_in_game))
 
     return redirect(reverse('view_game', args=[game.id]))
 
