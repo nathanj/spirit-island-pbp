@@ -57,10 +57,12 @@ class TestDecks(TestCase):
         self.assertEqual(list(player.impending_with_energy.values_list('name', flat=True)), ["River's Bounty", 'Vengeance of the Dead exploratory'])
 
 class TestPresence(TestCase):
+    BASE_1_SPIRIT = Spirit.objects.filter(name__in=[k for k, v in Spirit.base_energy_per_turn.items() if v == 1]).first()
+
     def test_irrelevant_presence_energy(self):
         game = Game()
         game.save()
-        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player = GamePlayer(game=game, spirit=self.BASE_1_SPIRIT)
         player.save()
         player.presence_set.create(left=0, top=0, opacity=0.0)
         self.assertEqual(player.get_gain_energy(), 1)
@@ -68,7 +70,7 @@ class TestPresence(TestCase):
     def test_presence_covering_energy(self):
         game = Game()
         game.save()
-        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player = GamePlayer(game=game, spirit=self.BASE_1_SPIRIT)
         player.save()
         player.presence_set.create(left=0, top=0, opacity=1.0, energy='2')
         self.assertEqual(player.get_gain_energy(), 1)
@@ -76,7 +78,7 @@ class TestPresence(TestCase):
     def test_max_energy(self):
         game = Game()
         game.save()
-        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player = GamePlayer(game=game, spirit=self.BASE_1_SPIRIT)
         player.save()
         player.presence_set.create(left=0, top=0, opacity=0.0, energy='2')
         player.presence_set.create(left=0, top=0, opacity=0.0, energy='3')
@@ -85,7 +87,7 @@ class TestPresence(TestCase):
     def test_presence_covering_plus_energy(self):
         game = Game()
         game.save()
-        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player = GamePlayer(game=game, spirit=self.BASE_1_SPIRIT)
         player.save()
         player.presence_set.create(left=0, top=0, opacity=1.0, energy='+2')
         self.assertEqual(player.get_gain_energy(), 1)
@@ -93,7 +95,7 @@ class TestPresence(TestCase):
     def test_plus_energy(self):
         game = Game()
         game.save()
-        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player = GamePlayer(game=game, spirit=self.BASE_1_SPIRIT)
         player.save()
         player.presence_set.create(left=0, top=0, opacity=0.0, energy='+2')
         player.presence_set.create(left=0, top=0, opacity=0.0, energy='+4')
@@ -102,7 +104,7 @@ class TestPresence(TestCase):
     def test_max_and_plus_energy(self):
         game = Game()
         game.save()
-        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player = GamePlayer(game=game, spirit=self.BASE_1_SPIRIT)
         player.save()
         player.presence_set.create(left=0, top=0, opacity=0.0, energy='2')
         player.presence_set.create(left=0, top=0, opacity=0.0, energy='3')
@@ -113,7 +115,7 @@ class TestPresence(TestCase):
     def test_no_rot(self):
         game = Game()
         game.save()
-        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player = GamePlayer(game=game, spirit=self.BASE_1_SPIRIT)
         player.save()
         player.presence_set.create(left=0, top=0, opacity=0.0)
         self.assertEqual(player.rot_gain(), 0)
@@ -121,7 +123,7 @@ class TestPresence(TestCase):
     def test_irrelevant_rot(self):
         game = Game()
         game.save()
-        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player = GamePlayer(game=game, spirit=self.BASE_1_SPIRIT)
         player.save()
         player.presence_set.create(left=0, top=0, opacity=0.0, elements='Fire')
         self.assertEqual(player.rot_gain(), 0)
@@ -129,7 +131,7 @@ class TestPresence(TestCase):
     def test_covered_rot(self):
         game = Game()
         game.save()
-        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player = GamePlayer(game=game, spirit=self.BASE_1_SPIRIT)
         player.save()
         player.presence_set.create(left=0, top=0, opacity=1.0, elements='Rot')
         self.assertEqual(player.rot_gain(), 0)
@@ -137,7 +139,7 @@ class TestPresence(TestCase):
     def test_rot(self):
         game = Game()
         game.save()
-        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player = GamePlayer(game=game, spirit=self.BASE_1_SPIRIT)
         player.save()
         player.presence_set.create(left=0, top=0, opacity=0.0, elements='Rot')
         self.assertEqual(player.rot_gain(), 1)
@@ -145,7 +147,7 @@ class TestPresence(TestCase):
     def test_rot_and_something_else(self):
         game = Game()
         game.save()
-        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player = GamePlayer(game=game, spirit=self.BASE_1_SPIRIT)
         player.save()
         player.presence_set.create(left=0, top=0, opacity=0.0, elements='Rot,Fire')
         self.assertEqual(player.rot_gain(), 1)
@@ -153,7 +155,7 @@ class TestPresence(TestCase):
     def test_many_rot(self):
         game = Game()
         game.save()
-        player = GamePlayer(game=game, base_energy_per_turn=1, spirit=Spirit.objects.first())
+        player = GamePlayer(game=game, spirit=self.BASE_1_SPIRIT)
         player.save()
         player.presence_set.create(left=0, top=0, opacity=0.0, elements='Rot')
         player.presence_set.create(left=0, top=0, opacity=0.0, elements='Rot')

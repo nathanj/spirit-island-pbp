@@ -61,6 +61,61 @@ class Threshold():
 class Spirit(models.Model):
     name = models.CharField(max_length=255, blank=False)
 
+    # Base energy gain per turn when no presence has been removed from tracks.
+    # NOT to be used to indicate how much energy the spirit has at setup;
+    # use spirit_setup_energy for that.
+    #
+    # Note that as of Nature Incarnate, there is no aspect that modifies the tracks.
+    # (Immense and Spreading Hostility are handled in get_gain_energy)
+    # Therefore, only spirit names are in this dictionary,
+    # and code that looks up from this dictionary only uses spirit name,
+    # ignoring aspects.
+    #
+    # If a future expansion adds an aspect that modifies an energy gain track,
+    # the code that looks up from this dictionary needs to be modified,
+    # so that it can include aspect in its lookup.
+    base_energy_per_turn = {
+            'Bringer': 2,
+            'Downpour': 1,
+            'Earth': 2,
+            'Fangs': 1,
+            'Finder': 0,
+            'Fractured': 1,
+            'Green': 0,
+            'Lightning': 1,
+            'Keeper': 2,
+            'Vengeance': 1,
+            'Lure': 1,
+            'Minds': 0,
+            'Mist': 0,
+            'Ocean': 0,
+            'River': 1,
+            'Shadows': 0,
+            'Memory': 0,
+            'Starlight': 1,
+            'Stone': 2,
+            'Thunderspeaker': 1,
+            'Trickster': 1,
+            'Volcano': 1,
+            'Wildfire': 0,
+            'Serpent': 1,
+            'Teeth': 2,
+            'Eyes': 1,
+            'Mud': 1,
+            'Heat': 1,
+            'Whirlwind': 1,
+            'Voice': 0,
+            'Roots': 1,
+            'Gaze': 1,
+            'Vigil': 0,
+            'Behemoth': 0,
+            'Earthquakes': 1,
+            'Breath': 1,
+            'Waters': 0,
+            'Rot': 2,
+            'Covets': 0,
+            }
+
     def __str__(self):
         return self.name
 
@@ -350,11 +405,6 @@ class GamePlayer(models.Model):
     bargain_cost_per_turn = models.IntegerField(default=0)
     bargain_paid_this_turn = models.IntegerField(default=0)
     aspect = models.CharField(max_length=255, default=None, null=True, blank=True)
-    # "base" means "when no presence has been removed from the tracks"
-    # set once at creation based on the spirit and should never change afterward
-    # TODO: This could just be a lookup on spirit name.
-    # Check whether that has any impact on performance.
-    base_energy_per_turn = models.IntegerField(default=0)
     # A number of spirits have a resource that's specific to them.
     # Rather than have separate fields + endpoints that can modify each of them,
     # we'll use a single field for this purpose,
@@ -583,7 +633,7 @@ class GamePlayer(models.Model):
 
     def get_gain_energy(self):
         energy_revealed = [p.energy for p in self.presences_off_track if p.energy]
-        largest_showing = max((int(en) for en in energy_revealed if en.isdigit()), default=self.base_energy_per_turn)
+        largest_showing = max((int(en) for en in energy_revealed if en.isdigit()), default=Spirit.base_energy_per_turn[self.spirit.name])
         plus_energy = sum(int(en) for en in energy_revealed if en[0] == '+')
         amount = largest_showing + plus_energy
         if self.aspect == 'Immense':
