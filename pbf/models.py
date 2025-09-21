@@ -633,7 +633,11 @@ class GamePlayer(models.Model):
 
     def get_gain_energy(self):
         energy_revealed = [p.energy for p in self.presences_off_track if p.energy]
-        largest_showing = max((int(en) for en in energy_revealed if en.isdigit()), default=Spirit.base_energy_per_turn[self.spirit.name])
+        # not using max(..., default=...) because default would be eagerly evaluated; we want lazy
+        try:
+            largest_showing = max(int(en) for en in energy_revealed if en.isdigit())
+        except ValueError:
+            largest_showing = Spirit.base_energy_per_turn[self.spirit.name]
         plus_energy = sum(int(en) for en in energy_revealed if en[0] == '+')
         amount = largest_showing + plus_energy
         if self.aspect == 'Immense':
