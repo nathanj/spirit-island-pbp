@@ -407,25 +407,19 @@ def add_player(request, game_id):
     gp = GamePlayer(game=game, name=name, spirit=spirit, color=color, aspect=aspect, energy=setup_energy)
     gp.init_spirit()
     gp.save()
-    try:
-        for presence in spirit_presence[spirit.name]:
-            try: energy = presence[3]
-            except: energy = ''
-            try: elements = presence[4]
-            except: elements = ''
-            gp.presence_set.create(left=presence[0], top=presence[1], opacity=presence[2], energy=energy, elements=elements)
 
-        # remove 1 presence from top track for Serpent Locus setup
-        if aspect == 'Locus':
-            bonus_presence = spirit_presence[spirit.name][0]
-            toggle_presence(request, player_id=gp.pk, left=bonus_presence[0], top=bonus_presence[1])
-    except Exception as ex:
-        print(ex)
-        pass
-
+    make_presence(gp)
     make_initial_hand(gp)
 
     return redirect(reverse('game_setup', args=[game.id]))
+
+def make_presence(gp):
+    for (left, top, opacity, *rest) in spirit_presence[gp.spirit.name]:
+        energy = rest[0] if rest else ''
+        elements = rest[1] if len(rest) >= 2 else ''
+        if gp.aspect == 'Locus' and elements == 'Fire':
+            opacity = 0.0
+        gp.presence_set.create(left=left, top=top, opacity=opacity, energy=energy, elements=elements)
 
 def make_initial_hand(gp, remove_from_decks=True):
     game = gp.game
