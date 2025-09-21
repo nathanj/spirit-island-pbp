@@ -414,12 +414,11 @@ def add_player(request, game_id):
     return redirect(reverse('game_setup', args=[game.id]))
 
 def make_presence(gp):
-    for (left, top, opacity, *rest) in spirit_presence[gp.spirit.name]:
-        energy = rest[0] if rest else ''
-        elements = rest[1] if len(rest) >= 2 else ''
+    def presence_from_spec(left, top, opacity, energy='', elements=''):
         if gp.aspect == 'Locus' and elements == 'Fire':
             opacity = 0.0
-        gp.presence_set.create(left=left, top=top, opacity=opacity, energy=energy, elements=elements)
+        return Presence(game_player=gp, left=left, top=top, opacity=opacity, energy=energy, elements=elements)
+    gp.presence_set.bulk_create(presence_from_spec(*presence_spec) for presence_spec in spirit_presence[gp.spirit.name])
 
 def make_initial_hand(gp, remove_from_decks=True):
     game = gp.game
