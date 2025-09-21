@@ -56,6 +56,35 @@ class TestDecks(TestCase):
         client.post(f"/game/{game.id}/deck_mod/vengeance_of_the_dead")
         self.assertEqual(list(player.impending_with_energy.values_list('name', flat=True)), ["River's Bounty", 'Vengeance of the Dead exploratory'])
 
+class TestSpiritPresence(TestCase):
+    from .views import make_presence
+    make_presence = staticmethod(make_presence)
+
+    def test_base_serpent_presence(self):
+        game = Game()
+        game.save()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='Serpent'))
+        self.make_presence(player)
+        self.assertEqual(player.presence_set.filter(opacity=1).count(), 12)
+
+    def test_locus_serpent_presence(self):
+        game = Game()
+        game.save()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='Serpent'), aspect='Locus')
+        self.make_presence(player)
+        self.assertEqual(player.presence_set.filter(opacity=1).count(), 11)
+
+    def test_every_spirit(self):
+        game = Game()
+        game.save()
+        for spirit in Spirit.objects.all():
+            player = game.gameplayer_set.create(spirit=spirit)
+            self.make_presence(player)
+            # It doesn't add much value to check the exact number for every single spirit.
+            # Just check that they're within the range.
+            self.assertGreaterEqual(player.presence_set.filter(opacity=1).count(), 9)
+            self.assertLess(player.presence_set.filter(opacity=1).count(), 13 if spirit.name != 'Covets' else 26)
+
 class TestPresence(TestCase):
     BASE_1_SPIRIT = Spirit.objects.filter(name__in=[k for k, v in Spirit.base_energy_per_turn.items() if v == 1]).first()
 
