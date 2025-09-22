@@ -29,6 +29,8 @@ class GamePlayerAdmin(admin.ModelAdmin):
         excludes = []
         if not obj or obj.spirit.name != 'Waters':
             excludes.append('healing')
+        if not obj or obj.spirit.name != 'Fractured':
+            excludes.append('days')
         return excludes
 
 admin.site.register(Card, CardAdmin)
