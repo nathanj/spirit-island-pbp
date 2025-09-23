@@ -226,61 +226,6 @@ def toggle_deck_mod(request, game_id, mod):
 
     return render(request, 'deck_mods.html', { 'game': game })
 
-# Base energy gain per turn when no presence has been removed from tracks.
-# NOT to be used to indicate how much energy the spirit has at setup;
-# use spirit_setup_energy for that.
-#
-# Note that as of Nature Incarnate, there is no aspect that modifies the tracks.
-# (Immense and Spreading Hostility are handled in get_gain_energy)
-# Therefore, only spirit names are in this dictionary,
-# and code that looks up from this dictionary only uses spirit name,
-# ignoring aspects.
-#
-# If a future expansion adds an aspect that modifies an energy gain track,
-# the code that looks up from this dictionary needs to be modified,
-# so that it can include aspect in its lookup.
-spirit_base_energy_per_turn = {
-        'Bringer': 2,
-        'Downpour': 1,
-        'Earth': 2,
-        'Fangs': 1,
-        'Finder': 0,
-        'Fractured': 1,
-        'Green': 0,
-        'Lightning': 1,
-        'Keeper': 2,
-        'Vengeance': 1,
-        'Lure': 1,
-        'Minds': 0,
-        'Mist': 0,
-        'Ocean': 0,
-        'River': 1,
-        'Shadows': 0,
-        'Memory': 0,
-        'Starlight': 1,
-        'Stone': 2,
-        'Thunderspeaker': 1,
-        'Trickster': 1,
-        'Volcano': 1,
-        'Wildfire': 0,
-        'Serpent': 1,
-        'Teeth': 2,
-        'Eyes': 1,
-        'Mud': 1,
-        'Heat': 1,
-        'Whirlwind': 1,
-        'Voice': 0,
-        'Roots': 1,
-        'Gaze': 1,
-        'Vigil': 0,
-        'Behemoth': 0,
-        'Earthquakes': 1,
-        'Breath': 1,
-        'Waters': 0,
-        'Rot': 2,
-        'Covets': 0,
-        }
-
 # Note that both spirit and aspect are used in this lookup,
 # so e.g. specifying "River" here will only affect base River.
 spirit_setup_energy = {
@@ -459,9 +404,7 @@ def add_player(request, game_id):
     spirit = get_object_or_404(Spirit, name=spirit_name)
     setup_energy = spirit_setup_energy.get(spirit_and_aspect, 0)
     name = request.POST.get('name', '')
-    # as noted above in the comment of spirit_base_energy_per_turn,
-    # only spirit name (and not aspect) is considered in energy gain per turn.
-    gp = GamePlayer(game=game, name=name, spirit=spirit, color=color, aspect=aspect, energy=setup_energy, base_energy_per_turn=spirit_base_energy_per_turn[spirit.name])
+    gp = GamePlayer(game=game, name=name, spirit=spirit, color=color, aspect=aspect, energy=setup_energy)
     gp.init_spirit()
     gp.save()
     try:
@@ -576,7 +519,6 @@ def import_game(request):
                 **basic_attrs,
                 color=player.get('color', next(iter(available_colours))),
                 spirit=Spirit.objects.get(name__iexact=spirit_name),
-                base_energy_per_turn=spirit_base_energy_per_turn[spirit_name],
                 )
         if gp.color in available_colours:
             available_colours.remove(gp.color)
