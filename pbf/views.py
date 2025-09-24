@@ -524,6 +524,10 @@ def import_game(request):
             expected_energy = expected_presence[3] if 3 < len(expected_presence) else ''
             expected_elements = expected_presence[4] if 4 < len(expected_presence) else ''
 
+            # if imported_presence has left/top those fields are ignored
+            # (the API doesn't export them and we don't support creating presence in arbitrary locations)
+            left, top, *_ = expected_presence
+
             # opacity is respected if present, otherwise defaulted to the starting state
             if import_presence and 'opacity' in import_presence:
                 opacity = import_presence['opacity']
@@ -535,14 +539,14 @@ def import_game(request):
             if import_presence:
                 # energy and elements are checked to see if they match what's expected
                 # limitation: This will cause the import to fail if we change the order of spirits' presences.
-                # maybe it's better to also import the top/left coordinates.
-                # we aren't doing this yet because the API doesn't export them.
+                # we could solve this by creating a unique identifier for each presence of each spirit,
+                # but such an identifier would only be used in import, so it seems not worth it.
                 if import_presence.get('energy', '') != expected_energy:
-                    raise ValueError(f"presence at {expected_presence[0]}, {expected_presence[1]} should have {expected_energy} energy but had {import_presence.get('energy')}")
+                    raise ValueError(f"presence at {left}, {top} should have {expected_energy} energy but had {import_presence.get('energy')}")
                 if import_presence.get('elements', '') != expected_elements:
-                    raise ValueError(f"presence at {expected_presence[0]}, {expected_presence[1]} should have {expected_elements} elements but had {import_presence.get('elements')}")
+                    raise ValueError(f"presence at {left}, {top} should have {expected_elements} elements but had {import_presence.get('elements')}")
 
-            gp.presence_set.create(left=expected_presence[0], top=expected_presence[1], opacity=opacity, energy=expected_energy, elements=expected_elements)
+            gp.presence_set.create(left=left, top=top, opacity=opacity, energy=expected_energy, elements=expected_elements)
 
         if 'hand' in player:
             gp.hand.set(hand := cards_with_name(player['hand']))
