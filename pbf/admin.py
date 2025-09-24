@@ -21,6 +21,10 @@ class GamePlayerAdmin(admin.ModelAdmin):
     search_fields = ('game__id', 'name')
     search_help_text = 'Search by game ID or player name'
     list_display = ('id', 'game', 'spirit__name', 'aspect', 'name')
+    # Changing spirit doesn't change their hand or presence.
+    # Doing so via admin interface is not an operation we should offer,
+    # as offering it is an implicit promise that it works.
+    readonly_fields = ('spirit', )
     autocomplete_fields = ('hand', 'discard', 'play', 'selection', 'days')
 
     # Some fields are specific to one spirit and don't do anything for others.
