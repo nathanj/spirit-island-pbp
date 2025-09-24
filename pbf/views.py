@@ -520,7 +520,7 @@ def import_game(request):
                 available_colours = {color for (color, _) in GamePlayer.COLORS}
         gp.save()
 
-        for (i, (expected_presence, import_presence)) in enumerate(zip(spirit_presence[spirit_name], itertools.chain(player.get('presence', []), itertools.repeat(None)))):
+        for (expected_presence, import_presence) in zip(spirit_presence[spirit_name], itertools.chain(player.get('presence', []), itertools.repeat(None))):
             expected_energy = expected_presence[3] if 3 < len(expected_presence) else ''
             expected_elements = expected_presence[4] if 4 < len(expected_presence) else ''
 
@@ -531,7 +531,7 @@ def import_game(request):
             # opacity is respected if present, otherwise defaulted to the starting state
             if import_presence and 'opacity' in import_presence:
                 opacity = import_presence['opacity']
-            elif gp.aspect == 'Locus' and i == 0:
+            elif gp.aspect == 'Locus' and expected_elements == 'Fire':
                 opacity = 0.0
             else:
                 opacity = expected_presence[2]
