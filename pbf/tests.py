@@ -1245,6 +1245,21 @@ class TestImport(TestCase):
         player = game.gameplayer_set.first()
         self.assertEqual(sum(player.presence_set.values_list('opacity', flat=True)), 11)
 
+    def test_import_presence_no_opacity(self):
+        game = self.import_game('{"players": [{"spirit": "River", "presence": [{"energy": "2"}]}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(sum(player.presence_set.values_list('opacity', flat=True)), 12)
+
+    def test_import_presence_with_explicit_0_opacity(self):
+        game = self.import_game('{"players": [{"spirit": "River", "presence": [{"opacity": 0, "energy": "2"}]}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(sum(player.presence_set.values_list('opacity', flat=True)), 11)
+
+    def test_import_presence_with_explicit_1_opacity(self):
+        game = self.import_game('{"players": [{"spirit": "Serpent", "aspect": "Locus", "presence": [{"opacity": 1, "elements": "Fire"}]}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(sum(player.presence_set.values_list('opacity', flat=True)), 12)
+
     def test_import_card_dict(self):
         game = self.import_game('{"minor_deck": [{"name": "Call to Isolation"}]}')
         minor = Card.objects.get(name="Call to Isolation")

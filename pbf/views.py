@@ -520,22 +520,29 @@ def import_game(request):
                 available_colours = {color for (color, _) in GamePlayer.COLORS}
         gp.save()
 
-        for (i, (expected_presence, import_presence)) in enumerate(zip(spirit_presence[spirit_name], itertools.chain(player.get('presence', []), itertools.repeat(None)))):
-            expected_energy = expected_presence[3] if 3 < len(expected_presence) else ''
-            expected_elements = expected_presence[4] if 4 < len(expected_presence) else ''
+        def presence_from_import_or_spec(import_presence, left, top, opacity, expected_energy='', expected_elements=''):
+            # if imported_presence has left/top those fields are ignored
+            # (the API doesn't export them and we don't support creating presence in arbitrary locations)
+
+            # opacity is respected if present, otherwise defaulted to the starting state
+            if import_presence and 'opacity' in import_presence:
+                opacity = import_presence['opacity']
+            elif gp.aspect == 'Locus' and expected_elements == 'Fire':
+                opacity = 0.0
 
             if import_presence:
+                # energy and elements are checked to see if they match what's expected
                 # limitation: This will cause the import to fail if we change the order of spirits' presences.
-                # maybe it's better to also import the top/left coordinates.
-                # we aren't doing this yet because the API doesn't export them.
-                if import_presence['energy'] != expected_energy:
-                    raise ValueError(f"presence at {expected_presence[0]}, {expected_presence[1]} should have {expected_energy} energy but had {import_presence['energy']}")
-                if import_presence['elements'] != expected_elements:
-                    raise ValueError(f"presence at {expected_presence[0]}, {expected_presence[1]} should have {expected_elements} elements but had {import_presence['elements']}")
-                gp.presence_set.create(left=expected_presence[0], top=expected_presence[1], opacity=import_presence['opacity'], energy=import_presence['energy'], elements=import_presence['elements'])
-            else:
-                expected_opacity = 0.0 if gp.aspect == 'Locus' and i == 0 else expected_presence[2]
-                gp.presence_set.create(left=expected_presence[0], top=expected_presence[1], opacity=expected_opacity, energy=expected_energy, elements=expected_elements)
+                # we could solve this by creating a unique identifier for each presence of each spirit,
+                # but such an identifier would only be used in import, so it seems not worth it.
+                if import_presence.get('energy', '') != expected_energy:
+                    raise ValueError(f"presence at {left}, {top} should have {expected_energy} energy but had {import_presence.get('energy')}")
+                if import_presence.get('elements', '') != expected_elements:
+                    raise ValueError(f"presence at {left}, {top} should have {expected_elements} elements but had {import_presence.get('elements')}")
+
+            return Presence(game_player=gp, left=left, top=top, opacity=opacity, energy=expected_energy, elements=expected_elements)
+
+        gp.presence_set.bulk_create(presence_from_import_or_spec(import_presence, *spec) for (spec, import_presence) in zip(spirit_presence[spirit_name], itertools.chain(player.get('presence', []), itertools.repeat(None))))
 
         if 'hand' in player:
             gp.hand.set(hand := cards_with_name(player['hand']))
