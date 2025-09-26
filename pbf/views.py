@@ -1057,11 +1057,15 @@ def reclaim_card(request, player_id, card_id):
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def reclaim_all(request, player_id, element=None):
+    from django.db.models import Q
+
     player = get_object_or_404(GamePlayer, pk=player_id)
     if element:
         # just validate that it's an element, don't need to keep the value
         _ = Elements[element.capitalize()]
-        with_element = player.discard.filter(elements__contains=element.capitalize())
+        # Elemental Boon has ? of every element,
+        # let's assume the player always wants to reclaim it
+        with_element = player.discard.filter(Q(elements__contains=element.capitalize()) | Q(name="Elemental Boon"))
         player.hand.add(*with_element)
         player.discard.remove(*with_element)
     else:
