@@ -771,6 +771,16 @@ class TestReclaim(TestCase):
         self.assertEqual(['Blazing Intimidation', 'Terrifying Rampage', 'Treacherous Waterways'], list(player.hand.values_list('name', flat=True)))
         self.assertEqual(['Delusions of Danger', 'Disorienting Landscape'], list(player.discard.values_list('name', flat=True)))
 
+    def test_reclaim_fire_elemental_boon(self):
+        game = Game.objects.create()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='Behemoth'))
+        player.discard.set([Card.objects.get(name="Elemental Boon")])
+
+        Client().post(f"/game/{player.id}/reclaim/all/fire")
+
+        self.assertEqual(['Elemental Boon'], list(player.hand.values_list('name', flat=True)))
+        self.assertEqual([], list(player.discard.values_list('name', flat=True)))
+
 class TestUndoGain(TestCase):
     def setup_game(self, card_names, spirit='River'):
         game = Game()
