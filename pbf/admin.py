@@ -1,9 +1,12 @@
+from django.conf import settings
 from django.contrib import admin
 from .models import *
 
 class CardAdmin(admin.ModelAdmin):
     def has_add_permission(self, request, obj=None):
         return False
+    def has_change_permission(self, request, obj=None):
+        return settings.DEBUG and super().has_change_permission(request, obj)
     def has_delete_permission(self, request, obj=None):
         return False
     search_fields = ('name',)
