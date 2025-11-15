@@ -230,25 +230,26 @@ async def on_message(message):
             "[Github link](<https://github.com/nathanj/spirit-island-pbp>)",
             "",
             "Use `$follow (yourgameurl)` to start",
-            "Use `$pin` (reply to message) to pin the message",
-            "Use `$unpin` (reply to message) to unpin the message, or `$unpin N` to unpin the last N messages",
+            "Use `$unpin N` to unpin the last N messages",
             "Use `$delete` (reply to message) to delete a message (only messages posted by the bot)",
             "Use `$rename (new name)` to set the channel name",
             "Use `$topic (new topic)` to set the channel topic",
         ))
         await message.channel.send(text)
     if message.content.startswith('$pin'):
+        # Deprecated command, as hosts can now pin messages themselves.
+        # For an unspecified transitionary period, still pin the message,
+        # but educate hosts that they should do it themselves.
+        # TODO: Remove command
         message_to_pin = await referenced_message(message, 'pin')
         # OK not to check if the message is already pinned, since pinning is idempotent.
         if message_to_pin and await act_on_message(message, message_to_pin, 'pin'):
             await report_success(message, 'pinned')
+        await message.reply('The $pin command is deprecated and may be removed in the future. Hosts should pin messages themselves instead of using this command.')
     elif message.content.startswith('$unpin'):
-        if message.reference:
-            message_to_unpin = await referenced_message(message, 'unpin')
-            # OK not to check that the message is pinned, since unpinning is idempotent.
-            if message_to_unpin and await act_on_message(message, message_to_unpin, 'unpin'):
-                await report_success(message, 'unpinned')
-        elif len(parts) >= 2 and parts[1].isnumeric() and (num_to_unpin := int(parts[1])) > 0:
+        # Automatically unpinning a number of messages may be more convenient than manually unpinning each.
+        # So, even after $pin is removed, we would still want to keep this $unpin N command.
+        if len(parts) >= 2 and parts[1].isnumeric() and (num_to_unpin := int(parts[1])) > 0:
             try:
                 pinned = await message.channel.pins()
             except discord.Forbidden:
@@ -262,7 +263,7 @@ async def on_message(message):
             else:
                 await message.channel.send("There were no pinned messages to unpin")
         else:
-            await message.channel.send(f"You need to reply to a message or specify a number of messages to unpin to use $unpin")
+            await message.reply('You need to tell me how many messages to unpin, like $unpin 1 or $unpin 99')
     elif message.content.startswith('$delete'):
         message_to_delete = await referenced_message(message, 'delete')
         if not message_to_delete:
