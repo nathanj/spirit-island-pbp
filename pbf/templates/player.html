@@ -308,7 +308,7 @@
 	      </div>
 	      <div class="text-center pb-5">
 		    <button class="btn" hx-get="{% url 'add_energy_to_impending' player.id i.card.id %}" {% if i.in_play or i.energy >= i.cost_with_scenario %}disabled{% endif %}>+1</button>
-			{% if i.energy >= i.cost_with_scenario %}
+			{% if i.energy >= i.cost_with_scenario and not i.this_turn %}
 				{% if i.in_play %}
 					<button class="btn" hx-get="{% url 'unplay_from_impending' player.id i.card.id %}">Unplay</button>
 					{# No check of spirit_specific_resource_gives_energy since Dances Up Earthquakes doesn't have a spirit-specific resource #}
