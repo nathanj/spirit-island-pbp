@@ -209,7 +209,7 @@
 
   {% if taken_cards %}
   <div id="taken_cards">
-    You took {{ taken_cards | length }} card{{ taken_cards | pluralize }}:
+    You {{ taken_cards_verb | default:"took" }} {{ taken_cards | length }} card{{ taken_cards | pluralize }}:
     <div class="container-fluid">
       <div class="row">
         {% for card in taken_cards %}
