@@ -1158,6 +1158,105 @@ class TestImpending(TestCase):
         client.post(f"/game/{player.id}/gain_energy_on_impending")
         self.assert_impending_energy(player, [2])
 
+class TestCovetsGleamingShardsPlantTreasure(TestCase):
+    def setup_players(self, n=1):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        for i in range(n):
+            client.post(f"/game/{game.id}/add-player", {"spirit": "Covets", "color": "random"})
+            self.assertEqual(game.gameplayer_set.count(), i + 1, "didn't find correct number of players; spirit not created successfully?")
+        return (client, game, *game.gameplayer_set.all())
+
+    def test_create(self):
+        client, game, player = self.setup_players()
+        minors_before = game.minor_deck.count()
+        majors_before = game.major_deck.count()
+        hand_before = player.hand.count()
+        player.spirit_specific_per_turn_flags |= GamePlayer.PLANT_TREASURE_THIS_TURN
+        player.save()
+
+        client.post(f"/game/{player.id}/create_plant_treasure")
+
+        self.assertEqual(player.plant_treasure.count(), 3)
+        self.assertEqual(game.minor_deck.count(), minors_before)
+        self.assertEqual(game.major_deck.count(), majors_before - 3)
+        self.assertEqual(player.hand.count(), hand_before)
+
+        for card in player.plant_treasure.all():
+            self.assertEqual(card.type, Card.MAJOR)
+
+    def test_create_reshuffle(self):
+        client, game, player = self.setup_players()
+        majors_before = game.major_deck.count()
+        game.discard_pile.add(*game.major_deck.all())
+        game.major_deck.clear()
+        player.spirit_specific_per_turn_flags |= GamePlayer.PLANT_TREASURE_THIS_TURN
+        player.save()
+
+        client.post(f"/game/{player.id}/create_plant_treasure")
+
+        self.assertEqual(player.plant_treasure.count(), 3)
+        self.assertEqual(game.major_deck.count(), majors_before - 3)
+        self.assertEqual(game.discard_pile.count(), 0)
+
+    def test_create_idempotent(self):
+        client, game, player = self.setup_players()
+        player.spirit_specific_per_turn_flags |= GamePlayer.PLANT_TREASURE_THIS_TURN
+        player.save()
+        client.post(f"/game/{player.id}/create_plant_treasure")
+        majors_before = game.major_deck.count()
+        plant_treasure_before = list(player.plant_treasure.all())
+        player.spirit_specific_per_turn_flags |= GamePlayer.PLANT_TREASURE_THIS_TURN
+        player.save()
+
+        client.post(f"/game/{player.id}/create_plant_treasure")
+
+        self.assertEqual(list(player.plant_treasure.all()), plant_treasure_before)
+        self.assertEqual(game.major_deck.count(), majors_before)
+
+    def test_create_when_not_enabled(self):
+        client, game, player = self.setup_players()
+        majors_before = game.major_deck.count()
+
+        client.post(f"/game/{player.id}/create_plant_treasure")
+
+        self.assertEqual(player.plant_treasure.count(), 0)
+        self.assertEqual(game.major_deck.count(), majors_before)
+
+    def test_take(self):
+        client, game, player = self.setup_players()
+        minors_before = game.minor_deck.count()
+        player.spirit_specific_per_turn_flags |= GamePlayer.PLANT_TREASURE_THIS_TURN
+        player.save()
+        client.post(f"/game/{player.id}/create_plant_treasure")
+        majors_before = game.major_deck.count()
+        hand_before = player.hand.count()
+        plant_treasure_before = list(player.plant_treasure.all())
+
+        client.post(f"/game/{player.id}/take_plant_treasure")
+
+        self.assertEqual(player.plant_treasure.count(), 0)
+        self.assertEqual(game.minor_deck.count(), minors_before)
+        self.assertEqual(game.major_deck.count(), majors_before)
+        self.assertEqual(player.hand.count(), hand_before + 3)
+
+        for card in plant_treasure_before:
+            self.assertIn(card, player.hand.all())
+
+    def test_take_idempotent(self):
+        client, game, player = self.setup_players()
+        player.spirit_specific_per_turn_flags |= GamePlayer.PLANT_TREASURE_THIS_TURN
+        player.save()
+        client.post(f"/game/{player.id}/create_plant_treasure")
+        client.post(f"/game/{player.id}/take_plant_treasure")
+        hand_before = player.hand.count()
+
+        client.post(f"/game/{player.id}/take_plant_treasure")
+
+        self.assertEqual(player.plant_treasure.count(), 0)
+        self.assertEqual(player.hand.count(), hand_before)
+
 class TestUpload(TestCase):
     def png_chunk(type, data):
         import binascii

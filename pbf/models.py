@@ -466,6 +466,7 @@ class GamePlayer(models.Model):
             'Round DownRot': 'Rot',
             'v1.2.1Covets': 'Metal Stored in Hoard',
             'v1.3Covets': 'Metal Stored in Hoard',
+            'v1.4Covets': 'Metal Stored in Hoard',
             'UnconstrainedFangs': 'Prepared Beasts',
             'Memory': 'Prepared Elements',
             'IntensifyMemory': 'Prepared Elements',
@@ -668,6 +669,13 @@ class GamePlayer(models.Model):
 
     def energy_from_rot(self):
         return (self.rot_loss() + (0 if self.aspect == 'Round Down' else 1)) // 2
+
+    @functools.cached_property
+    def plant_treasure(self):
+        # Reusing the existing Days That Never Were association,
+        # as the two are similar (cards that you might have in the future, but not now)
+        # TODO: If it's a problem in the future, we can consider using a dedicated association.
+        return self.days
 
     def days_ordered(self):
         return self.days.order_by('type', 'cost')
@@ -1380,6 +1388,28 @@ spirit_thresholds = {
             (667, 1052, '2S'),
             (667, 1081, '3S2E2N'),
             (667, 1110, '4S3E3N'),
+            ],
+        'v1.4Covets': [
+            # Scent of Shining Earth
+            (360, 487, '1E'),
+            (360, 522, '2F2E'),
+            (360, 555, '2A3E'),
+            (360, 590, '4E'),
+            # Threats, Demands, and Intimidation
+            (650, 487, '2S2E'),
+            (650, 522, '2E2N'),
+            # Violent Outburst
+            (667, 750, '2F'),
+            (667, 779, '3F2E2N'),
+            (667, 807, '4F2E2N'),
+            # Harrowing Gaze
+            (667, 902, '2A'),
+            (667, 931, '3A2E2N'),
+            (667, 960, '4A2E2N'),
+            # Imposing Demands
+            (667, 1052, '2S'),
+            (667, 1081, '3S2E2N'),
+            (667, 1110, '4S2E2N'),
             ],
         }
 

@@ -155,7 +155,7 @@ def game_setup(request, game_id):
             ('Waters', 'Wounded Waters Bleeding', ()),
         ],
         'Apocrypha': [
-            ('Covets', 'Covets Gleaming Shards of Earth [Apocrypha]', ('NO BASE', 'v1.3')),
+            ('Covets', 'Covets Gleaming Shards of Earth [Apocrypha]', ('NO BASE', 'v1.4')),
             ('Rot', 'Spreading Rot Renews the Earth [Apocrypha]', ('Round Down',)),
         ],
         'Exploratory Testing': [
@@ -353,12 +353,12 @@ spirit_presence = {
                 (441,254,1.0), (512,254,1.0,'','Rot'), (582,254,1.0), (654,254,1.0,'','Moon'), (724,254,1.0), (796,254,1.0),
                 ),
         'Covets': (
-                (441,158,1.0,'1'), (512,158,1.0,'','Fire'), (582,158,1.0,'2','Animal'), (654,158,1.0,'3','Earth'), (725,158,1.0,'4'), (796,158,1.0), (867,158,1.0,'5'),
+                (441,158,1.0,'','Fire'), (512,158,1.0,'1'), (582,158,1.0,'2','Animal'), (654,158,1.0), (725,158,1.0,'3'), (796,158,1.0,'','Earth'), (867,158,1.0,'5'),
                 (441,279,1.0,'','Sun'), (512,279,1.0,''), (582,279,1.0,'','Air'), (654,279,1.0,'','Animal'), (724,279,1.0),
                 # hoard one-time bonuses
                 (176,700,0.0), (176,815,0.0),
                 # hoard forms (passive bonuses)
-                (332,700,0.0), (332,815,0.0), (332,950,0.0),
+                (342,700,0.0), (342,815,0.0), (342,950,0.0),
                 # hoard innates
                 (605,700,0.0), (605,855,0.0), (605,1005,0.0),
                 # hoard any element spaces
@@ -946,6 +946,42 @@ def create_days(request, player_id, num):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
+# Covets Gleaming Shards of Earth
+def create_plant_treasure(request, player_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+
+    if player.plant_treasure.exists():
+        # show the ones they already set aside
+        return render(request, 'player.html', {'player': player, 'taken_cards': player.plant_treasure.all(), 'taken_cards_verb': 'set aside'})
+
+    if not player.plant_treasure_this_turn():
+        return render(request, 'player.html', {'player': player})
+
+    game = player.game
+    majors = cards_from_deck(game, 3, 'major')
+    add_log_msg(game, player=player, text=f'stores the Plant Treasure and sets aside 3 major powers', cards=majors)
+    player.plant_treasure.add(*majors)
+    player.spirit_specific_per_turn_flags &= ~GamePlayer.PLANT_TREASURE_THIS_TURN
+    player.save(update_fields=['spirit_specific_per_turn_flags'])
+
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': majors, 'taken_cards_verb': 'set aside'}))
+
+# Covets Gleaming Shards of Earth
+def take_plant_treasure(request, player_id):
+    player = get_object_or_404(GamePlayer, pk=player_id)
+
+    # The site does not maintain a counter of metal held by incarna,
+    # so we cannot check that.
+    # The spirit-specific resource field is used for metal stored in the hoard,
+    # while metal held by incarna is considered part of the island state,
+    # so the host is responsible for maintaining the latter and showing it to the players.
+    if player.plant_treasure.exists():
+        player.hand.add(*player.plant_treasure.all())
+        player.plant_treasure.clear()
+        add_log_msg(player.game, player=player, text=f'takes their Plant Treasure powers')
+
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
 def gain_energy_on_impending(request, player_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
     to_gain = player.impending_energy()
@@ -1270,7 +1306,8 @@ def toggle_presence(request, player_id, left, top):
         # But we do have to handle the case where they had more Time than discs (10).
         player.spirit_specific_resource = player.presence_set.filter(opacity=1.0, left__lte=Presence.FRACTURED_DAYS_TIME_X).count()
         player.save(update_fields=['spirit_specific_resource'])
-    if player.spirit.name == 'Covets' and left == 176 and top == 700:
+    if player.spirit.name == 'Covets' and left == 176 and top == (700 if player.aspect == 'v1.3' else 815):
+        # the plant treasure was above the earth treasure in v1.3 but below it in v1.4, hence the different `top` value being checked
         if presence.opacity:
             player.spirit_specific_per_turn_flags |= GamePlayer.PLANT_TREASURE_THIS_TURN
         else:

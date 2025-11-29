@@ -36,7 +36,9 @@ class GamePlayerAdmin(admin.ModelAdmin):
         excludes = []
         if not obj or obj.spirit.name != 'Waters':
             excludes.append('healing')
-        if not obj or obj.spirit.name != 'Fractured':
+        if not obj or (obj.spirit.name != 'Fractured' and obj.spirit.name != 'Covets'):
+            # TODO: Cutting corners, using Days That Never Were for Covets Gleaming Shards,
+            # rather than a dedicated association.
             excludes.append('days')
         return excludes
 
