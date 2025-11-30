@@ -186,7 +186,7 @@
   {% if player.aspect == 'v1.2.1' %}
   <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '6' %}">6 Cards</button>
   {% elif player.aspect >= 'v1.3' %}
-  <button class="btn" hx-get="{% url 'take_powers' player.id 'major' '3' %}">Take 3</button>
+  <button class="btn" hx-get="{% url 'take_powers' player.id 'major' '3' %}"{% if not player.plant_treasure_this_turn %} disabled{% endif %}>Take 3</button>
   {% endif %}
   {% endif %}
   <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards</button>

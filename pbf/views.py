@@ -737,6 +737,10 @@ def take_powers(request, player_id, type, num):
     if num == 1:
         add_log_msg(player.game, player=player, text=f'takes a {type} power', cards=taken_cards, spoiler=spoiler)
     else:
+        if player.spirit.name == 'Covets' and player.aspect == 'v1.3' and type == 'major' and num == 3:
+            # This is the Plant Treasure that can only be used once, so unset the flag.
+            player.spirit_specific_per_turn_flags &= ~GamePlayer.PLANT_TREASURE_THIS_TURN
+            player.save(update_fields=['spirit_specific_per_turn_flags'])
         add_log_msg(player.game, player=player, text=f'takes {num} {type} powers', cards=taken_cards, spoiler=spoiler)
 
     return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
@@ -1266,6 +1270,12 @@ def toggle_presence(request, player_id, left, top):
         # But we do have to handle the case where they had more Time than discs (10).
         player.spirit_specific_resource = player.presence_set.filter(opacity=1.0, left__lte=Presence.FRACTURED_DAYS_TIME_X).count()
         player.save(update_fields=['spirit_specific_resource'])
+    if player.spirit.name == 'Covets' and left == 176 and top == 700:
+        if presence.opacity:
+            player.spirit_specific_per_turn_flags |= GamePlayer.PLANT_TREASURE_THIS_TURN
+        else:
+            player.spirit_specific_per_turn_flags &= ~GamePlayer.PLANT_TREASURE_THIS_TURN
+        player.save(update_fields=['spirit_specific_per_turn_flags'])
 
     return render(request, 'player.html', {'player': player})
 

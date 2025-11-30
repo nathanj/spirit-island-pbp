@@ -428,6 +428,10 @@ class GamePlayer(models.Model):
     # Spreading Rot Renews the Earth:
     ROT_GAINED_THIS_TURN = 1 << 2 # Whether they've gained from their track (NOT incrementing using the +1 button)
     ROT_CONVERTED_THIS_TURN = 1 << 3
+    # Covets Gleaming Shards of Earth
+    # enables the Plant Treasure's one-time button for this turn
+    # we assume they want to use it immediately so it's okay to use a per-turn flag for it.
+    PLANT_TREASURE_THIS_TURN = 1 << 2
 
     @property
     def last_unready_energy_friendly(self):
@@ -445,6 +449,9 @@ class GamePlayer(models.Model):
 
     def rot_converted_this_turn(self):
         return self.spirit_specific_per_turn_flags & GamePlayer.ROT_CONVERTED_THIS_TURN
+
+    def plant_treasure_this_turn(self):
+        return self.spirit_specific_per_turn_flags & GamePlayer.PLANT_TREASURE_THIS_TURN
 
     def __str__(self):
         return str(self.game.id) + ' - ' + str(self.spirit.name)
