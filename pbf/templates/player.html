@@ -156,7 +156,7 @@
   <span hx-include="[name='spoiler_power_gain']">
   <p>Gain Minor ({{ player.game.minor_deck.count }} in deck):
   {% if player.aspect == 'Mentor' %}
-  <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' '2' %}">2 Cards (keep 2)</button>
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '2' %}">2 Cards (keep 2)</button>
   <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}" hx-confirm="Confirm you want to look at 4 minor power cards and keep 3 (Starlight Seeks Its Form used Boon of Reimagining on you)?">4 Cards (keep 3)</button>
   {% else %}
   <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}">4 Cards</button>
@@ -178,7 +178,7 @@
 
   <p>Gain Major ({{ player.game.major_deck.count }} in deck):
   {% if player.aspect == 'Mentor' %}
-  <button class="btn" hx-get="{% url 'take_powers' player.id 'major' '2' %}">2 Cards (keep 2)</button>
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards (keep 2)</button>
   <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}" hx-confirm="Confirm you want to look at 4 major power cards and keep 1 (event Visions Out of Time)?">4 Cards</button>
   {% else %}
   <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}">4 Cards</button>

@@ -617,6 +617,57 @@ class TestRot(TestCase):
     def test_round_down_even_odd(self):
         self.assert_rot(10, 5, 2, round_down=True)
 
+class TestGainPower(TestCase):
+    def assert_uses_selection(self, type, num, spirit='River', aspect=None):
+        client = Client()
+        client.post('/new')
+        game = Game.objects.last()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name=spirit), aspect=aspect, color='blue')
+
+        deck_before = getattr(game, f"{type}_deck").count()
+        hand_before = player.hand.count()
+        self.assertEqual(player.selection.count(), 0)
+
+        client.get(f"/game/{player.id}/gain/{type}/{num}")
+
+        self.assertEqual(getattr(game, f"{type}_deck").count(), deck_before - num)
+        self.assertEqual(player.hand.count(), hand_before)
+        self.assertEqual(player.selection.count(), num)
+
+    def assert_no_selection(self, type, num, spirit='River', aspect=None):
+        client = Client()
+        client.post('/new')
+        game = Game.objects.last()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name=spirit), aspect=aspect, color='blue')
+
+        deck_before = getattr(game, f"{type}_deck").count()
+        hand_before = player.hand.count()
+        self.assertEqual(player.selection.count(), 0)
+
+        client.get(f"/game/{player.id}/gain/{type}/{num}")
+
+        self.assertEqual(getattr(game, f"{type}_deck").count(), deck_before - num)
+        self.assertEqual(player.hand.count(), hand_before + num)
+        self.assertEqual(player.selection.count(), 0)
+
+    def test_not_mentor_minor(self):
+        self.assert_uses_selection('minor', 4)
+
+    def test_mentor_minor(self):
+        self.assert_no_selection('minor', 2, 'Memory', 'Mentor')
+
+    def test_mentor_minor_boon_of_reimagining(self):
+        self.assert_uses_selection('minor', 4, 'Memory', 'Mentor')
+
+    def test_not_mentor_major(self):
+        self.assert_uses_selection('major', 4)
+
+    def test_not_mentor_major_unlock(self):
+        self.assert_uses_selection('major', 2)
+
+    def test_mentor_major(self):
+        self.assert_no_selection('major', 2, 'Memory', 'Mentor')
+
 class TestChooseCard(TestCase):
     def cards_gained(self, spirit, card_type, draw):
         client = Client()

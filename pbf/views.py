@@ -737,20 +737,7 @@ def take_powers(request, player_id, type, num):
     if num == 1:
         add_log_msg(player.game, player=player, text=f'takes a {type} power', cards=taken_cards, spoiler=spoiler)
     else:
-        # There's a bit of tension between the function's name/functionality and game terminology.
-        #
-        # As used in code, take_powers is being used when we don't go through the selection process
-        # (the spirit gets all the cards directly into their hand).
-        # It's natural to use this for Mentor Shifting Memory of Ages,
-        # since the number of cards they get to keep is equal to the number of cards they look at.
-        #
-        # However, we do want to use the word "gain" in the log message, not "take",
-        # because Mentor still needs to forget a power card.
-        #
-        # The alternative is to special-case gain_power to not use selection if it's Mentor and num == 2.
-        # Either way we have to make some special cases,
-        # and doing it here at least matches in mechanism better.
-        add_log_msg(player.game, player=player, text=f'gains {num} {type} powers', cards=taken_cards, spoiler=spoiler)
+        add_log_msg(player.game, player=player, text=f'takes {num} {type} powers', cards=taken_cards, spoiler=spoiler)
 
     return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
 
@@ -782,6 +769,25 @@ def gain_power(request, player_id, type, num):
     spoiler = request.GET.get('spoiler_power_gain', False)
 
     selection = cards_from_deck(player.game, num, type)
+
+    if player.aspect == 'Mentor' and num == 2:
+        # Mentor looking at two cards keeps both of them,
+        # so no need to go through selection.
+        #
+        # Why not put this in take_powers?
+        # Because it would use the wrong verb ("take" instead of "gain"),
+        # and Mentor still needs to forget a power card when gaining a major,
+        # so the verb "take" would be inappropriate.
+        #
+        # Why not put this in take_powers but special-case Mentor's verb then?
+        # Because Mentor's gain 2 keep 2 should use verb "gain",
+        # but Transformative Sacrifice take 2 used on Mentor should use verb "take".
+        # Putting this in take_powers would leave no way to tell the difference between these two.
+        # Instead, we keep it here, and call either gain_power or take_powers as appropriate.
+        player.hand.add(*selection)
+        add_log_msg(player.game, player=player, text=f'gains {num} {type} powers', cards=selection, spoiler=spoiler)
+        return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards_verb': 'gained', 'taken_cards': selection}))
+
     player.selection.set(selection)
 
     # TODO: Should we set a flag on the player, such that when they actually select the card, it is also spoilered?
