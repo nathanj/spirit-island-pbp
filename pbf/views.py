@@ -750,7 +750,15 @@ def take_powers(request, player_id, type, num):
         # The alternative is to special-case gain_power to not use selection if it's Mentor and num == 2.
         # Either way we have to make some special cases,
         # and doing it here at least matches in mechanism better.
-        add_log_msg(player.game, player=player, text=f'gains {num} {type} powers', cards=taken_cards, spoiler=spoiler)
+        #
+        # Other uses of take_powers are indeed take and should use "take" in the log message:
+        # Transformative Sacrifice
+        # Covets Gleaming Shards of Earth v1.3 take 3 majors
+        # Note that currently we use the wrong verb if Transformative Sacrifice for 2 cards is used on Mentor.
+        # If it's an issue, consider addressing it passing in a flag with the request denoting gain vs take.
+        # (not an arbitrary verb, as we do not want to allow arbitrary input to be put in log messages)
+        verb = 'gain' if player.aspect == 'Mentor' and num == 2 else 'take'
+        add_log_msg(player.game, player=player, text=f'{verb}s {num} {type} powers', cards=taken_cards, spoiler=spoiler)
 
     return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
 
