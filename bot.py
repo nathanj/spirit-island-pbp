@@ -229,11 +229,11 @@ async def on_message(message):
         text = "\n".join((
             "[Github link](<https://github.com/nathanj/spirit-island-pbp>)",
             "",
-            "Use `$follow (yourgameurl)` to start",
+            "Use `$topic (new topic)` to set the channel topic (set an update channel's topic to a game link to start sending updates to that channel)",
+            "Use `$follow (yourgameurl)` for forum posts (where it's not possible to set a topic)",
             "Use `$unpin N` to unpin the last N messages",
             "Use `$delete` (reply to message) to delete a message (only messages posted by the bot)",
             "Use `$rename (new name)` to set the channel name",
-            "Use `$topic (new topic)` to set the channel topic",
         ))
         await message.channel.send(text)
     if message.content.startswith('$pin'):
@@ -278,6 +278,11 @@ async def on_message(message):
             await report_success(message, 'deleted')
     elif message.content.startswith('$topic'):
         try:
+            # Expected (and so far observed) behaviour:
+            # the bot will get an on_guild_channel_update for its own update,
+            # thereby automatically following a game linked in the topic
+            # (if present and the channel doesn't match NON_UPDATE_CHANNEL_PATTERN),
+            # without needing to explicitly call link_channel_to_game here.
             await message.channel.edit(topic=" ".join(parts[1:]), reason=f"{message.author.display_name} ({message.author.name}) requested")
             await report_success(message, 'set as topic')
         except discord.Forbidden:
