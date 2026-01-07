@@ -1,0 +1,43 @@
+{% load static %}
+
+{# similarities with power_deck.html, but enough differences (show specific spirit's scenario cards, target element ID, buttons + name) that it makes sense to just separate them #}
+
+<h4>{{player.spirit.name}} ({{owned | length}} cards):</h4>
+<ul>
+  <div class="container-fluid">
+    <div class="row">
+      {% for card in owned %}
+      <div class="col-auto">
+        <div class="w-md-150">
+          <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</ul>
+
+<p>
+<h4>{{ name }} deck ({{ deck | length }} cards):</h4>
+<button class="btn" onClick="document.getElementById('deck').innerHTML='';">Close</button>
+<ul hx-target="#deck">
+  <div class="container-fluid">
+    <div class="row">
+      {% for card in deck %}
+      <div class="col-auto">
+	<div class="w-md-150">
+	  <div class="card p-0 m-15">
+	    <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+      {{card.name}}
+	    <div class="text-center pb-5">
+	      <button class="btn" hx-get="{% url 'add_to_scenario' player.id card.id %}">Add</button>
+	    </div>
+	  </div>
+	</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</ul>
+<button class="btn" onClick="document.getElementById('deck').innerHTML='';">Close</button>
+</p>

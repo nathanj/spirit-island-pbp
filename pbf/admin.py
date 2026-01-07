@@ -45,6 +45,8 @@ class GamePlayerAdmin(admin.ModelAdmin): #type: ignore[type-arg]
             # TODO: Cutting corners, using Days That Never Were for Covets Gleaming Shards,
             # rather than a dedicated association.
             excludes.append('days')
+        if not obj or not obj.game.scenario_setup_from_deck():
+            excludes.append('scenario')
         return excludes
 
     filter_horizontal = ('healing', )

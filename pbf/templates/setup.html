@@ -43,12 +43,20 @@
           {% endfor %}
         </select>
       </td>
+      {% if game.scenario_setup_from_deck %}
+      <td hx-target="#deck" hx-swap="innerHTML">
+  <button class="btn" hx-get="{% url 'setup_deck' player.id 'minor' %}">Minor</button>
+  <button class="btn" hx-get="{% url 'setup_deck' player.id 'major' %}">Major</button>
+      </td>
+      {% endif %}
     </tr>
     {% endfor %}
   </tbody>
 </table>
 <button type="submit" class="btn">Save player names/colors</button>
 </form>
+
+<div id="deck"></div>
 
 <script src="{% static 'pbf/dropdown.min.js' %}"></script>
 

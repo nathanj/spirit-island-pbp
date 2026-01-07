@@ -326,6 +326,11 @@ class Game(models.Model):
         # Template only uses the name, so just give them that
         return [locname for (_, _, _, locname) in Card.objects.get(name='Vengeance of the Dead exploratory').location_in_game(self)]
 
+    def scenario_setup_from_deck(self) -> bool:
+        scenarios = {
+        }
+        return self.scenario in scenarios
+
 colors_to_circle_color_map = {
         'blue': '#705dff',
         'green': '#0d9501',

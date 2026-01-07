@@ -965,6 +965,43 @@ def create_days(request: HttpRequest, player_id: int, num: int) -> HttpResponse:
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
+def setup_deck(request: HttpRequest, player_id: int, type: str) -> HttpResponse:
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    if type == 'minor':
+        cards = player.game.minor_deck.all()
+    elif type == 'major':
+        cards = player.game.major_deck.all()
+    else:
+        raise ValueError('invalid card type')
+
+    return render(request, 'power_deck_setup.html', {'name': type.capitalize(), 'player': player, 'owned': player.scenario.all(), 'deck': cards})
+
+# move a card from its corresponding deck (minor or major), if it's there
+# if the card belongs to a deck (major or minor),
+#   returns the card and that deck (regardless of whether the card was moved)
+# if the card does not belong to a deck (unique), returns the card and None.
+def move_card_from_deck(card_id: int, game: Game, dst: 'Card_ManyRelatedManager[Any]') -> tuple[Card, 'Card_ManyRelatedManager[Any] | None']:
+    card = get_object_or_404(Card, pk=card_id)
+    if card.type == Card.MINOR:
+        deck: 'Card_ManyRelatedManager[Any]' = game.minor_deck
+    elif card.type == Card.MAJOR:
+        deck = game.major_deck
+    else:
+        return (card, None)
+
+    if deck.filter(id=card.id).exists():
+        deck.remove(card)
+        dst.add(card)
+    return (card, deck)
+
+def add_to_scenario(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card, deck = move_card_from_deck(card_id, player.game, player.scenario)
+    if not deck:
+        raise ValueError(f"Can't add {card}")
+
+    return render(request, 'power_deck_setup.html', {'name': card.get_type_display(), 'player': player, 'owned': player.scenario.all(), 'deck': deck.all()})
+
 # Covets Gleaming Shards of Earth
 def create_plant_treasure(request: HttpRequest, player_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
