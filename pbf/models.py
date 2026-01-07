@@ -138,6 +138,7 @@ class Card(models.Model):
     MAJOR = 1
     UNIQUE = 2
     SPECIAL = 3
+    HEALING = 4
 
     name = models.CharField(max_length=255, blank=False)
     TYPES = (
@@ -145,6 +146,7 @@ class Card(models.Model):
         (MAJOR, 'Major'),
         (UNIQUE, 'Unique'),
         (SPECIAL, 'Special'),
+        (HEALING, 'Healing'),
     )
     type = models.IntegerField(choices=TYPES)
     spirit = models.ForeignKey(Spirit, blank=True, null=True, on_delete=models.CASCADE)
@@ -189,7 +191,7 @@ class Card(models.Model):
         if executor.migration_plan(executor.loader.graph.leaf_nodes()):
             return errors
 
-        not_healing = cls.objects.exclude(name__in=cls.HEALING_NAMES)
+        not_healing = cls.objects.exclude(type=cls.HEALING)
 
         unknown_speed = not_healing.exclude(speed__in=(cls.FAST, cls.SLOW))
         errors.extend(checks.Warning('unknown speed', obj=card) for card in unknown_speed)
@@ -209,10 +211,6 @@ class Card(models.Model):
 
     def can_return_to_deck(self) -> bool:
         return self.type in (self.MINOR, self.MAJOR)
-
-    HEALING_NAMES = frozenset(('Serene Waters', 'Waters Renew', 'Roiling Waters', 'Waters Taste of Ruin'))
-    def is_healing(self) -> bool:
-        return self.name in self.HEALING_NAMES
 
     def url(self) -> str:
         return '/pbf/' + self.name.replace(",", '').replace("-", '').replace("'", '').replace(' ', '_').lower() + '.jpg'
@@ -753,7 +751,7 @@ class GamePlayer(models.Model):
         num_healing = None
         healing_markers = None
         for card in sel:
-            if card.is_healing():
+            if card.type == Card.HEALING:
                 if num_healing is None:
                     num_healing = self.healing.count()
                 if healing_markers is None:
