@@ -560,7 +560,7 @@ def import_game(request: HttpRequest) -> HttpResponse:
             if gp.full_name() in spirit_additional_cards:
                 cards_in_game |= {Card.objects.get(name=card).id for card in spirit_additional_cards[gp.full_name()]}
 
-        for name in ('discard', 'play', 'selection', 'days', 'healing'):
+        for name in ('discard', 'play', 'selection', 'days', 'healing', 'scenario'):
             if name in player:
                 getattr(gp, name).set(cards := cards_with_name(player[name]))
                 cards_in_game |= {card.id for card in cards}

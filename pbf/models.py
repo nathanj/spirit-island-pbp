@@ -255,7 +255,7 @@ class Card(models.Model):
 
         # Player-specific locations, minus impending
         # Not healing since nothing that uses this cares to know
-        for loc in ('hand', 'discard', 'play', 'selection', 'days'):
+        for loc in ('hand', 'discard', 'play', 'selection', 'days', 'scenario'):
             if (players := getattr(self, loc).filter(game=game).values_list('id', 'spirit__name', named=True)):
                 names = " and ".join(player.spirit__name for player in players)
                 locs.append((GamePlayer, [player.id for player in players], loc, f"{names}'s {loc}"))
@@ -369,6 +369,7 @@ class GamePlayer(models.Model):
     play = models.ManyToManyField(Card, related_name='play', blank=True)
     selection = models.ManyToManyField(Card, related_name='selection', blank=True)
     days = models.ManyToManyField(Card, related_name='days', blank=True)
+    scenario = models.ManyToManyField(Card, related_name='scenario', blank=True)
     # had to rename from "impending" to enable ManyToManyField migration
     impending_with_energy = models.ManyToManyField(Card, through='pbf.GamePlayerImpendingWithEnergy', related_name='impending_with_energy', blank=True)
     healing = models.ManyToManyField(Card, related_name='healing', blank=True)
