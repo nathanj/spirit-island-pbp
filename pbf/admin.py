@@ -50,7 +50,7 @@ class GamePlayerAdmin(admin.ModelAdmin): #type: ignore[type-arg]
     filter_horizontal = ('healing', )
     def formfield_for_manytomany(self, db_field: ManyToManyField, request: HttpRequest, **kwargs: Any) -> ModelMultipleChoiceField | None: #type: ignore[type-arg]
         if db_field.name == 'healing':
-            kwargs['queryset'] = Card.objects.filter(name__in=Card.HEALING_NAMES)
+            kwargs['queryset'] = Card.objects.filter(type=Card.HEALING)
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
 admin.site.register(Card, CardAdmin)
