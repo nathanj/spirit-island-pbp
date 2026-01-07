@@ -965,6 +965,33 @@ def create_days(request: HttpRequest, player_id: int, num: int) -> HttpResponse:
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
+def setup_deck(request: HttpRequest, player_id: int, type: str) -> HttpResponse:
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    if type == 'minor':
+        cards = player.game.minor_deck.all()
+    elif type == 'major':
+        cards = player.game.major_deck.all()
+    else:
+        raise ValueError(f"invalid card type")
+
+    return render(request, 'power_deck_setup.html', {'name': type.capitalize(), 'player': player, 'cards': cards})
+
+def add_to_scenario(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(Card, pk=card_id)
+    if card.type == Card.MINOR:
+        deck: 'Card_ManyRelatedManager[Any]' = player.game.minor_deck
+    elif card.type == Card.MAJOR:
+        deck = player.game.major_deck
+    else:
+        raise ValueError(f"Can't add {card}")
+
+    if deck.filter(id=card_id).exists():
+        deck.remove(card)
+        player.scenario.add(card)
+
+    return render(request, 'power_deck_setup.html', {'name': card.get_type_display(), 'player': player, 'cards': deck.all()})
+
 # Covets Gleaming Shards of Earth
 def create_plant_treasure(request: HttpRequest, player_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
