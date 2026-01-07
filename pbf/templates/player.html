@@ -88,6 +88,8 @@
       {# We must not allow arbitrary aspect name to be interpolated into the path! Only allow known-good aspects. #}
       {% if player.aspect == 'v1.2.1' %}
       <img src="{% static 'pbf/covets_v1.2.1.jpg' %}" width="957" height="1260" />
+      {% elif player.aspect == 'v1.3' %}
+      <img src="{% static 'pbf/covets_v1.3.jpg' %}" width="957" height="1260" />
       {% else %}
       <img src="{% static player.spirit.url %}" width="957" height="1260" />
       {% endif %}
@@ -185,8 +187,10 @@
   {% if player.spirit.name == 'Covets' %}
   {% if player.aspect == 'v1.2.1' %}
   <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '6' %}">6 Cards</button>
-  {% elif player.aspect >= 'v1.3' %}
-  <button class="btn" hx-get="{% url 'take_powers' player.id 'major' '3' %}">Take 3</button>
+  {% elif player.aspect == 'v1.3' %}
+  <button class="btn" hx-get="{% url 'take_powers' player.id 'major' '3' %}"{% if not player.plant_treasure_this_turn %} disabled{% endif %}>Take 3</button>
+  {% elif player.aspect >= 'v1.4' and not player.plant_treasure.exists %}
+  <button class="btn" hx-get="{% url 'create_plant_treasure' player.id %}"{% if not player.plant_treasure_this_turn %} disabled{% endif %}>Set aside 3 (Plant Treasure)</button>
   {% endif %}
   {% endif %}
   <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards</button>
@@ -389,6 +393,27 @@
     </div>
 
   </ul>
+  {% elif player.spirit.name == 'Covets' %}
+  {% for card in player.plant_treasure.all %}
+  {% if forloop.first %}
+  <p>
+  <h4>Plant Treasure:</h4>
+  <ul>
+    <div class="container-fluid">
+      <div class="row">
+  {% endif %}
+	<div class="col-auto">
+	  <div class="w-150">
+	    <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
+	  </div>
+	</div>
+  {% if forloop.last %}
+  </ul>
+  <button class="btn" hx-get="{% url 'take_plant_treasure' player.id %}">Take</button>
+  Reminder: Incarna must hold 4+ Metal (<em>not</em> Stored in the Hoard)
+  </p>
+  {% endif %}
+  {% endfor %}
   {% endif %}
 
   <div id="spirit-discard-deck-{{player.id}}"
