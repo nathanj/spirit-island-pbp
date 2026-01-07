@@ -463,13 +463,13 @@ sqlparse = ">=0.2"
 
 [[package]]
 name = "django-ninja"
-version = "1.5.1"
+version = "1.5.2"
 description = "Django Ninja - Fast Django REST framework"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "django_ninja-1.5.1-py3-none-any.whl", hash = "sha256:135aaa1117dce8dfd7a1e80b4487a8cccee3a4182c3c8b562d08ea94e4d2cbdf"},
-    {file = "django_ninja-1.5.1.tar.gz", hash = "sha256:6acda68a64d60934c6fdccb4d97c3ac7f02cfefd78a5d87ae053effe081b17c7"},
+    {file = "django_ninja-1.5.2-py3-none-any.whl", hash = "sha256:5faf09cf6e64298e822305c3f4b933608b4fce30643e36cc58f67660f20f4cac"},
+    {file = "django_ninja-1.5.2.tar.gz", hash = "sha256:1554bebc28e9bbc8412f49bae4698937781b54d828c84af30c40dfced407b8cb"},
 ]
 
 [package.dependencies]
