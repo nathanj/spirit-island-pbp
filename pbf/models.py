@@ -333,6 +333,13 @@ class Game(models.Model):
     def scenario_setup_from_deck(self) -> bool:
         scenarios = {
             'Destiny Unfolds',
+            'Second Wave',
+        }
+        return self.scenario in scenarios
+
+    def scenario_setup_uniques(self) -> bool:
+        scenarios = {
+            'Second Wave',
         }
         return self.scenario in scenarios
 
@@ -804,6 +811,15 @@ class GamePlayer(models.Model):
         # still need to return the list of Impending object (not Card).
         _ = self.cards_with_thresholds(imp.card for imp in impends)
         return impends
+
+    def scenario_with_second_wave_thresholds(self) -> Iterable[Card]:
+        cards = self.scenario.all()
+        for card in cards:
+            card.computed_thresholds = [ #type: ignore[attr-defined]
+                Threshold(x, y, sum(int(n[0]) for n in chunk(elts_str, 2)) <= 10)
+                for (x, y, elts_str) in card_thresholds.get(card.name, [])
+            ]
+        return cards
 
     def thresholds(self) -> Iterable[Threshold]:
         elements = self.elements
