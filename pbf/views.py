@@ -971,6 +971,8 @@ def setup_deck(request: HttpRequest, player_id: int, type: str) -> HttpResponse:
         cards = player.game.minor_deck.all()
     elif type == 'major':
         cards = player.game.major_deck.all()
+    elif type == 'unique':
+        cards = Card.objects.filter(type=Card.UNIQUE)
     else:
         raise ValueError(f"invalid card type")
 
@@ -1001,6 +1003,9 @@ def add_to_scenario(request: HttpRequest, player_id: int, card_id: int) -> HttpR
         deck: 'Card_ManyRelatedManager[Any]' = player.game.minor_deck
     elif card.type == Card.MAJOR:
         deck = player.game.major_deck
+    elif card.type == Card.UNIQUE:
+        player.scenario.add(card)
+        return render(request, 'power_deck_setup.html', {'name': 'Unique', 'player': player, 'cards': Card.objects.filter(type=Card.UNIQUE)})
     else:
         raise ValueError(f"Can't add {card}")
 
@@ -1017,6 +1022,16 @@ def gain_scenario(request: HttpRequest, player_id: int, card_id: int) -> HttpRes
     player.scenario.remove(card)
 
     add_log_msg(player.game, player=player, text=f'gains {card.name} from their Destiny')
+
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
+def discard_scenario(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(player.scenario, pk=card_id)
+    player.scenario.remove(card)
+    player.game.discard_pile.add(card)
+
+    add_log_msg(player.game, text=f'{card.name} (Second Wave) discarded')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 

@@ -1310,6 +1310,20 @@ class TestScenario(TestCase):
         self.assertEqual(majors_before - 1, game.major_deck.count())
         self.assertNotIn(card, game.major_deck.all())
 
+    def test_add_unique(self):
+        client, game, player = self.setup_game()
+
+        card = Card.objects.get(name='Boon of Vigor')
+        minors_before = game.minor_deck.count()
+        majors_before = game.major_deck.count()
+        self.assertEqual(0, player.scenario.count())
+
+        client.post(f"/game/{player.id}/add_to_scenario/{card.id}")
+
+        self.assertEqual(['Boon of Vigor'], list(player.scenario.values_list('name', flat=True)))
+        self.assertEqual(minors_before, game.minor_deck.count())
+        self.assertEqual(majors_before, game.major_deck.count())
+
     def test_gain_scenario(self):
         client, game, player = self.setup_game()
 
@@ -1323,6 +1337,20 @@ class TestScenario(TestCase):
         self.assertEqual(['Call to Ferocity'], list(player.scenario.values_list('name', flat=True)))
         self.assertEqual(hand_before + 1, player.hand.count())
         self.assertIn(card1, player.hand.all())
+
+    def test_discard_scenario(self):
+        client, game, player = self.setup_game()
+
+        card1 = Card.objects.get(name='Call to Isolation')
+        card2 = Card.objects.get(name='Call to Ferocity')
+        client.post(f"/game/{player.id}/add_to_scenario/{card1.id}")
+        client.post(f"/game/{player.id}/add_to_scenario/{card2.id}")
+        discard_before = game.discard_pile.count()
+
+        client.post(f"/game/{player.id}/discard_scenario/{card1.id}")
+        self.assertEqual(['Call to Ferocity'], list(player.scenario.values_list('name', flat=True)))
+        self.assertEqual(discard_before + 1, game.discard_pile.count())
+        self.assertIn(card1, game.discard_pile.all())
 
 class TestDaysThatNeverWere(TestCase):
     def test_create(self):
