@@ -107,7 +107,9 @@
   {% csrf_token %}
   <select name="scenario">
     <option value="">No scenario</option>
+    {# This should just be a for loop over the below scenarios, but Django template language doesn't support list literals. #}
     <option value="Blitz" {% if game.scenario == 'Blitz' %}selected{% endif %}>Blitz</option>
+    <option value="Destiny Unfolds" {% if game.scenario == 'Destiny Unfolds' %}selected{% endif %}>Destiny Unfolds</option>
   </select>
   <button type="submit" class="btn">Change scenario</button>
 </form>
