@@ -137,7 +137,7 @@ class Card(models.Model):
     MINOR = 0
     MAJOR = 1
     UNIQUE = 2
-    SPECIAL = 3
+    RETIRED = 3
     HEALING = 4
 
     name = models.CharField(max_length=255, blank=False)
@@ -145,7 +145,7 @@ class Card(models.Model):
         (MINOR, 'Minor'),
         (MAJOR, 'Major'),
         (UNIQUE, 'Unique'),
-        (SPECIAL, 'Special'),
+        (RETIRED, 'Retired'),
         (HEALING, 'Healing'),
     )
     type = models.IntegerField(choices=TYPES)
