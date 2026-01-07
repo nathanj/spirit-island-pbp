@@ -10,6 +10,7 @@ class CardAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
     search_fields = ('name',)
+    list_display = ('name', 'spirit__name', 'type')
 
 class GameAdmin(admin.ModelAdmin):
     search_fields = ('id', 'name')
