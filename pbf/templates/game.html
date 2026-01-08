@@ -71,6 +71,9 @@
     <div class="col-lg-3">
       <div class="content">
 	<button class="btn" type="button" onclick="halfmoon.toggleDarkMode()">Dark Mode</button>
+  {% if game.screenshot and game.screenshot2 %}
+	<button class="btn" type="button" onclick="var s1=document.getElementById('ss1'); var s2=document.getElementById('ss2'); var i1=s1.src; s1.src=s2.src; s2.src=i1">Swap Images</button>
+  {% endif %}
       </div>
       {% include "logs.html" %}
     </div>
