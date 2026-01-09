@@ -114,7 +114,7 @@ def game(request, game_id):
     return get_object_or_404(Game, pk=game_id)
 
 @api.get("/game/{game_id}/log", response=list[GameLogSchema])
-def gamelogs(request, game_id, after: int = None):
+def gamelogs(request, game_id, after: int | None = None):
     game = get_object_or_404(Game, pk=game_id)
     if after is None:
         return game.gamelog_set.all()
