@@ -116,7 +116,7 @@ list_guilds = '--list-guilds' in sys.argv
 LOG = structlog.get_logger()
 debug = os.environ.get('DEBUG', None) == 'yes'
 
-DISCORD_KEY = os.getenv('DISCORD_KEY')
+DISCORD_KEY = os.getenv('DISCORD_KEY', '')
 DJANGO_HOST = os.getenv('DJANGO_HOST', 'localhost')
 DJANGO_PORT = int(os.getenv('DJANGO_PORT', 8000))
 NON_UPDATE_CHANNEL_PATTERN = re.compile(os.getenv('DISCORD_NON_UPDATE_CHANNEL_PATTERN', r'\A\d+-?dc'))
