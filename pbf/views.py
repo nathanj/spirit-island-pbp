@@ -6,7 +6,7 @@ import os
 from collections.abc import Iterable
 from django.db import transaction
 from django.forms import ModelForm
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from typing import Any
@@ -29,12 +29,12 @@ redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1)
 #
 # It's an error to set both cards and images.
 # images may be set by itself if there are images not associated with a card (example: screenshot)
-def add_log_msg(game, *, text, player=None, cards=None, images=None, spoiler=False):
+def add_log_msg(game: Game, *, text: str, player: GamePlayer | None = None, cards: list[Card] | None = None, images: str | None = None, spoiler: bool = False) -> None:
     if player:
         text = f'{player.circle_emoji} {player.spirit.name} {text}'
     if cards and images:
         raise TypeError("specified both cards and images, but cards would overwrite images")
-    card_names = cards and ', '.join(card.name for card in cards)
+    card_names = ', '.join(card.name for card in cards) if cards else ''
     if cards:
         images = ','.join('./pbf/static' + card.url() for card in cards)
     if spoiler and cards:
@@ -49,53 +49,53 @@ def add_log_msg(game, *, text, player=None, cards=None, images=None, spoiler=Fal
         discord_text = text
         game.gamelog_set.create(text=text, images=images)
     if len(game.discord_channel) > 0:
-        j = {'text': discord_text}
+        j: dict[str, str | bool] = {'text': discord_text}
         if images is not None:
             j['images'] = images
         if spoiler:
             j['spoiler'] = True
         redis_client.publish(f'log-relay:{game.discord_channel}', json.dumps(j))
 
-class GameForm(ModelForm):
+class GameForm(ModelForm): #type: ignore[type-arg]
     class Meta:
         model = Game
         fields = ['screenshot']
 
-class GameForm2(ModelForm):
+class GameForm2(ModelForm): #type: ignore[type-arg]
     class Meta:
         model = Game
         fields = ['screenshot2']
 
-def with_log_trigger(response):
+def with_log_trigger(response: HttpResponse) -> HttpResponse:
     response['HX-Trigger'] = 'newLog'
     return response
 
-def home(request):
+def home(request: HttpRequest) -> HttpResponse:
     return render(request, 'index.html')
 
 # For use in development only, not production.
-def view_screenshot(request, game_id=None, filename=None):
+def view_screenshot(request: HttpRequest, game_id: str | None = None, filename: str | None = None) -> HttpResponse:
     with open(os.path.join(*[s for s in ['screenshot', game_id, filename] if s]), mode='rb') as f:
         return HttpResponse(f.read(), content_type='image/jpeg')
 
-def new_game(request):
+def new_game(request: HttpRequest) -> HttpResponse:
     game = Game(name='My Game')
     game.save()
     game.minor_deck.set(Card.objects.filter(type=Card.MINOR, exclude_from_deck=False))
     game.major_deck.set(Card.objects.filter(type=Card.MAJOR, exclude_from_deck=False))
     return redirect(reverse('game_setup', args=[game.id]))
 
-def edit_players(request, game_id):
+def edit_players(request: HttpRequest, game_id: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     players = zip(request.POST.getlist('id'), request.POST.getlist('name'), request.POST.getlist('color'))
     GamePlayer.objects.bulk_update([GamePlayer(id=id, name=name, color=color) for id, name, color in players], ['name', 'color'])
 
     return redirect(reverse('game_setup', args=[game.id]))
 
-def game_setup(request, game_id):
+def game_setup(request: HttpRequest, game_id: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
 
-    spirits_by_expansion = {
+    spirits_by_expansion: dict[str, list[tuple[str, str, tuple[str, ...]]]] = {
         # Short name, full name, aspects (if any)
         # Within an expansion, sorted alphabetically
         # Base is automatically included, unless the first element of aspects is 'NO BASE'
@@ -179,26 +179,26 @@ def game_setup(request, game_id):
 
     return render(request, 'setup.html', { 'game': game, 'spirits_by_expansion': spirits_by_expansion })
 
-def change_game_name(request, game_id):
+def change_game_name(request: HttpRequest, game_id: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     game.name = request.POST['name']
     game.save()
     return redirect(reverse('game_setup', args=[game.id]))
 
-def change_scenario(request, game_id):
+def change_scenario(request: HttpRequest, game_id: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     game.scenario = request.POST['scenario']
     game.save()
     return redirect(reverse('game_setup', args=[game.id]))
 
-def deck_mods(request, game_id):
+def deck_mods(request: HttpRequest, game_id: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     return render(request, 'deck_mods.html', { 'game': game })
 
-def toggle_deck_mod(request, game_id, mod):
+def toggle_deck_mod(request: HttpRequest, game_id: str, mod: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
 
-    def replace_card(cls, ids, attr, _human_friendly_name, old, new):
+    def replace_card(cls: type, ids: list[int] | None, attr: str, old: Card, new: Card) -> None:
         import pbf.models
         match cls:
             case pbf.models.Game:
@@ -218,11 +218,11 @@ def toggle_deck_mod(request, game_id, mod):
             original = Card.objects.get(name='Vengeance of the Dead')
             exploratory = Card.objects.get(name='Vengeance of the Dead exploratory')
             if (locs := exploratory.location_in_game(game)):
-                for loc in locs:
-                    replace_card(*loc, exploratory, original)
+                for (cls, ids, attr, _) in locs:
+                    replace_card(cls, ids, attr, exploratory, original)
             else:
-                for loc in original.location_in_game(game):
-                    replace_card(*loc, original, exploratory)
+                for (cls, ids, attr, _) in original.location_in_game(game):
+                    replace_card(cls, ids, attr, original, exploratory)
         case _:
             raise ValueError('unknown deck mod')
 
@@ -390,7 +390,7 @@ spirit_remove_cards = {
     'SunshineRiver': ['Boon of Vigor'],
     }
 
-def add_player(request, game_id):
+def add_player(request: HttpRequest, game_id: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     colors = [c for (c, freq, _) in game.color_freq() if freq == 0]
     color = request.POST['color']
@@ -415,14 +415,14 @@ def add_player(request, game_id):
 
     return redirect(reverse('game_setup', args=[game.id]))
 
-def make_presence(gp):
-    def presence_from_spec(left, top, opacity, energy='', elements=''):
+def make_presence(gp: GamePlayer) -> None:
+    def presence_from_spec(left: int, top: int, opacity: float, energy: str = '', elements: str = '') -> Presence:
         if gp.aspect == 'Locus' and elements == 'Fire':
             opacity = 0.0
         return Presence(game_player=gp, left=left, top=top, opacity=opacity, energy=energy, elements=elements)
     gp.presence_set.bulk_create(presence_from_spec(*presence_spec) for presence_spec in spirit_presence[gp.spirit.name])
 
-def make_initial_hand(gp, remove_from_decks=True):
+def make_initial_hand(gp: GamePlayer, remove_from_decks: bool = True) -> None:
     game = gp.game
     gp.hand.set(Card.objects.filter(spirit=gp.spirit))
     if gp.full_name() in spirit_additional_cards:
@@ -434,8 +434,8 @@ def make_initial_hand(gp, remove_from_decks=True):
     if gp.full_name() in spirit_remove_cards:
         gp.hand.remove(*[Card.objects.get(name=name) for name in spirit_remove_cards[gp.full_name()]])
 
-def import_game(request):
-    def cards_with_name(cards):
+def import_game(request: HttpRequest) -> HttpResponse:
+    def cards_with_name(cards: list[str | dict[str, str]]) -> Iterable[Card]:
         # Cards can be specified as either:
         # - just their name as a string
         # - or a dict with key "name"
@@ -462,6 +462,8 @@ def import_game(request):
     # as they should have all the fields,
     # but it doesn't seem to hurt to be permissive here.
 
+    if isinstance(request.FILES['json'], list):
+        raise ValueError("multiple files unsupported")
     to_import = json.load(request.FILES['json'])
     game = Game(
             name=to_import.get('name', 'Untitled Imported Game'),
@@ -522,7 +524,7 @@ def import_game(request):
                 available_colours = {color for (color, _) in GamePlayer.COLORS}
         gp.save()
 
-        def presence_from_import_or_spec(import_presence, left, top, opacity, expected_energy='', expected_elements=''):
+        def presence_from_import_or_spec(import_presence: dict[str, Any], left: int, top: int, opacity: float, expected_energy: str = '', expected_elements: str = '') -> Presence:
             # if imported_presence has left/top those fields are ignored
             # (the API doesn't export them and we don't support creating presence in arbitrary locations)
 
@@ -583,21 +585,26 @@ def import_game(request):
 
     return redirect(reverse('view_game', args=[game.id]))
 
-def view_game(request, game_id, spirit_spec=None):
+def view_game(request: HttpRequest, game_id: str, spirit_spec: str | None = None) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     if request.method == 'POST':
         if 'spirit_spec' in request.POST:
             spirit_spec = request.POST['spirit_spec']
 
-        def without_suffix(ss):
-            name, ext = os.path.splitext(os.path.basename(ss.url))
+        def without_suffix(ss: str) -> str | None:
+            name, ext = os.path.splitext(os.path.basename(ss))
             if len(name) >= 8 and name[-8] == '_':
                 return f"{name[:-8]}{ext}"
-        existing_files = [without_suffix(ss) for ss in [game.screenshot, game.screenshot2] if ss]
+            return None
+        existing_files = [without_suffix(ss.url) for ss in [game.screenshot, game.screenshot2] if ss]
 
         for key, form_class in (('screenshot', GameForm), ('screenshot2', GameForm2)):
             if key not in request.FILES:
                 continue
+
+            file = request.FILES[key]
+            if isinstance(file, list):
+                raise ValueError("multiple files in the same field unsupported")
 
             # Some hosts always use the same filename for their uploads.
             # Django's behaviour is to try to use that filename,
@@ -619,10 +626,10 @@ def view_game(request, game_id, spirit_spec=None):
             #
             # if the existing screenshot has filename e.g. name_abc1234.png,
             # detect when they upload the file name.png
-            if not game.always_suffix_screenshot and request.FILES[key].name in existing_files:
+            if not game.always_suffix_screenshot and file.name in existing_files:
                 from django.utils.crypto import get_random_string
-                name, ext = os.path.splitext(request.FILES[key].name)
-                request.FILES[key].name = f"{name}_{get_random_string(7)}{ext}"
+                name, ext = os.path.splitext(file.name or "untitled")
+                file.name = f"{name}_{get_random_string(7)}{ext}"
 
             form = form_class(request.POST, request.FILES, instance=game)
             if form.is_valid():
@@ -635,17 +642,17 @@ def view_game(request, game_id, spirit_spec=None):
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
     return render(request, 'game.html', { 'game': game, 'logs': logs, 'tab_id': tab_id, 'spirit_spec': spirit_spec })
 
-def try_match_spirit(game, spirit_spec):
+def try_match_spirit(game: Game, spirit_spec: str | None) -> int | None:
     if not spirit_spec:
         return None
 
     if spirit_spec.isnumeric():
-        spirit_spec = int(spirit_spec)
+        spirit_id = int(spirit_spec)
         player_ids = game.gameplayer_set.values_list('id', flat=True)
-        if 1 <= spirit_spec <= len(player_ids):
-            return player_ids[spirit_spec - 1]
-        elif spirit_spec in player_ids:
-            return spirit_spec
+        if 1 <= spirit_id <= len(player_ids):
+            return player_ids[spirit_id - 1]
+        elif spirit_id in player_ids:
+            return spirit_id
     else:
         aspect_match = game.gameplayer_set.filter(aspect__iexact=spirit_spec).values_list('id', flat=True).first()
         if aspect_match:
@@ -668,7 +675,9 @@ def try_match_spirit(game, spirit_spec):
         if player_match:
             return player_match
 
-def draw_cards(request, game_id):
+    return None
+
+def draw_cards(request: HttpRequest, game_id: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     cards_needed = int(request.POST['num_cards'])
     type = request.POST['type']
@@ -686,9 +695,9 @@ def draw_cards(request, game_id):
     card_names = ', '.join(card.name for card in cards_drawn)
     return with_log_trigger(render(request, 'host_draw.html', {'msg': f"You {draw_result}{draw_result_explain}: {card_names}", 'cards': cards_drawn}))
 
-def cards_from_deck(game, cards_needed, type):
+def cards_from_deck(game: Game, cards_needed: int, type: str) -> list[Card]:
     if type == 'minor':
-        deck = game.minor_deck
+        deck: 'Card_ManyRelatedManager[Any]' = game.minor_deck
     elif type == 'major':
         deck = game.major_deck
     else:
@@ -715,7 +724,7 @@ def cards_from_deck(game, cards_needed, type):
 
     return cards_drawn
 
-def reshuffle_discard(game, type):
+def reshuffle_discard(game: Game, type: str) -> None:
     if type == 'minor':
         minors = game.discard_pile.filter(type=Card.MINOR).all()
         game.discard_pile.remove(*minors)
@@ -729,7 +738,7 @@ def reshuffle_discard(game, type):
 
     add_log_msg(game, text=f'Re-shuffling {type} power deck')
 
-def take_powers(request, player_id, type, num):
+def take_powers(request: HttpRequest, player_id: int, type: str, num: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     # most compliant browsers should send 'on', but we'll allow 'true' as well
     spoiler = request.GET.get('spoiler_power_gain', '') in ('on', 'true')
@@ -748,7 +757,7 @@ def take_powers(request, player_id, type, num):
 
     return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
 
-def gain_healing(request, player_id):
+def gain_healing(request: HttpRequest, player_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     if player.selection.exists():
         # Don't set a new selection while the player already has one.
@@ -766,7 +775,7 @@ def gain_healing(request, player_id):
 
     return render(request, 'player.html', {'player': player})
 
-def gain_power(request, player_id, type, num):
+def gain_power(request: HttpRequest, player_id: int, type: str, num: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     if player.selection.exists():
         # Don't set a new selection while the player already has one.
@@ -803,19 +812,19 @@ def gain_power(request, player_id, type, num):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def minor_deck(request, game_id):
+def minor_deck(request: HttpRequest, game_id: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     return render(request, 'power_deck.html', {'name': 'Minor', 'cards': game.minor_deck.all()})
 
-def major_deck(request, game_id):
+def major_deck(request: HttpRequest, game_id: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     return render(request, 'power_deck.html', {'name': 'Major', 'cards': game.major_deck.all()})
 
-def discard_pile(request, player_id):
+def discard_pile(request: HttpRequest, player_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     return render(request, 'discard_pile.html', { 'player': player })
 
-def return_to_deck(request, player_id, card_id):
+def return_to_deck(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     # this doesn't actually manipulate the player in any way,
     # except to return to their tab after the operation is done
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -834,7 +843,7 @@ def return_to_deck(request, player_id, card_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def choose_from_discard(request, player_id, card_id):
+def choose_from_discard(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.game.discard_pile, pk=card_id)
     player.hand.add(card)
@@ -858,13 +867,13 @@ def move_card(card_id: int, srcs: Iterable['Card_ManyRelatedManager[Any]'], dst:
             pass
     return None
 
-def send_days(request, player_id, card_id):
+def send_days(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     if card := move_card(card_id, [player.selection, player.game.discard_pile], player.days):
         add_log_msg(player.game, player=player, text=f'sends {card.name} to the Days That Never Were')
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def choose_card(request, player_id, card_id):
+def choose_card(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.selection, pk=card_id)
 
@@ -894,7 +903,7 @@ def choose_card(request, player_id, card_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def undo_gain_card(request, player_id):
+def undo_gain_card(request: HttpRequest, player_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     game = player.game
 
@@ -921,9 +930,9 @@ def undo_gain_card(request, player_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def choose_healing_card(request, player, card):
+def choose_healing_card(request: HttpRequest, player: GamePlayer, card: Card) -> HttpResponse:
     if card.name.startswith('Waters'):
-        player.healing.remove(player.healing.filter(name__startswith='Waters').first())
+        player.healing.remove(player.healing.filter(name__startswith='Waters').first()) #type: ignore[arg-type]
     else:
         player.healing.clear()
     player.healing.add(card)
@@ -933,7 +942,7 @@ def choose_healing_card(request, player, card):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def choose_days(request, player_id, card_id):
+def choose_days(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.days, pk=card_id)
     player.hand.add(card)
@@ -943,11 +952,12 @@ def choose_days(request, player_id, card_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def create_days(request, player_id, num):
+def create_days(request: HttpRequest, player_id: int, num: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     game = player.game
 
-    for (deck, name) in [(game.minor_deck, 'minor'), (game.major_deck, 'major')]:
+    decks: list[tuple['Card_ManyRelatedManager[Any]', str]] = [(game.minor_deck, 'minor'), (game.major_deck, 'major')]
+    for (deck, name) in decks:
         days = random.sample(list(deck.all()), num)
         deck.remove(*days)
         player.days.add(*days)
@@ -956,7 +966,7 @@ def create_days(request, player_id, num):
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 # Covets Gleaming Shards of Earth
-def create_plant_treasure(request, player_id):
+def create_plant_treasure(request: HttpRequest, player_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
 
     if player.plant_treasure.exists():
@@ -976,7 +986,7 @@ def create_plant_treasure(request, player_id):
     return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': majors, 'taken_cards_verb': 'set aside'}))
 
 # Covets Gleaming Shards of Earth
-def take_plant_treasure(request, player_id):
+def take_plant_treasure(request: HttpRequest, player_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
 
     # The site does not maintain a counter of metal held by incarna,
@@ -991,7 +1001,7 @@ def take_plant_treasure(request, player_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def gain_energy_on_impending(request, player_id):
+def gain_energy_on_impending(request: HttpRequest, player_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     to_gain = player.impending_energy()
     # You only gain energy on cards made impending on previous turns.
@@ -1011,7 +1021,7 @@ def gain_energy_on_impending(request, player_id):
 
     return render(request, 'player.html', {'player': player})
 
-def impend_card(request, player_id, card_id):
+def impend_card(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.hand, pk=card_id)
     player.impending_with_energy.add(card)
@@ -1019,7 +1029,7 @@ def impend_card(request, player_id, card_id):
 
     return render(request, 'player.html', {'player': player})
 
-def unimpend_card(request, player_id, card_id):
+def unimpend_card(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.impending_with_energy, pk=card_id)
     player.impending_with_energy.remove(card)
@@ -1027,7 +1037,7 @@ def unimpend_card(request, player_id, card_id):
 
     return render(request, 'player.html', {'player': player})
 
-def add_energy_to_impending(request, player_id, card_id):
+def add_energy_to_impending(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.impending_with_energy, pk=card_id)
     impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
@@ -1037,7 +1047,7 @@ def add_energy_to_impending(request, player_id, card_id):
 
     return render(request, 'player.html', {'player': player})
 
-def remove_energy_from_impending(request, player_id, card_id):
+def remove_energy_from_impending(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.impending_with_energy, pk=card_id)
     impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
@@ -1047,7 +1057,7 @@ def remove_energy_from_impending(request, player_id, card_id):
 
     return render(request, 'player.html', {'player': player})
 
-def play_from_impending(request, player_id, card_id):
+def play_from_impending(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.impending_with_energy, pk=card_id)
     impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
@@ -1057,7 +1067,7 @@ def play_from_impending(request, player_id, card_id):
 
     return render(request, 'player.html', {'player': player})
 
-def unplay_from_impending(request, player_id, card_id):
+def unplay_from_impending(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.impending_with_energy, pk=card_id)
     impending_with_energy = get_object_or_404(GamePlayerImpendingWithEnergy, gameplayer=player, card=card)
@@ -1067,7 +1077,7 @@ def unplay_from_impending(request, player_id, card_id):
 
     return render(request, 'player.html', {'player': player})
 
-def play_card(request, player_id, card_id):
+def play_card(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.hand, pk=card_id)
     player.play.add(card)
@@ -1076,7 +1086,7 @@ def play_card(request, player_id, card_id):
     # no log message but deciding to keep with_log_trigger anyway as they could affect what cards the player wants to play
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def unplay_card(request, player_id, card_id):
+def unplay_card(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.play, pk=card_id)
     player.hand.add(card)
@@ -1085,14 +1095,14 @@ def unplay_card(request, player_id, card_id):
     # no log message but deciding to keep with_log_trigger anyway as they could affect what cards the player wants to play
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def forget_card(request, player_id, card_id):
+def forget_card(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     if card := move_card(card_id, [player.hand, player.play, player.discard, player.impending_with_energy], player.game.discard_pile):
         add_log_msg(player.game, player=player, text=f'forgets {card.name}')
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 
-def reclaim_card(request, player_id, card_id):
+def reclaim_card(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.discard, pk=card_id)
     player.hand.add(card)
@@ -1101,7 +1111,7 @@ def reclaim_card(request, player_id, card_id):
     # no log message but deciding to keep with_log_trigger anyway as they could affect what cards the player wants to play
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def reclaim_all(request, player_id, element=None):
+def reclaim_all(request: HttpRequest, player_id: int, element: str | None = None) -> HttpResponse:
     from django.db.models import Q
 
     player = get_object_or_404(GamePlayer, pk=player_id)
@@ -1120,7 +1130,7 @@ def reclaim_all(request, player_id, element=None):
     # no log message but deciding to keep with_log_trigger anyway as they could affect what cards the player wants to play
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def discard_all(request, player_id):
+def discard_all(request: HttpRequest, player_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     # if we used the cached property cards_in_play here, we'd have to clear it,
     # so let's just not use it.
@@ -1152,14 +1162,14 @@ def discard_all(request, player_id):
     # no log message but deciding to keep with_log_trigger anyway as an update is useful at the end of the turn
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def discard_card(request, player_id, card_id):
+def discard_card(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     move_card(card_id, [player.play, player.hand], player.discard)
 
     # no log message but deciding to keep with_log_trigger anyway as they could affect what cards the player wants to play
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def ready(request, player_id):
+def ready(request: HttpRequest, player_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     player.ready = True
     player.last_ready_energy = player.energy
@@ -1183,7 +1193,7 @@ def ready(request, player_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def add_impending_log_msgs(player):
+def add_impending_log_msgs(player: GamePlayer) -> None:
     for impended_card_with_energy in player.gameplayerimpendingwithenergy_set.all().prefetch_related('card'):
         card = impended_card_with_energy.card
         if impended_card_with_energy.this_turn:
@@ -1193,7 +1203,7 @@ def add_impending_log_msgs(player):
         else:
             add_log_msg(player.game, player=player, text=f'adjusts energy on impended card {card.name} ({impended_card_with_energy.energy}/{impended_card_with_energy.cost_with_scenario})')
 
-def add_spirit_specific_resource_msgs(player):
+def add_spirit_specific_resource_msgs(player: GamePlayer) -> None:
     if (elts := player.spirit_specific_resource_elements()) is None:
         add_log_msg(player.game, player=player, text=f'has {player.spirit_specific_resource} {player.spirit_specific_resource_name()}')
     else:
@@ -1201,14 +1211,14 @@ def add_spirit_specific_resource_msgs(player):
         if element_msg:
             add_log_msg(player.game, player=player, text=f'{player.spirit_specific_resource_name()}: {element_msg}')
 
-def change_energy(request, player_id, amount):
+def change_energy(request: HttpRequest, player_id: int, amount: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     player.energy += amount
     player.save()
 
     return render(request, 'energy.html', {'player': player})
 
-def pay_energy(request, player_id):
+def pay_energy(request: HttpRequest, player_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     amount = player.get_play_cost()
     player.energy -= amount
@@ -1217,7 +1227,7 @@ def pay_energy(request, player_id):
 
     return render(request, 'energy.html', {'player': player})
 
-def gain_energy(request, player_id):
+def gain_energy(request: HttpRequest, player_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     amount = player.get_gain_energy()
     player.gain_energy_or_pay_debt(amount)
@@ -1227,7 +1237,7 @@ def gain_energy(request, player_id):
     # no log message but deciding to keep with_log_trigger anyway as they could affect what cards the player wants to play
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
-def change_bargain_cost_per_turn(request, player_id, amount):
+def change_bargain_cost_per_turn(request: HttpRequest, player_id: int, amount: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     player.bargain_cost_per_turn = max(0, player.bargain_cost_per_turn + amount)
     # what if they adjust bargain_cost_per_turn to be less than bargain_paid_this_turn?
@@ -1236,13 +1246,13 @@ def change_bargain_cost_per_turn(request, player_id, amount):
     player.save()
     return render(request, 'energy_and_spirit_resource.html' if player.spirit_specific_resource_gives_energy else 'energy.html', {'player': player})
 
-def change_bargain_paid_this_turn(request, player_id, amount):
+def change_bargain_paid_this_turn(request: HttpRequest, player_id: int, amount: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     player.bargain_paid_this_turn = max(0, min(player.bargain_paid_this_turn + amount, player.bargain_cost_per_turn))
     player.save()
     return render(request, 'energy_and_spirit_resource.html' if player.spirit_specific_resource_gives_energy else 'energy.html', {'player': player})
 
-def change_spirit_specific_resource(request, player_id, amount):
+def change_spirit_specific_resource(request: HttpRequest, player_id: int, amount: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     # no known spirit's spirit-specific-resource can go below 0
     player.spirit_specific_resource = max(player.spirit_specific_resource + amount, 0)
@@ -1259,7 +1269,7 @@ def change_spirit_specific_resource(request, player_id, amount):
 
     return render(request, 'spirit_specific_resource.html', {'player': player})
 
-def gain_rot(request, player_id):
+def gain_rot(request: HttpRequest, player_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     player.spirit_specific_resource += player.rot_gain()
     player.spirit_specific_per_turn_flags |= GamePlayer.ROT_GAINED_THIS_TURN
@@ -1267,7 +1277,7 @@ def gain_rot(request, player_id):
 
     return render(request, 'spirit_specific_resource.html', {'player': player})
 
-def convert_rot(request, player_id):
+def convert_rot(request: HttpRequest, player_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     # be sure to change energy before rot,
     # because energy gain is based on rot.
@@ -1278,7 +1288,7 @@ def convert_rot(request, player_id):
 
     return render(request, 'energy_and_spirit_resource.html', {'player': player})
 
-def toggle_presence(request, player_id, left, top):
+def toggle_presence(request: HttpRequest, player_id: int, left: int, top: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     presence = get_object_or_404(player.presence_set, left=left, top=top)
     presence.opacity = abs(1.0 - presence.opacity)
@@ -1300,7 +1310,7 @@ def toggle_presence(request, player_id, left, top):
 
     return render(request, 'player.html', {'player': player})
 
-def add_element(request, player_id, element):
+def add_element(request: HttpRequest, player_id: int, element: str) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     if element == 'sun': player.temporary_sun += 1
     if element == 'moon': player.temporary_moon += 1
@@ -1315,7 +1325,7 @@ def add_element(request, player_id, element):
 
     return render(request, 'player.html', {'player': player})
 
-def remove_element(request, player_id, element):
+def remove_element(request: HttpRequest, player_id: int, element: str) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     if element == 'sun': player.temporary_sun -= 1
     if element == 'moon': player.temporary_moon -= 1
@@ -1334,7 +1344,7 @@ def remove_element(request, player_id, element):
 
     return render(request, 'player.html', {'player': player})
 
-def add_element_permanent(request, player_id, element):
+def add_element_permanent(request: HttpRequest, player_id: int, element: str) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     if element == 'sun': player.permanent_sun += 1
     if element == 'moon': player.permanent_moon += 1
@@ -1349,7 +1359,7 @@ def add_element_permanent(request, player_id, element):
 
     return render(request, 'player.html', {'player': player})
 
-def remove_element_permanent(request, player_id, element):
+def remove_element_permanent(request: HttpRequest, player_id: int, element: str) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     if element == 'sun': player.permanent_sun -= 1
     if element == 'moon': player.permanent_moon -= 1
@@ -1368,12 +1378,12 @@ def remove_element_permanent(request, player_id, element):
 
     return render(request, 'player.html', {'player': player})
 
-def tab(request, game_id, player_id):
+def tab(request: HttpRequest, game_id: int, player_id: int) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     player = get_object_or_404(GamePlayer, pk=player_id)
     return render(request, 'tabs.html', {'game': game, 'player': player})
 
-def game_logs(request, game_id):
+def game_logs(request: HttpRequest, game_id: int) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
     return render(request, 'logs.html', {'game': game, 'logs': logs})
