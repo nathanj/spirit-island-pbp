@@ -106,7 +106,7 @@ def game_link(request, game_id, channel_id):
     return "ok"
 
 @api.get("/game", response=list[GameSchema])
-def game(request):
+def game_list(request):
     return Game.objects.all()
 
 @api.get("/game/{game_id}", response=GameDetailSchema)
