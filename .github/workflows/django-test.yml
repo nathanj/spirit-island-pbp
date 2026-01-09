@@ -23,6 +23,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
       # nothing specific against Poetry 2, but not everyone running this project is using it.
       - run: pip install 'poetry < 2'
-      - run: poetry install --no-root
+      - run: poetry install --no-root --only main
       - run: poetry run ./manage.py migrate
       - run: poetry run ./manage.py test
