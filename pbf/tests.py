@@ -1390,6 +1390,7 @@ class TestCovetsGleamingShardsPlantTreasure(TestCase):
         self.assertEqual(player.hand.count(), hand_before)
 
 class TestUpload(TestCase):
+    @staticmethod
     def png_chunk(type, data):
         import binascii
         import struct
