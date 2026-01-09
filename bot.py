@@ -104,7 +104,7 @@ if '--fake-discord' in sys.argv:
         def get_channel(self, id):
             return self.Channel(id)
 
-    client = Client()
+    client: discord.client.Client = Client() #type: ignore[assignment]
 else:
     intents = discord.Intents.default()
     intents.message_content = True
