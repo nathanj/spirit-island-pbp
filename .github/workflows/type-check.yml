@@ -1,0 +1,26 @@
+name: type check
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  schedule:
+    # Weekly.
+    - cron: "0 0 * * 0"
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        python-version:
+          - '3.10'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      # nothing specific against Poetry 2, but not everyone running this project is using it.
+      - run: pip install 'poetry < 2'
+      - run: poetry install --no-root --with typecheck
+      - run: poetry run mypy .
