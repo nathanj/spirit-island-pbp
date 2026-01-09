@@ -18,7 +18,7 @@ class CardSchema(ModelSchema):
         fields = ['id', 'name']
 
 class ImpendingSchema(ModelSchema):
-    card: CardSchema = None
+    card: CardSchema
     class Meta:
         model = GamePlayerImpendingWithEnergy
         fields = ['energy', 'in_play', 'this_turn']
@@ -29,7 +29,7 @@ class PresenceSchema(ModelSchema):
         fields = ['opacity', 'energy', 'elements']
 
 class GamePlayerSchema(ModelSchema):
-    spirit: SpiritSchema = None
+    spirit: SpiritSchema
     hand: list[CardSchema] = []
     discard: list[CardSchema] = []
     play: list[CardSchema] = []
