@@ -1,9 +1,20 @@
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, register_converter
 from django.conf import settings
 from django.conf.urls.static import static
 from pbf import views
 from pbf.api import api
+
+class NegativeIntConverter:
+    regex = r'-?\d+'
+
+    def to_python(self, value):
+        return int(value)
+
+    def to_url(self, value):
+        return '%d' % value
+
+register_converter(NegativeIntConverter, 'negint')
 
 urlpatterns = [
     path('', include('django_prometheus.urls')),
@@ -56,10 +67,10 @@ urlpatterns = [
     path('game/<int:player_id>/discard/<int:card_id>', views.discard_card, name='discard_card'),
     path('game/<int:player_id>/energy/pay', views.pay_energy, name='pay_energy'),
     path('game/<int:player_id>/energy/gain', views.gain_energy, name='gain_energy'),
-    path('game/<int:player_id>/energy/<str:amount>', views.change_energy, name='change_energy'),
-    path('game/<int:player_id>/bargain_cost/<str:amount>', views.change_bargain_cost_per_turn, name='change_bargain_cost_per_turn'),
-    path('game/<int:player_id>/bargain_pay/<str:amount>', views.change_bargain_paid_this_turn, name='change_bargain_paid_this_turn'),
-    path('game/<int:player_id>/spirit_specific_resource/<str:amount>', views.change_spirit_specific_resource, name='change_spirit_specific_resource'),
+    path('game/<int:player_id>/energy/<negint:amount>', views.change_energy, name='change_energy'),
+    path('game/<int:player_id>/bargain_cost/<negint:amount>', views.change_bargain_cost_per_turn, name='change_bargain_cost_per_turn'),
+    path('game/<int:player_id>/bargain_pay/<negint:amount>', views.change_bargain_paid_this_turn, name='change_bargain_paid_this_turn'),
+    path('game/<int:player_id>/spirit_specific_resource/<negint:amount>', views.change_spirit_specific_resource, name='change_spirit_specific_resource'),
     path('game/<int:player_id>/rot/gain', views.gain_rot, name='gain_rot'),
     path('game/<int:player_id>/rot/convert', views.convert_rot, name='convert_rot'),
     path('game/<int:player_id>/presence/<int:left>/<int:top>', views.toggle_presence, name='toggle_presence'),

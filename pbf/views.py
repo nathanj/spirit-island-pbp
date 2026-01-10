@@ -1214,7 +1214,6 @@ def add_spirit_specific_resource_msgs(player):
             add_log_msg(player.game, player=player, text=f'{player.spirit_specific_resource_name()}: {element_msg}')
 
 def change_energy(request, player_id, amount):
-    amount = int(amount)
     player = get_object_or_404(GamePlayer, pk=player_id)
     player.energy += amount
     player.save()
@@ -1241,7 +1240,6 @@ def gain_energy(request, player_id):
     return with_log_trigger(render(request, 'energy.html', {'player': player}))
 
 def change_bargain_cost_per_turn(request, player_id, amount):
-    amount = int(amount)
     player = get_object_or_404(GamePlayer, pk=player_id)
     player.bargain_cost_per_turn = max(0, player.bargain_cost_per_turn + amount)
     # what if they adjust bargain_cost_per_turn to be less than bargain_paid_this_turn?
@@ -1251,14 +1249,12 @@ def change_bargain_cost_per_turn(request, player_id, amount):
     return render(request, 'energy_and_spirit_resource.html' if player.spirit_specific_resource_gives_energy else 'energy.html', {'player': player})
 
 def change_bargain_paid_this_turn(request, player_id, amount):
-    amount = int(amount)
     player = get_object_or_404(GamePlayer, pk=player_id)
     player.bargain_paid_this_turn = max(0, min(player.bargain_paid_this_turn + amount, player.bargain_cost_per_turn))
     player.save()
     return render(request, 'energy_and_spirit_resource.html' if player.spirit_specific_resource_gives_energy else 'energy.html', {'player': player})
 
 def change_spirit_specific_resource(request, player_id, amount):
-    amount = int(amount)
     player = get_object_or_404(GamePlayer, pk=player_id)
     # no known spirit's spirit-specific-resource can go below 0
     player.spirit_specific_resource = max(player.spirit_specific_resource + amount, 0)
