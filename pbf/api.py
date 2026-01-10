@@ -1,5 +1,4 @@
 from django.shortcuts import get_object_or_404
-from typing import List
 from ninja import NinjaAPI
 from ninja import Field, ModelSchema
 import os
@@ -31,14 +30,14 @@ class PresenceSchema(ModelSchema):
 
 class GamePlayerSchema(ModelSchema):
     spirit: SpiritSchema = None
-    hand: List[CardSchema] = []
-    discard: List[CardSchema] = []
-    play: List[CardSchema] = []
-    selection: List[CardSchema] = []
-    days: List[CardSchema] = []
-    healing: List[CardSchema] = []
-    impending: List[ImpendingSchema] = Field([], alias="gameplayerimpendingwithenergy_set")
-    presence: List[PresenceSchema] = Field([], alias="presence_set")
+    hand: list[CardSchema] = []
+    discard: list[CardSchema] = []
+    play: list[CardSchema] = []
+    selection: list[CardSchema] = []
+    days: list[CardSchema] = []
+    healing: list[CardSchema] = []
+    impending: list[ImpendingSchema] = Field([], alias="gameplayerimpendingwithenergy_set")
+    presence: list[PresenceSchema] = Field([], alias="presence_set")
     class Meta:
         model = GamePlayer
         fields = [
@@ -57,10 +56,10 @@ class GameSchema(ModelSchema):
         fields = ['id', 'name', 'discord_channel', 'scenario']
 
 class GameDetailSchema(ModelSchema):
-    players: List[GamePlayerSchema] = Field([], alias="gameplayer_set")
-    minor_deck: List[CardSchema] = []
-    major_deck: List[CardSchema] = []
-    discard_pile: List[CardSchema] = []
+    players: list[GamePlayerSchema] = Field([], alias="gameplayer_set")
+    minor_deck: list[CardSchema] = []
+    major_deck: list[CardSchema] = []
+    discard_pile: list[CardSchema] = []
     class Meta:
         model = Game
         # we've not exported the screenshots, because it's not obvious how we would do it.
@@ -106,7 +105,7 @@ def game_link(request, game_id, channel_id):
     game.save()
     return "ok"
 
-@api.get("/game", response=List[GameSchema])
+@api.get("/game", response=list[GameSchema])
 def game(request):
     return Game.objects.all()
 
@@ -114,7 +113,7 @@ def game(request):
 def game(request, game_id):
     return get_object_or_404(Game, pk=game_id)
 
-@api.get("/game/{game_id}/log", response=List[GameLogSchema])
+@api.get("/game/{game_id}/log", response=list[GameLogSchema])
 def gamelogs(request, game_id, after: int = None):
     game = get_object_or_404(Game, pk=game_id)
     if after is None:
