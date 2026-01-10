@@ -158,44 +158,44 @@
   <span hx-include="[name='spoiler_power_gain']">
   <p>Gain Minor ({{ player.game.minor_deck.count }} in deck):
   {% if player.aspect == 'Mentor' %}
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '2' %}">2 Cards (keep 2)</button>
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}" hx-confirm="Confirm you want to look at 4 minor power cards and keep 3 (Starlight Seeks Its Form used Boon of Reimagining on you)?">4 Cards (keep 3)</button>
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' 2 %}">2 Cards (keep 2)</button>
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' 4 %}" hx-confirm="Confirm you want to look at 4 minor power cards and keep 3 (Starlight Seeks Its Form used Boon of Reimagining on you)?">4 Cards (keep 3)</button>
   {% else %}
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '4' %}">4 Cards</button>
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' '6' %}">6 Cards</button>
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' 4 %}">4 Cards</button>
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'minor' 6 %}">6 Cards</button>
   {% endif %}
-  <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' '1' %}">1 Card</button>
+  <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' 1 %}">1 Card</button>
 
   <button class="btn" hx-get="{% url 'minor_deck' player.game.id %}" hx-target="#Minor-deck" hx-swap="innerHTML">Show deck</button>
 
   <button class="btn" onClick="const ts = document.getElementById('trans-sac').style; ts.display = ts.display == 'block' ? 'none' : 'block'">Trans. Sac.</button>
   <div id="trans-sac" style="display: none">
     Transformative Sacrifice:
-    <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' '2' %}">Take 2</button>
-    <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' '3' %}">Take 3</button>
-    <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' '4' %}">Take 4</button>
+    <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' 2 %}">Take 2</button>
+    <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' 3 %}">Take 3</button>
+    <button class="btn" hx-get="{% url 'take_powers' player.id 'minor' 4 %}">Take 4</button>
   </div>
 
   <div id="Minor-deck"></div>
 
   <p>Gain Major ({{ player.game.major_deck.count }} in deck):
   {% if player.aspect == 'Mentor' %}
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards (keep 2)</button>
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}" hx-confirm="Confirm you want to look at 4 major power cards and keep 1 (event Visions Out of Time)?">4 Cards</button>
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' 2 %}">2 Cards (keep 2)</button>
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' 4 %}" hx-confirm="Confirm you want to look at 4 major power cards and keep 1 (event Visions Out of Time)?">4 Cards</button>
   {% else %}
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '4' %}">4 Cards</button>
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' 4 %}">4 Cards</button>
   {% if player.spirit.name == 'Covets' %}
   {% if player.aspect == 'v1.2.1' %}
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '6' %}">6 Cards</button>
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' 6 %}">6 Cards</button>
   {% elif player.aspect == 'v1.3' %}
-  <button class="btn" hx-get="{% url 'take_powers' player.id 'major' '3' %}"{% if not player.plant_treasure_this_turn %} disabled{% endif %}>Take 3</button>
+  <button class="btn" hx-get="{% url 'take_powers' player.id 'major' 3 %}"{% if not player.plant_treasure_this_turn %} disabled{% endif %}>Take 3</button>
   {% elif player.aspect >= 'v1.4' and not player.plant_treasure.exists %}
   <button class="btn" hx-get="{% url 'create_plant_treasure' player.id %}"{% if not player.plant_treasure_this_turn %} disabled{% endif %}>Set aside 3 (Plant Treasure)</button>
   {% endif %}
   {% endif %}
-  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' '2' %}">2 Cards</button>
+  <button class="btn" hx-get="{% url 'gain_power' player.id 'major' 2 %}">2 Cards</button>
   {% endif %}
-  <button class="btn" hx-get="{% url 'take_powers' player.id 'major' '1' %}">1 Card</button>
+  <button class="btn" hx-get="{% url 'take_powers' player.id 'major' 1 %}">1 Card</button>
 
   <button class="btn" hx-get="{% url 'major_deck' player.game.id %}" hx-target="#Major-deck" hx-swap="innerHTML">Show deck</button>
   <div id="Major-deck"></div>
