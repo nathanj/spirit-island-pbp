@@ -6,8 +6,8 @@
      hx-indicator="#energy-spinner">
   <p>
     Energy: {{ player.energy }} 
-    <button class="btn" hx-get="{% url 'change_energy' player.id '1' %}">+1{% if player.remaining_bargain_cost > 0 %} (⚠️ debt){% endif %}</button>
-    <button class="btn" hx-get="{% url 'change_energy' player.id '-1' %}">-1</button>
+    <button class="btn" hx-get="{% url 'change_energy' player.id 1 %}">+1{% if player.remaining_bargain_cost > 0 %} (⚠️ debt){% endif %}</button>
+    <button class="btn" hx-get="{% url 'change_energy' player.id -1 %}">-1</button>
     {% if player.gained_this_turn %}
       Gained!
     {% else %}
@@ -31,10 +31,10 @@
   {% if player.bargain_cost_per_turn or player.bargain_in_play %}
   <p{% if player.spirit_specific_resource_gives_energy %} hx-target="#spirit-energy-and-resource-{{player.id}}"{% endif %}>
   Bargain cost: {{ player.bargain_paid_this_turn }} paid this turn / {{ player.bargain_cost_per_turn }} per turn
-  <button class="btn" hx-get="{% url 'change_bargain_paid_this_turn' player.id '1' %}" {% if player.remaining_bargain_cost <= 0 %}disabled{% endif %}>+1 paid</button>
-  <button class="btn" hx-get="{% url 'change_bargain_paid_this_turn' player.id '-1' %}" {% if player.bargain_paid_this_turn <= 0 %}disabled{% endif %}>-1 paid</button>
-  <button class="btn" hx-get="{% url 'change_bargain_cost_per_turn' player.id '1' %}">+1 cost</button>
-  <button class="btn" hx-get="{% url 'change_bargain_cost_per_turn' player.id '-1' %}">-1 cost</button>
+  <button class="btn" hx-get="{% url 'change_bargain_paid_this_turn' player.id 1 %}" {% if player.remaining_bargain_cost <= 0 %}disabled{% endif %}>+1 paid</button>
+  <button class="btn" hx-get="{% url 'change_bargain_paid_this_turn' player.id -1 %}" {% if player.bargain_paid_this_turn <= 0 %}disabled{% endif %}>-1 paid</button>
+  <button class="btn" hx-get="{% url 'change_bargain_cost_per_turn' player.id 1 %}">+1 cost</button>
+  <button class="btn" hx-get="{% url 'change_bargain_cost_per_turn' player.id -1 %}">-1 cost</button>
   </p>
   {% endif %}
 </div>
