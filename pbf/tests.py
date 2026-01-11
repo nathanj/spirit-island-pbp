@@ -1492,6 +1492,63 @@ class TestImport(TestCase):
         self.assertEqual(game.minor_deck.count(), self.NUM_MINORS - 1)
         self.assertEqual(list(game.minor_deck.filter(id=minor.id)), [])
 
+class TestApi(TestCase):
+    def test_game_list(self):
+        import json
+        client = Client()
+        game = Game.objects.create(name='test game', scenario='Blitz')
+        j = json.loads(client.get('/api/game').content)
+        self.assertEqual(len(j), 1)
+        self.assertEqual(j[0]['id'], str(game.id))
+        self.assertEqual(j[0]['name'], 'test game')
+        self.assertEqual(j[0]['scenario'], 'Blitz')
+
+    def test_game_detail(self):
+        import json
+        client = Client()
+        game = Game.objects.create(name='test game', scenario='Blitz')
+        j = json.loads(client.get(f'/api/game/{game.id}').content)
+        self.assertEqual(j['id'], str(game.id))
+        self.assertEqual(j['name'], 'test game')
+        self.assertEqual(j['scenario'], 'Blitz')
+
+    def test_game_decks(self):
+        import json
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        j = json.loads(client.get(f'/api/game/{game.id}').content)
+        self.assertEqual([c['name'] for c in j['minor_deck']], list(Card.objects.filter(type=Card.MINOR, exclude_from_deck=False).values_list('name', flat=True)))
+        self.assertEqual([c['name'] for c in j['major_deck']], list(Card.objects.filter(type=Card.MAJOR, exclude_from_deck=False).values_list('name', flat=True)))
+        self.assertEqual(j['discard_pile'], [])
+
+    def test_spirit(self):
+        import json
+        client = Client()
+        game = Game.objects.create()
+        client.post(f'/game/{game.id}/add-player', {'spirit': 'River', 'color': 'random'})
+        j = json.loads(client.get(f'/api/game/{game.id}').content)
+        self.assertEqual(len(j['players']), 1)
+        player = j['players'][0]
+        self.assertEqual(player['spirit']['name'], 'River')
+        self.assertEqual([c['name'] for c in player['hand']], ['Boon of Vigor', 'Flash Floods', "River's Bounty", 'Wash Away'])
+        self.assertEqual(player['play'], [])
+        self.assertEqual(player['discard'], [])
+        self.assertEqual(player['selection'], [])
+        self.assertEqual(len(player['presence']), 12)
+        # A number of fields not tested yet, can test them if there's any reason to believe one is more bug-prune than the other
+
+    def test_log(self):
+        import json
+        client = Client()
+        game = Game.objects.create()
+        game.gamelog_set.create(text='hello world', spoiler_text='hidden', images='island.png')
+        j = json.loads(client.get(f'/api/game/{game.id}/log').content)
+        self.assertEqual(len(j), 1)
+        self.assertEqual(j[0]['text'], 'hello world')
+        self.assertEqual(j[0]['spoiler_text'], 'hidden')
+        self.assertEqual(j[0]['images'], 'island.png')
+
 class TestLog(TestCase):
     from .views import add_log_msg
     add_log_msg = staticmethod(add_log_msg)
