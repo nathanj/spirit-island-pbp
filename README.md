@@ -41,6 +41,7 @@ Run the type checker:
 
 ```
 poetry run mypy .
+poetry run mypy --strict pbf/{admin,models,views}.py
 ```
 
 ## Making a new admin account for your instance
