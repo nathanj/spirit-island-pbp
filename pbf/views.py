@@ -731,7 +731,8 @@ def reshuffle_discard(game, type):
 
 def take_powers(request, player_id, type, num):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    spoiler = request.GET.get('spoiler_power_gain', False)
+    # most compliant browsers should send 'on', but we'll allow 'true' as well
+    spoiler = request.GET.get('spoiler_power_gain', '') in ('on', 'true')
 
     taken_cards = cards_from_deck(player.game, num, type)
     player.hand.add(*taken_cards)
@@ -772,7 +773,8 @@ def gain_power(request, player_id, type, num):
         # Otherwise, cards in the previous selection would no longer be accessible.
         return render(request, 'player.html', {'player': player})
 
-    spoiler = request.GET.get('spoiler_power_gain', False)
+    # most compliant browsers should send 'on', but we'll allow 'true' as well
+    spoiler = request.GET.get('spoiler_power_gain', '') in ('on', 'true')
 
     selection = cards_from_deck(player.game, num, type)
 

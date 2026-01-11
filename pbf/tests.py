@@ -1938,7 +1938,7 @@ class TestLog(TestCase):
         client.post('/new')
         game = Game.objects.last()
         player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='River'), color='red')
-        client.get(f"/game/{player.id}/gain/minor/4?spoiler_power_gain=true")
+        client.get(f"/game/{player.id}/gain/minor/4?spoiler_power_gain=on")
         self.assertIn('River gains a minor power. Choices:', game.gamelog_set.last().text)
         self.assertNotIn(player.selection.first().name, game.gamelog_set.last().text)
         self.assertIn(player.selection.first().url(), game.gamelog_set.last().images)
