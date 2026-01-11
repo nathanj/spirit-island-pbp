@@ -229,15 +229,14 @@ class Card(models.Model):
         return thresholds
 
     def healing_thresholds(self, num_healing_cards, healing_markers):
-        elements = {elt: n for (_, _, n, elt) in healing_markers}
-        total_elements = sum(elements.values())
+        total_elements = sum(healing_markers.values())
         if self.name.startswith('Waters'):
             y, elt = (80, 'animal') if self.name == 'Waters Taste of Ruin' else (74, 'water')
-            return [Threshold(2, y, total_elements >= 5 and elements[elt] >= 3)]
+            return [Threshold(2, y, total_elements >= 5 and healing_markers[elt] >= 3)]
         else:
             y, elt = (65, 'animal') if self.name == 'Roiling Waters' else (68, 'water')
             return [
-                Threshold(2, y, total_elements >= 3 and elements[elt] >= 2),
+                Threshold(2, y, total_elements >= 3 and healing_markers[elt] >= 2),
                 Threshold(2, y + 8, num_healing_cards == 0),
             ]
 
@@ -727,11 +726,24 @@ class GamePlayer(models.Model):
     def selection_with_thresholds(self):
         sel = self.cards_with_thresholds(self.selection.all())
         num_healing = None
+        healing_markers = None
         for card in sel:
             if card.is_healing():
                 if num_healing is None:
                     num_healing = self.healing.count()
-                card.computed_thresholds.extend(card.healing_thresholds(num_healing, self.spirit_specific_resource_elements()))
+                if healing_markers is None:
+                    # only Wounded Waters Bleeding should ever be gaining healing cards,
+                    # but in case someone else edits in healing cards to some other spirit's selection,
+                    # they have no healing markers.
+                    # not even a Shifting Memory of Ages elemental marker should count.
+                    if self.spirit.name == 'Waters':
+                        if elts := self.spirit_specific_resource_elements():
+                            healing_markers = {elt: count for (_, _, count, elt) in elts}
+                        else:
+                            raise ValueError("shouldn't happen - Wounded Water Bleeding had no spirit-specific elements")
+                    else:
+                        healing_markers = {}
+                card.computed_thresholds.extend(card.healing_thresholds(num_healing, healing_markers))
         return sel
 
     def impending_with_thresholds(self):
