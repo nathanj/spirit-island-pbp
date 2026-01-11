@@ -968,6 +968,138 @@ class TestElements(TestCase):
         player.presence_set.create(left=0, top=0, opacity=0.0, elements='Water,Rot')
         self.assert_elements(player, expected_elements)
 
+class TestCheckElements(TestCase):
+    @staticmethod
+    def check_elements(*args):
+        from .views import check_elements
+        return check_elements(*args)
+
+    def test_single_element_none(self):
+        from collections import defaultdict
+        self.assertFalse(self.check_elements(defaultdict(int), '3A'))
+
+    def test_single_element_not_enough(self):
+        elements = Counter()
+        elements[Elements.Air] = 2
+        self.assertFalse(self.check_elements(elements, '3A'))
+
+    def test_single_element_exactly_enough(self):
+        elements = Counter()
+        elements[Elements.Air] = 3
+        self.assertTrue(self.check_elements(elements, '3A'))
+
+    def test_single_element_different_element(self):
+        elements = Counter()
+        elements[Elements.Fire] = 3
+        self.assertFalse(self.check_elements(elements, '3A'))
+
+    def test_single_element_more_than_enough(self):
+        elements = Counter()
+        elements[Elements.Air] = 4
+        self.assertTrue(self.check_elements(elements, '3A'))
+
+    def test_multiple_element_wrong_combination(self):
+        elements = Counter()
+        elements[Elements.Sun] = 2
+        elements[Elements.Animal] = 3
+        self.assertFalse(self.check_elements(elements, '3S2N'))
+
+    def test_multiple_element_exactly_enough(self):
+        elements = Counter()
+        elements[Elements.Sun] = 3
+        elements[Elements.Animal] = 2
+        self.assertTrue(self.check_elements(elements, '3S2N'))
+
+    def test_or_threshold_not_enough(self):
+        elements = Counter()
+        elements[Elements.Sun] = 2
+        elements[Elements.Fire] = 2
+        self.assertFalse(self.check_elements(elements, ['3S', '3F']))
+
+    def test_or_threshold_irrelevant_element(self):
+        elements = Counter()
+        elements[Elements.Water] = 3
+        self.assertFalse(self.check_elements(elements, ['3S', '3F']))
+
+    def test_or_threshold_enough_first(self):
+        elements = Counter()
+        elements[Elements.Sun] = 3
+        self.assertTrue(self.check_elements(elements, ['3S', '3F']))
+
+    def test_or_threshold_enough_second(self):
+        elements = Counter()
+        elements[Elements.Fire] = 3
+        self.assertTrue(self.check_elements(elements, ['3S', '3F']))
+
+    def test_equiv_one_naturally_enough(self):
+        elements = Counter()
+        elements[Elements.Fire] = 4
+        self.assertTrue(self.check_elements(elements, '4F', 'MF'))
+
+    def test_equiv_one_other_enough(self):
+        elements = Counter()
+        elements[Elements.Moon] = 4
+        self.assertTrue(self.check_elements(elements, '4F', 'MF'))
+
+    def test_equiv_one_combined_enough(self):
+        elements = Counter()
+        elements[Elements.Moon] = 2
+        elements[Elements.Fire] = 2
+        self.assertTrue(self.check_elements(elements, '4F', 'MF'))
+
+    def test_equiv_one_not_enough(self):
+        elements = Counter()
+        elements[Elements.Moon] = 2
+        elements[Elements.Fire] = 1
+        self.assertFalse(self.check_elements(elements, '4F', 'MF'))
+
+    def test_equiv_one_irrelevant_element(self):
+        elements = Counter()
+        elements[Elements.Moon] = 2
+        elements[Elements.Water] = 4
+        self.assertFalse(self.check_elements(elements, '4F', 'MF'))
+
+    def test_equiv_two_enough_first(self):
+        elements = Counter()
+        elements[Elements.Moon] = 5
+        self.assertTrue(self.check_elements(elements, '3M2F', 'MF'))
+
+    def test_equiv_two_enough_second(self):
+        elements = Counter()
+        elements[Elements.Fire] = 5
+        self.assertTrue(self.check_elements(elements, '3M2F', 'MF'))
+
+    def test_equiv_two_naturally_enough(self):
+        elements = Counter()
+        elements[Elements.Moon] = 3
+        elements[Elements.Fire] = 2
+        self.assertTrue(self.check_elements(elements, '3M2F', 'MF'))
+
+    def test_equiv_two_combined_enough(self):
+        elements = Counter()
+        elements[Elements.Moon] = 2
+        elements[Elements.Fire] = 3
+        self.assertTrue(self.check_elements(elements, '3M2F', 'MF'))
+
+    def test_equiv_two_irrelevant_element(self):
+        elements = Counter()
+        elements[Elements.Moon] = 3
+        elements[Elements.Water] = 2
+        self.assertFalse(self.check_elements(elements, '3M2F', 'MF'))
+
+    def test_equiv_two_plus_another_missing(self):
+        elements = Counter()
+        elements[Elements.Moon] = 10
+        elements[Elements.Fire] = 10
+        self.assertFalse(self.check_elements(elements, '4M3F2A', 'MF'))
+
+    def test_equiv_two_plus_another_enough(self):
+        elements = Counter()
+        elements[Elements.Moon] = 1
+        elements[Elements.Fire] = 6
+        elements[Elements.Air] = 2
+        self.assertTrue(self.check_elements(elements, '4M3F2A', 'MF'))
+
 class TestImpending(TestCase):
     def setup_players(self, n=1):
         client = Client()
