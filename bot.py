@@ -8,6 +8,7 @@ import json
 import structlog
 import async_timeout
 import re
+import typing
 from dotenv import load_dotenv
 from PIL import Image
 import redis.asyncio as redis
@@ -103,7 +104,7 @@ if '--fake-discord' in sys.argv:
         def get_channel(self, id):
             return self.Channel(id)
 
-    client = Client()
+    client: discord.client.Client = Client() #type: ignore[assignment]
 else:
     intents = discord.Intents.default()
     intents.message_content = True
@@ -115,7 +116,7 @@ list_guilds = '--list-guilds' in sys.argv
 LOG = structlog.get_logger()
 debug = os.environ.get('DEBUG', None) == 'yes'
 
-DISCORD_KEY = os.getenv('DISCORD_KEY')
+DISCORD_KEY = os.getenv('DISCORD_KEY', '')
 DJANGO_HOST = os.getenv('DJANGO_HOST', 'localhost')
 DJANGO_PORT = int(os.getenv('DJANGO_PORT', 8000))
 NON_UPDATE_CHANNEL_PATTERN = re.compile(os.getenv('DISCORD_NON_UPDATE_CHANNEL_PATTERN', r'\A\d+-?dc'))
@@ -433,14 +434,18 @@ async def relay_game(channel_id, log):
         await channel.send('\n'.join(combined_text))
         combined_text = []
 
+class GameLogBufferEntry(typing.TypedDict):
+    timestamp: datetime.datetime
+    logs: list[dict[str, typing.Any]]
+
 # Buffer up the log so we can send a group of related log messages together.
-game_log_buffer = {}
+game_log_buffer: dict[int, GameLogBufferEntry] = {}
 
 # We keep the last message sent to each channel,
 # which helped us drop duplicate messages when the bot had a bug that would send them.
 # This shouldn't be necessary now that we make sure to only create one relay_task,
 # but we'll keep it in case there are other causes of duplicate messages.
-last_message = {}
+last_message: dict[int, str] = {}
 
 async def logger():
     await client.wait_until_ready()

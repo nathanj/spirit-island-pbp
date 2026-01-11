@@ -18,7 +18,7 @@ class CardSchema(ModelSchema):
         fields = ['id', 'name']
 
 class ImpendingSchema(ModelSchema):
-    card: CardSchema = None
+    card: CardSchema
     class Meta:
         model = GamePlayerImpendingWithEnergy
         fields = ['energy', 'in_play', 'this_turn']
@@ -29,7 +29,7 @@ class PresenceSchema(ModelSchema):
         fields = ['opacity', 'energy', 'elements']
 
 class GamePlayerSchema(ModelSchema):
-    spirit: SpiritSchema = None
+    spirit: SpiritSchema
     hand: list[CardSchema] = []
     discard: list[CardSchema] = []
     play: list[CardSchema] = []
@@ -106,7 +106,7 @@ def game_link(request, game_id, channel_id):
     return "ok"
 
 @api.get("/game", response=list[GameSchema])
-def game(request):
+def game_list(request):
     return Game.objects.all()
 
 @api.get("/game/{game_id}", response=GameDetailSchema)
@@ -114,7 +114,7 @@ def game(request, game_id):
     return get_object_or_404(Game, pk=game_id)
 
 @api.get("/game/{game_id}/log", response=list[GameLogSchema])
-def gamelogs(request, game_id, after: int = None):
+def gamelogs(request, game_id, after: int | None = None):
     game = get_object_or_404(Game, pk=game_id)
     if after is None:
         return game.gamelog_set.all()

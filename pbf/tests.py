@@ -57,29 +57,29 @@ class TestDecks(TestCase):
         self.assertEqual(list(player.impending_with_energy.values_list('name', flat=True)), ["River's Bounty", 'Vengeance of the Dead exploratory'])
 
 class TestSpiritPresence(TestCase):
-    from .views import make_presence
-    make_presence = staticmethod(make_presence)
-
     def test_base_serpent_presence(self):
+        from .views import make_presence
         game = Game()
         game.save()
         player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='Serpent'))
-        self.make_presence(player)
+        make_presence(player)
         self.assertEqual(player.presence_set.filter(opacity=1).count(), 12)
 
     def test_locus_serpent_presence(self):
+        from .views import make_presence
         game = Game()
         game.save()
         player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='Serpent'), aspect='Locus')
-        self.make_presence(player)
+        make_presence(player)
         self.assertEqual(player.presence_set.filter(opacity=1).count(), 11)
 
     def test_every_spirit(self):
+        from .views import make_presence
         game = Game()
         game.save()
         for spirit in Spirit.objects.all():
             player = game.gameplayer_set.create(spirit=spirit)
-            self.make_presence(player)
+            make_presence(player)
             # It doesn't add much value to check the exact number for every single spirit.
             # Just check that they're within the range.
             self.assertGreaterEqual(player.presence_set.filter(opacity=1).count(), 9)
@@ -345,8 +345,10 @@ class TestEnergyGainAndBargainDebt(TestCase):
         self.assertEqual(player.bargain_paid_this_turn, 8)
 
 class TestMatchSpirit(TestCase):
-    from .views import try_match_spirit
-    try_match_spirit = staticmethod(try_match_spirit)
+    @staticmethod
+    def try_match_spirit(*args):
+        from .views import try_match_spirit
+        return try_match_spirit(*args)
 
     def setup_game(self, players):
         game = Game()
@@ -1390,6 +1392,7 @@ class TestCovetsGleamingShardsPlantTreasure(TestCase):
         self.assertEqual(player.hand.count(), hand_before)
 
 class TestUpload(TestCase):
+    @staticmethod
     def png_chunk(type, data):
         import binascii
         import struct
@@ -1682,8 +1685,10 @@ class TestApi(TestCase):
         self.assertEqual(j[0]['images'], 'island.png')
 
 class TestLog(TestCase):
-    from .views import add_log_msg
-    add_log_msg = staticmethod(add_log_msg)
+    @staticmethod
+    def add_log_msg(*args, **kwargs):
+        from .views import add_log_msg
+        return add_log_msg(*args, **kwargs)
 
     def test_just_message(self):
         game = Game.objects.create()

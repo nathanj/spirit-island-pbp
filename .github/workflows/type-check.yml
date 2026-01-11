@@ -1,4 +1,4 @@
-name: Django test
+name: type check
 on:
   pull_request:
   push:
@@ -14,7 +14,6 @@ jobs:
       matrix:
         python-version:
           - '3.10'
-          - '3.11'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,6 +22,5 @@ jobs:
           python-version: ${{ matrix.python-version }}
       # nothing specific against Poetry 2, but not everyone running this project is using it.
       - run: pip install 'poetry < 2'
-      - run: poetry install --no-root --only main
-      - run: poetry run ./manage.py migrate
-      - run: poetry run ./manage.py test
+      - run: poetry install --no-root --with typecheck
+      - run: poetry run mypy .

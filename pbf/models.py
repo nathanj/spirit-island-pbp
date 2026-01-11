@@ -364,7 +364,7 @@ class GamePlayer(models.Model):
     selection = models.ManyToManyField(Card, related_name='selection', blank=True)
     days = models.ManyToManyField(Card, related_name='days', blank=True)
     # had to rename from "impending" to enable ManyToManyField migration
-    impending_with_energy = models.ManyToManyField(Card, through='GamePlayerImpendingWithEnergy', related_name='impending_with_energy', blank=True)
+    impending_with_energy = models.ManyToManyField(Card, through='pbf.GamePlayerImpendingWithEnergy', related_name='impending_with_energy', blank=True)
     healing = models.ManyToManyField(Card, related_name='healing', blank=True)
     # the field is nullable, but should only be null for GamePlayer that were created before it was added.
     last_unready_energy = models.IntegerField(null=True)

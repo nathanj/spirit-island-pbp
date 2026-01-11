@@ -40,6 +40,11 @@ async-timeout = "^5.0.0"
 # so this will have to be resolved before upgrading to that version
 django-debug-toolbar = "^5.0.0"
 
+[tool.poetry.group.typecheck.dependencies]
+mypy = "^1.18.0"
+django-stubs = "^5.0.0"
+types-requests = "^2.32.4"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
