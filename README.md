@@ -29,6 +29,20 @@ poetry run python .\manage.py migrate auth
 poetry run ./manage.py test
 ```
 
+## Type checking
+
+Install the type checker:
+
+```
+poetry install --no-root --with typecheck
+```
+
+Run the type checker:
+
+```
+poetry run mypy .
+```
+
 ## Making a new admin account for your instance
 
 ```
