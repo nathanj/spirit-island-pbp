@@ -708,6 +708,58 @@ class TestChooseCard(TestCase):
     def test_covets_major(self):
         self.assert_cards_gained('major', 6, 1)
 
+    def assert_gain_and_days(self, draw, card_type, ops):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name="Fractured"), color="blue")
+        hand_before = player.hand.count()
+        days_before = player.days.count()
+        discard_before = game.discard_pile.count()
+        client.post(f"/game/{player.id}/gain/{card_type}/{draw}")
+        for op in ops:
+            client.post(f"/game/{player.id}/{op}/{player.selection.first().id}")
+        self.assertEqual(player.hand.count(), hand_before + sum(1 for op in ops if op == 'choose'))
+        self.assertEqual(player.days.count(), days_before + sum(1 for op in ops if op == 'send_days'))
+        self.assertEqual(list(player.selection.all()), [])
+        self.assertEqual(game.discard_pile.count(), discard_before + draw - len(ops))
+
+    def test_fractured_days_minor_days_then_gain(self):
+        self.assert_gain_and_days(4, 'minor', ['send_days', 'choose'])
+
+    def test_fractured_days_minor_gain_then_days(self):
+        self.assert_gain_and_days(4, 'minor', ['choose', 'send_days'])
+
+    def test_fractured_days_reimagining_days_then_gain(self):
+        self.assert_gain_and_days(6, 'minor', ['send_days', 'send_days', 'choose', 'choose'])
+
+    def test_fractured_days_reimagining_gain_then_days(self):
+        self.assert_gain_and_days(6, 'minor', ['choose', 'choose', 'send_days', 'send_days'])
+
+    def test_fractured_days_reimagining_mixed_abab(self):
+        self.assert_gain_and_days(6, 'minor', ['send_days', 'choose', 'send_days', 'choose'])
+
+    def test_fractured_days_reimagining_mixed_abba(self):
+        self.assert_gain_and_days(6, 'minor', ['send_days', 'choose', 'choose', 'send_days'])
+
+    def test_fractured_days_reimagining_mixed_baba(self):
+        self.assert_gain_and_days(6, 'minor', ['choose', 'send_days', 'choose', 'send_days'])
+
+    def test_fractured_days_reimagining_mixed_baab(self):
+        self.assert_gain_and_days(6, 'minor', ['choose', 'send_days', 'send_days', 'choose'])
+
+    def test_fractured_days_major_days_then_gain(self):
+        self.assert_gain_and_days(4, 'major', ['send_days', 'choose'])
+
+    def test_fractured_days_major_gain_then_days(self):
+        self.assert_gain_and_days(4, 'major', ['choose', 'send_days'])
+
+    def test_fractured_days_unlock_the_gates_days_then_gain(self):
+        self.assert_gain_and_days(2, 'major', ['send_days', 'choose'])
+
+    def test_fractured_days_unlock_the_gates_gain_then_days(self):
+        self.assert_gain_and_days(2, 'major', ['choose', 'send_days'])
+
 class TestHealing(TestCase):
     def setup_game(self, cards=()):
         client = Client()
