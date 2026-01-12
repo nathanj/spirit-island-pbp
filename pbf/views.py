@@ -560,7 +560,7 @@ def import_game(request: HttpRequest) -> HttpResponse:
             if gp.full_name() in spirit_additional_cards:
                 cards_in_game |= {Card.objects.get(name=card).id for card in spirit_additional_cards[gp.full_name()]}
 
-        for name in ('discard', 'play', 'selection', 'days', 'healing'):
+        for name in ('discard', 'play', 'selection', 'days', 'healing', 'scenario'):
             if name in player:
                 getattr(gp, name).set(cards := cards_with_name(player[name]))
                 cards_in_game |= {card.id for card in cards}
@@ -764,14 +764,7 @@ def gain_healing(request: HttpRequest, player_id: int) -> HttpResponse:
         # Otherwise, cards in the previous selection would no longer be accessible.
         return render(request, 'player.html', {'player': player})
 
-    selection = [
-            Card.objects.get(name="Serene Waters"),
-            Card.objects.get(name="Waters Renew"),
-            Card.objects.get(name="Roiling Waters"),
-            Card.objects.get(name="Waters Taste of Ruin")
-            ]
-
-    player.selection.set(selection)
+    player.selection.set(Card.objects.filter(type=Card.HEALING))
 
     return render(request, 'player.html', {'player': player})
 
@@ -877,7 +870,7 @@ def choose_card(request: HttpRequest, player_id: int, card_id: int) -> HttpRespo
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.selection, pk=card_id)
 
-    if card.is_healing():
+    if card.type == Card.HEALING:
         return choose_healing_card(request, player, card)
 
     player.hand.add(card)
@@ -920,7 +913,7 @@ def undo_gain_card(request: HttpRequest, player_id: int) -> HttpResponse:
         elif sel.type == Card.MAJOR:
             majors.append(sel)
             to_remove.append(sel)
-        elif sel.is_healing():
+        elif sel.type == Card.HEALING:
             to_remove.append(sel)
         # If it's not any of these types, we'll leave it in selection, as something's gone wrong.
 

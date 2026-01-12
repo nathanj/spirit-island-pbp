@@ -137,14 +137,16 @@ class Card(models.Model):
     MINOR = 0
     MAJOR = 1
     UNIQUE = 2
-    SPECIAL = 3
+    RETIRED = 3
+    HEALING = 4
 
     name = models.CharField(max_length=255, blank=False)
     TYPES = (
         (MINOR, 'Minor'),
         (MAJOR, 'Major'),
         (UNIQUE, 'Unique'),
-        (SPECIAL, 'Special'),
+        (RETIRED, 'Retired'),
+        (HEALING, 'Healing'),
     )
     type = models.IntegerField(choices=TYPES)
     spirit = models.ForeignKey(Spirit, blank=True, null=True, on_delete=models.CASCADE)
@@ -189,7 +191,7 @@ class Card(models.Model):
         if executor.migration_plan(executor.loader.graph.leaf_nodes()):
             return errors
 
-        not_healing = cls.objects.exclude(name__in=cls.HEALING_NAMES)
+        not_healing = cls.objects.exclude(type=cls.HEALING)
 
         unknown_speed = not_healing.exclude(speed__in=(cls.FAST, cls.SLOW))
         errors.extend(checks.Warning('unknown speed', obj=card) for card in unknown_speed)
@@ -209,10 +211,6 @@ class Card(models.Model):
 
     def can_return_to_deck(self) -> bool:
         return self.type in (self.MINOR, self.MAJOR)
-
-    HEALING_NAMES = frozenset(('Serene Waters', 'Waters Renew', 'Roiling Waters', 'Waters Taste of Ruin'))
-    def is_healing(self) -> bool:
-        return self.name in self.HEALING_NAMES
 
     def url(self) -> str:
         return '/pbf/' + self.name.replace(",", '').replace("-", '').replace("'", '').replace(' ', '_').lower() + '.jpg'
@@ -255,7 +253,7 @@ class Card(models.Model):
 
         # Player-specific locations, minus impending
         # Not healing since nothing that uses this cares to know
-        for loc in ('hand', 'discard', 'play', 'selection', 'days'):
+        for loc in ('hand', 'discard', 'play', 'selection', 'days', 'scenario'):
             if (players := getattr(self, loc).filter(game=game).values_list('id', 'spirit__name', named=True)):
                 names = " and ".join(player.spirit__name for player in players)
                 locs.append((GamePlayer, [player.id for player in players], loc, f"{names}'s {loc}"))
@@ -369,6 +367,7 @@ class GamePlayer(models.Model):
     play = models.ManyToManyField(Card, related_name='play', blank=True)
     selection = models.ManyToManyField(Card, related_name='selection', blank=True)
     days = models.ManyToManyField(Card, related_name='days', blank=True)
+    scenario = models.ManyToManyField(Card, related_name='scenario', blank=True)
     # had to rename from "impending" to enable ManyToManyField migration
     impending_with_energy = models.ManyToManyField(Card, through='pbf.GamePlayerImpendingWithEnergy', related_name='impending_with_energy', blank=True)
     healing = models.ManyToManyField(Card, related_name='healing', blank=True)
@@ -740,7 +739,7 @@ class GamePlayer(models.Model):
         num_healing = None
         healing_markers = None
         for card in sel:
-            if card.is_healing():
+            if card.type == Card.HEALING:
                 if num_healing is None:
                     num_healing = self.healing.count()
                 if healing_markers is None:

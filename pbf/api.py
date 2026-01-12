@@ -35,6 +35,7 @@ class GamePlayerSchema(ModelSchema):
     play: list[CardSchema] = []
     selection: list[CardSchema] = []
     days: list[CardSchema] = []
+    scenario: list[CardSchema] = []
     healing: list[CardSchema] = []
     impending: list[ImpendingSchema] = Field([], alias="gameplayerimpendingwithenergy_set")
     presence: list[PresenceSchema] = Field([], alias="presence_set")

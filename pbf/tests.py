@@ -725,7 +725,7 @@ class TestHealing(TestCase):
     def test_gain(self):
         client, game, player = self.setup_game()
         client.get(f"/game/{player.id}/gain_healing")
-        self.assertEqual([True, True, True, True], [card.is_healing() for card in player.selection.all()])
+        self.assertEqual(['Roiling Waters', 'Serene Waters', 'Waters Renew', 'Waters Taste of Ruin'], list(player.selection.values_list('name', flat=True)))
 
     def test_choose_1(self):
         client, game, player = self.setup_game(['Roiling Waters'])
