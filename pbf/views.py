@@ -3,11 +3,13 @@ import itertools
 import random
 import os
 
+from collections.abc import Iterable
 from django.db import transaction
 from django.forms import ModelForm
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
+from typing import Any
 
 from .models import *
 
@@ -840,19 +842,24 @@ def choose_from_discard(request, player_id, card_id):
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
+# move a card from one of many possible sources to the destination
+def move_card(card_id: int, srcs: Iterable['Card_ManyRelatedManager[Any]'], dst: 'Card_ManyRelatedManager[Any]') -> Card | None:
+    for src in srcs:
+        try:
+            card = src.get(pk=card_id)
+            src.remove(card)
+            dst.add(card)
+            return card
+        # do not catch Card.MultipleObjectsReturned;
+        # if there are multiple objects something has gone wrong
+        except Card.DoesNotExist:
+            pass
+    return None
+
 def send_days(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    for location in [player.selection, player.game.discard_pile]:
-        try:
-            card = get_object_or_404(location, pk=card_id)
-            player.days.add(card)
-            location.remove(card)
-            break
-        except:
-            pass
-
-    add_log_msg(player.game, player=player, text=f'sends {card.name} to the Days That Never Were')
-
+    if card := move_card(card_id, [player.selection, player.game.discard_pile], player.days):
+        add_log_msg(player.game, player=player, text=f'sends {card.name} to the Days That Never Were')
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def choose_card(request, player_id, card_id):
@@ -1078,18 +1085,8 @@ def unplay_card(request, player_id, card_id):
 
 def forget_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
-
-    for location in [player.hand, player.play, player.discard, player.impending_with_energy]:
-        try:
-            card = location.get(pk=card_id)
-            location.remove(card)
-            player.game.discard_pile.add(card)
-            break
-        except:
-            pass
-
-    add_log_msg(player.game, player=player, text=f'forgets {card.name}')
-
+    if card := move_card(card_id, [player.hand, player.play, player.discard, player.impending_with_energy], player.game.discard_pile):
+        add_log_msg(player.game, player=player, text=f'forgets {card.name}')
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 
@@ -1155,18 +1152,7 @@ def discard_all(request, player_id):
 
 def discard_card(request, player_id, card_id):
     player = get_object_or_404(GamePlayer, pk=player_id)
-    try:
-        card = player.play.get(pk=card_id)
-        player.discard.add(card)
-        player.play.remove(card)
-    except:
-        pass
-    try:
-        card = player.hand.get(pk=card_id)
-        player.discard.add(card)
-        player.hand.remove(card)
-    except:
-        pass
+    move_card(card_id, [player.play, player.hand], player.discard)
 
     # no log message but deciding to keep with_log_trigger anyway as they could affect what cards the player wants to play
     return with_log_trigger(render(request, 'player.html', {'player': player}))
