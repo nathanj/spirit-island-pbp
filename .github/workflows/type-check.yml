@@ -24,3 +24,4 @@ jobs:
       - run: pip install 'poetry < 2'
       - run: poetry install --no-root --with typecheck
       - run: poetry run mypy .
+      - run: poetry run mypy pbf/{admin,models,views}.py --strict

@@ -3,14 +3,17 @@ import os
 import uuid
 from enum import Enum
 from collections import Counter, defaultdict
+from collections.abc import Iterable
+from typing import Any, NamedTuple, Type
 
+from django.core import checks
 from django.db import models
 
-def chunk(str, n):
+def chunk(str: str, n: int) -> Iterable[str]:
     return [str[i:i+n] for i in range(0, len(str), n)]
 
-def check_elements(elements, desired, equiv_elements=None):
-    if type(desired) == type([]):
+def check_elements(elements: dict['Elements', int], desired: list[str] | str, equiv_elements: str | None = None) -> bool:
+    if isinstance(desired, list):
         # Doesn't pass equiv_elements,
         # but so far no spirit can have both equiv_elements and an OR threshold.
         return any(check_elements(elements, d) for d in desired)
@@ -18,7 +21,7 @@ def check_elements(elements, desired, equiv_elements=None):
     chunks = chunk(desired, 2)
     if equiv_elements:
         threshold = sum(int(c[0]) for c in chunks if c[1] in equiv_elements)
-        in_play = sum(elements[Elements.from_char(e)] for e in equiv_elements)
+        in_play = sum(elements[Elements.from_char(e)] for e in equiv_elements) #type: ignore[index, misc]
         if in_play < threshold: return False
         chunks = [c for c in chunks if c[1] not in equiv_elements]
 
@@ -40,7 +43,7 @@ class Elements(Enum):
     Animal = 8
 
     @staticmethod
-    def from_char(c):
+    def from_char(c: str) -> 'Elements | None':
         if c == 'S': return Elements.Sun
         if c == 'M': return Elements.Moon
         if c == 'F': return Elements.Fire
@@ -52,12 +55,12 @@ class Elements(Enum):
         return None
 
 class Threshold():
-    def __init__(self, x, y, achieved):
+    def __init__(self, x: int, y: int, achieved: bool) -> None:
         self.x = x
         self.y = y
         self.achieved = achieved
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'{self.achieved} - {self.x}, {self.y}'
 
 class Spirit(models.Model):
@@ -118,13 +121,13 @@ class Spirit(models.Model):
             'Covets': 0,
             }
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def starting_hand(self):
+    def starting_hand(self) -> Iterable['Card']:
         return Card.objects.filter(spirit_id=self.id)
 
-    def url(self):
+    def url(self) -> str:
         return '/pbf/' + self.name.replace(' ', '-').lower() + '.jpg'
 
 class Card(models.Model):
@@ -166,8 +169,7 @@ class Card(models.Model):
     exclude_from_deck = models.BooleanField(default=False)
 
     @classmethod
-    def check(cls, **kwargs):
-        from django.core import checks
+    def check(cls, **kwargs: Any) -> list[checks.CheckMessage]:
         from django.db import connection
         from django.db.migrations.executor import MigrationExecutor
 
@@ -202,48 +204,49 @@ class Card(models.Model):
 
         return errors
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def can_return_to_deck(self):
+    def can_return_to_deck(self) -> bool:
         return self.type in (self.MINOR, self.MAJOR)
 
     HEALING_NAMES = frozenset(('Serene Waters', 'Waters Renew', 'Roiling Waters', 'Waters Taste of Ruin'))
-    def is_healing(self):
+    def is_healing(self) -> bool:
         return self.name in self.HEALING_NAMES
 
-    def url(self):
+    def url(self) -> str:
         return '/pbf/' + self.name.replace(",", '').replace("-", '').replace("'", '').replace(' ', '_').lower() + '.jpg'
 
-    def get_elements(self):
-        counter = Counter()
+    def get_elements(self) -> Counter[Elements]:
+        counter = Counter[Elements]()
         for e in self.elements.split(','):
             if len(e) > 0:
                 counter[Elements[e]] = 1
         return counter
 
-    def thresholds(self, elements, equiv_elements=None):
+    def thresholds(self, elements: dict[Elements, int], equiv_elements: str | None = None) -> Iterable[Threshold]:
         thresholds = []
         for t in card_thresholds.get(self.name, []):
             thresholds.append(Threshold(t[0], t[1], check_elements(elements, t[2], equiv_elements)))
         return thresholds
 
-    def healing_thresholds(self, num_healing_cards, healing_markers):
-        elements = {elt: n for (_, _, n, elt) in healing_markers}
-        total_elements = sum(elements.values())
+    def healing_thresholds(self, num_healing_cards: int, healing_markers: dict[str, int]) -> Iterable[Threshold]:
+        total_elements = sum(healing_markers.values())
         if self.name.startswith('Waters'):
             y, elt = (80, 'animal') if self.name == 'Waters Taste of Ruin' else (74, 'water')
-            return [Threshold(2, y, total_elements >= 5 and elements[elt] >= 3)]
+            return [Threshold(2, y, total_elements >= 5 and healing_markers[elt] >= 3)]
         else:
             y, elt = (65, 'animal') if self.name == 'Roiling Waters' else (68, 'water')
             return [
-                Threshold(2, y, total_elements >= 3 and elements[elt] >= 2),
+                Threshold(2, y, total_elements >= 3 and healing_markers[elt] >= 2),
                 Threshold(2, y + 8, num_healing_cards == 0),
             ]
 
+    CardLocation = tuple[Type['Game'], None, str, str] | tuple[Type['GamePlayer'], list[int], str, str] | tuple[Type['GamePlayerImpendingWithEnergy'], list[int], str, str]
+
     # Returns array of tuples: (class, IDs if applicable, attribute name, human-friendly name)
-    def location_in_game(self, game):
-        locs = []
+    def location_in_game(self, game: 'Game') -> Iterable[CardLocation]:
+        locs: list[Card.CardLocation] = []
 
         # Game-wide locations
         for loc in ('minor_deck', 'major_deck', 'discard_pile'):
@@ -259,12 +262,13 @@ class Card(models.Model):
 
         # Impending
         if (impends := self.gameplayerimpendingwithenergy_set.filter(gameplayer__game=game)):
-            locs.append((GamePlayerImpendingWithEnergy, [impend.id for impend in impends], None, 'impending'))
+            # Currently 'card' is unused (replace_card in views has 'card' hard-coded).
+            locs.append((GamePlayerImpendingWithEnergy, [impend.id for impend in impends], 'card', 'impending'))
 
         return locs
 
 class Game(models.Model):
-    def screenshot_with_suffix(game, filename):
+    def screenshot_with_suffix(game: 'Game', filename: str) -> str:
         # If the game is set to always suffix the screenshot, do so.
         # Django admin has to be used to manually set this setting.
         # Related: the screenshot upload code in views.py,
@@ -302,23 +306,23 @@ class Game(models.Model):
     #)
     discord_channel = models.CharField(max_length=255, default="", blank=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.id)
 
-    def color_freq(self):
+    def color_freq(self) -> Iterable[tuple[str, int, str]]:
         colors = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'pink', 'brown', 'white']
         player_colors = Counter(self.gameplayer_set.values_list('color', flat=True))
         return [(c, player_colors[c], colors_to_circle_color_map[c]) for c in colors]
 
     @functools.cached_property
-    def player_count(self):
+    def player_count(self) -> int:
         return self.gameplayer_set.count()
 
-    def player_summary(self):
+    def player_summary(self) -> Iterable[Any]:
         players = self.gameplayer_set.values_list('id', 'name', 'spirit__name', 'aspect', 'color', 'ready', named=True)
         return [p._replace(color=colors_to_circle_color_map[p.color] if p.color else p.color) for p in players]
 
-    def exploratory_vengeance_location(self):
+    def exploratory_vengeance_location(self) -> Iterable[str]:
         # Template only uses the name, so just give them that
         return [locname for (_, _, _, locname) in Card.objects.get(name='Vengeance of the Dead exploratory').location_in_game(self)]
 
@@ -436,32 +440,33 @@ class GamePlayer(models.Model):
     PLANT_TREASURE_THIS_TURN = 1 << 2
 
     @property
-    def last_unready_energy_friendly(self):
+    def last_unready_energy_friendly(self) -> int | str:
         # don't use `or` here, because 0 is valid.
         return 'unknown' if self.last_unready_energy is None else self.last_unready_energy
 
-    def spirit_specific_incremented_this_turn(self):
+    # TODO: Consider changing these to return bool; the int isn't useful to callers
+    def spirit_specific_incremented_this_turn(self) -> int:
         return self.spirit_specific_per_turn_flags & GamePlayer.SPIRIT_SPECIFIC_INCREMENTED_THIS_TURN
 
-    def spirit_specific_decremented_this_turn(self):
+    def spirit_specific_decremented_this_turn(self) -> int:
         return self.spirit_specific_per_turn_flags & GamePlayer.SPIRIT_SPECIFIC_DECREMENTED_THIS_TURN
 
-    def rot_gained_this_turn(self):
+    def rot_gained_this_turn(self) -> int:
         return self.spirit_specific_per_turn_flags & GamePlayer.ROT_GAINED_THIS_TURN
 
-    def rot_converted_this_turn(self):
+    def rot_converted_this_turn(self) -> int:
         return self.spirit_specific_per_turn_flags & GamePlayer.ROT_CONVERTED_THIS_TURN
 
-    def plant_treasure_this_turn(self):
+    def plant_treasure_this_turn(self) -> int:
         return self.spirit_specific_per_turn_flags & GamePlayer.PLANT_TREASURE_THIS_TURN
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.game.id) + ' - ' + str(self.spirit.name)
 
-    def has_spirit_specific_resource(self):
+    def has_spirit_specific_resource(self) -> bool:
         return self.spirit_specific_resource_name() is not None
 
-    def spirit_specific_resource_name(self):
+    def spirit_specific_resource_name(self) -> str | None:
         d = {
             'Fractured': 'Time',
             'Rot': 'Rot',
@@ -480,7 +485,7 @@ class GamePlayer(models.Model):
     # these spirits use the spirit-specific resource field to store a number of markers of each element.
     # since the integer field is only guaranteed to be 32 bits wide and there are eight elements,
     # we can use four bits per element (a max of 15 of each).
-    def spirit_specific_resource_elements(self):
+    def spirit_specific_resource_elements(self) -> Iterable[tuple[int, int, int, str]] | None:
         d = {
             'Memory': ('sun', 'moon', 'fire', 'air', 'water', 'earth', 'plant', 'animal'),
             'Waters': ('water', 'animal'),
@@ -488,7 +493,7 @@ class GamePlayer(models.Model):
         # Currently doesn't change based on aspect, so just uses spirit name instead of spirit + aspect
         elts = d.get(self.spirit.name)
         if not elts:
-            return elts
+            return None
         # for each element return a 4-tuple:
         # amount to add to spirit_specific_resource to increment the count of that element
         # same but for decrementing
@@ -506,21 +511,23 @@ class GamePlayer(models.Model):
     # (currently only Spreading Rot Renews the Earth),
     # set this to true so that the site re-renders the spirit-specific resource when bargain debt changes.
     @property
-    def spirit_specific_resource_gives_energy(self):
+    def spirit_specific_resource_gives_energy(self) -> bool:
         return self.spirit.name == 'Rot'
 
     # If true, it makes sense to +1/-1 the spirit-specific resource
     # Assumed to be true unless a spirit specifically specifies not.
     # (also has no effect for spirits using spirit_specific_resource_elements)
-    def increment_decrement_specific_resource(self):
-        d = {
+    def increment_decrement_specific_resource(self) -> bool:
+        d: dict[str, bool] = {
         }
         return d.get(self.full_name(), True)
 
-    def aspect_url(self):
+    def aspect_url(self) -> str:
+        if not self.aspect:
+            raise ValueError("no aspect")
         return f'pbf/aspect-{self.aspect.replace(" ", "_").lower()}.jpg'
 
-    def aspect_left(self):
+    def aspect_left(self) -> int:
         if self.aspect == 'Immense':
             return 650
         elif self.aspect == 'Pandemonium':
@@ -530,7 +537,7 @@ class GamePlayer(models.Model):
         else:
             return 0
 
-    def aspect_top(self):
+    def aspect_top(self) -> int:
         if self.aspect == 'Immense':
             return 360
         elif self.aspect == 'Pandemonium':
@@ -540,16 +547,16 @@ class GamePlayer(models.Model):
         else:
             return 400
 
-    def disk_url(self):
+    def disk_url(self) -> str:
         return 'pbf/disk_' + self.color + '.png'
 
     @property
-    def circle_emoji(self):
+    def circle_emoji(self) -> str:
         return colors_to_emoji_map[self.color]
 
     @functools.cached_property
-    def elements(self):
-        counter = Counter()
+    def elements(self) -> dict[Elements, int]:
+        counter = Counter[Elements]()
         counter[Elements.Sun] += self.temporary_sun + self.permanent_sun
         counter[Elements.Moon] += self.temporary_moon + self.permanent_moon
         counter[Elements.Fire] += self.temporary_fire + self.permanent_fire
@@ -575,18 +582,18 @@ class GamePlayer(models.Model):
         return defaultdict(int, counter)
 
     @functools.cached_property
-    def cards_in_play(self):
+    def cards_in_play(self) -> models.QuerySet[Card, Card]:
         return self.play.all()
 
     @functools.cached_property
-    def played_impending(self):
+    def played_impending(self) -> models.QuerySet[Card, Card]:
         return self.impending_with_energy.filter(gameplayerimpendingwithenergy__in_play=True)
 
-    def equiv_elements(self):
+    def equiv_elements(self) -> str | None:
         if self.aspect == 'Dark Fire': return "MF"
         return None
 
-    def total_and_temporary_elements(self):
+    def total_and_temporary_elements(self) -> Iterable[tuple[str, int, int]]:
         elements = self.elements
         # not a dictionary because this is used in the template,
         # which wouldn't be able to deconstruct a tuple of (total, temporary) in the value.
@@ -595,44 +602,48 @@ class GamePlayer(models.Model):
             result[1:3] = [('moonfire', elements[Elements.Moon] + elements[Elements.Fire], self.temporary_moon + self.temporary_fire)]
         return result
 
-    def permanent_elements(self):
+    def permanent_elements(self) -> dict[str, int]:
         result = [(elt.name.lower(), getattr(self, 'permanent_' + elt.name.lower())) for elt in Elements]
         if self.aspect == 'Dark Fire':
             result[1:3] = [('moonfire', self.permanent_moon + self.permanent_fire)]
         return {k: v for (k, v) in result}
 
 
+    class PresenceInfo(NamedTuple):
+        energy: str
+        elements: str
+
     @functools.cached_property
-    def presences_off_track(self):
-        return self.presence_set.filter(opacity=0.0).exclude(energy='', elements='').values_list('energy', 'elements', named=True)
+    def presences_off_track(self) -> Iterable[PresenceInfo]:
+        return self.presence_set.filter(opacity=0.0).exclude(energy='', elements='').values_list('energy', 'elements', named=True) #type: ignore[return-value]
 
     # Any code that creates a GamePlayer is expected to (manually) call this function once after creating it,
     # (currently add_player in views)
     # so it is suitable for any one-time setup.
     # why not override __init__? Django docs indicate doing so is *not* preferred:
     # https://docs.djangoproject.com/en/5.1/ref/models/instances/
-    def init_spirit(self):
+    def init_spirit(self) -> None:
         self.last_unready_energy = self.energy
         if self.spirit.name == "Memory":
             for e in (Elements.Moon, Elements.Air, Elements.Earth):
                 # Prepare one of each.
                 self.spirit_specific_resource += 1 << (ELEMENT_WIDTH * (e.value - 1))
 
-    def full_name(self):
+    def full_name(self) -> str:
         name = self.spirit.name
         if self.aspect:
             name = self.aspect + name
         return name
 
-    def get_play_cost(self):
+    def get_play_cost(self) -> int:
         blitz = self.game.scenario == 'Blitz'
         return sum(card.cost - (1 if blitz and card.speed == Card.FAST else 0) for card in self.cards_in_play)
 
     @property
-    def remaining_bargain_cost(self):
+    def remaining_bargain_cost(self) -> int:
         return self.bargain_cost_per_turn - self.bargain_paid_this_turn
 
-    def gain_energy_or_pay_debt(self, energy):
+    def gain_energy_or_pay_debt(self, energy: int) -> None:
         if energy < 0:
             raise ValueError(f"gained negative energy {energy}")
         if energy > self.remaining_bargain_cost:
@@ -641,7 +652,7 @@ class GamePlayer(models.Model):
         else:
             self.bargain_paid_this_turn += energy
 
-    def get_gain_energy(self):
+    def get_gain_energy(self) -> int:
         energy_revealed = [p.energy for p in self.presences_off_track if p.energy]
         # not using max(..., default=...) because default would be eagerly evaluated; we want lazy
         try:
@@ -659,27 +670,27 @@ class GamePlayer(models.Model):
         else:
             return amount
 
-    def impending_energy(self):
+    def impending_energy(self) -> int:
         return max((int(p.energy[6:]) for p in self.presences_off_track if p.energy.startswith('Impend')), default=1)
 
-    def rot_gain(self):
+    def rot_gain(self) -> int:
         # no presence grants > 1 Rot, so just check `in` rather than count
         return sum('Rot' in p.elements for p in self.presences_off_track)
 
-    def rot_loss(self):
+    def rot_loss(self) -> int:
         return (self.spirit_specific_resource + (0 if self.aspect == 'Round Down' else 1)) // 2
 
-    def energy_from_rot(self):
+    def energy_from_rot(self) -> int:
         return (self.rot_loss() + (0 if self.aspect == 'Round Down' else 1)) // 2
 
     @functools.cached_property
-    def plant_treasure(self):
+    def plant_treasure(self) -> 'Card_ManyRelatedManager[GamePlayer_days]':
         # Reusing the existing Days That Never Were association,
         # as the two are similar (cards that you might have in the future, but not now)
         # TODO: If it's a problem in the future, we can consider using a dedicated association.
         return self.days
 
-    def days_ordered(self):
+    def days_ordered(self) -> Iterable[Card]:
         return self.days.order_by('type', 'cost')
 
     # Time was originally added before the spirit_specific_resource field.
@@ -690,7 +701,7 @@ class GamePlayer(models.Model):
     # As a result, when one changes, we want to sync it with the other.
     # This is used when spirit_specific_resource is changed with the +1/-1 buttons,
     # and adjusts presence discs to match the count (or as close as possible).
-    def sync_time_discs_with_resource(self):
+    def sync_time_discs_with_resource(self) -> None:
         if self.spirit.name != 'Fractured':
             raise ValueError('Only Fractured Days has Time')
         time_discs = self.presence_set.filter(opacity=1.0, left__lte=Presence.FRACTURED_DAYS_TIME_X).count()
@@ -705,36 +716,49 @@ class GamePlayer(models.Model):
             discs = self.presence_set.filter(opacity=0.0, left__lte=Presence.FRACTURED_DAYS_TIME_X)[:to_add]
             self.presence_set.filter(id__in=discs).update(opacity=1.0)
 
-    def bargain_in_play(self):
+    def bargain_in_play(self) -> bool:
         return any(card.name.startswith('Bargain') for card in self.cards_in_play)
 
-    def cards_with_thresholds(self, cards):
+    def cards_with_thresholds(self, cards: Iterable[Card]) -> Iterable[Card]:
         # cards_in_play is a cached property returning a QuerySet,
         # and the others are all QuerySet as well.
         # Modifying the Card object in these QuerySet appears to work as expected,
         # so we'll go with that.
         # If that ever stops working, we could convert them using list().
         for card in cards:
-            card.computed_thresholds = card.thresholds(self.elements, self.equiv_elements())
+            card.computed_thresholds = card.thresholds(self.elements, self.equiv_elements()) #type: ignore[attr-defined]
         return cards
 
-    def played_cards_with_thresholds(self):
+    def played_cards_with_thresholds(self) -> Iterable[Card]:
         return self.cards_with_thresholds(self.cards_in_play)
 
-    def hand_cards_with_thresholds(self):
+    def hand_cards_with_thresholds(self) -> Iterable[Card]:
         return self.cards_with_thresholds(self.hand.all())
 
-    def selection_with_thresholds(self):
+    def selection_with_thresholds(self) -> Iterable[Card]:
         sel = self.cards_with_thresholds(self.selection.all())
         num_healing = None
+        healing_markers = None
         for card in sel:
             if card.is_healing():
                 if num_healing is None:
                     num_healing = self.healing.count()
-                card.computed_thresholds.extend(card.healing_thresholds(num_healing, self.spirit_specific_resource_elements()))
+                if healing_markers is None:
+                    # only Wounded Waters Bleeding should ever be gaining healing cards,
+                    # but in case someone else edits in healing cards to some other spirit's selection,
+                    # they have no healing markers.
+                    # not even a Shifting Memory of Ages elemental marker should count.
+                    if self.spirit.name == 'Waters':
+                        if elts := self.spirit_specific_resource_elements():
+                            healing_markers = {elt: count for (_, _, count, elt) in elts}
+                        else:
+                            raise ValueError("shouldn't happen - Wounded Water Bleeding had no spirit-specific elements")
+                    else:
+                        healing_markers = {}
+                card.computed_thresholds.extend(card.healing_thresholds(num_healing, healing_markers)) #type: ignore[attr-defined]
         return sel
 
-    def impending_with_thresholds(self):
+    def impending_with_thresholds(self) -> Iterable['GamePlayerImpendingWithEnergy']:
         # We could check the spirit and return an empty list if not Dances Up Earthquakes,
         # to save a database query if called on any other spirit.
         # But in this case the contract is that the template will check the spirit,
@@ -745,7 +769,7 @@ class GamePlayer(models.Model):
         _ = self.cards_with_thresholds(imp.card for imp in impends)
         return impends
 
-    def thresholds(self):
+    def thresholds(self) -> Iterable[Threshold]:
         elements = self.elements
         thresholds = []
         name = self.full_name()
@@ -788,10 +812,10 @@ class GamePlayerImpendingWithEnergy(models.Model):
         db_table = "pbf_gameplayer_impending_with_energy"
 
     @property
-    def cost_with_scenario(self):
+    def cost_with_scenario(self) -> int:
         return self.card.cost - (1 if self.card.speed == Card.FAST and self.gameplayer.game.scenario == 'Blitz' else 0)
 
-spirit_thresholds = {
+spirit_thresholds: dict[str, list[tuple[int, int, str | list[str]]]] = {
         'EnticingBringer': [
             (360, 450, '2M2A'),
             (360, 515, '3M'),
