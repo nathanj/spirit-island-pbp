@@ -793,6 +793,9 @@ class TestPlayCost(TestCase):
     def test_slow_not_blitz(self):
         self.assert_cost(['Call to Vigilance'], 2)
 
+    def test_multiple_cards(self):
+        self.assert_cost(['Favors of Story and Season', 'Call to Vigilance'], 3)
+
     def test_fast_blitz(self):
         self.assert_cost(['Favors of Story and Season'], 0, scenario='Blitz')
 
