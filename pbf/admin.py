@@ -3,7 +3,7 @@ from django.contrib import admin
 from .models import *
 
 class CardAdmin(admin.ModelAdmin):
-    def has_add_permission(self, request, obj=None):
+    def has_add_permission(self, request):
         return False
     def has_change_permission(self, request, obj=None):
         return settings.DEBUG and super().has_change_permission(request, obj)
