@@ -624,7 +624,7 @@ class GamePlayer(models.Model):
 
     def get_play_cost(self):
         blitz = self.game.scenario == 'Blitz'
-        return sum([card.cost - (1 if blitz and card.speed == Card.FAST else 0) for card in self.cards_in_play])
+        return sum(card.cost - (1 if blitz and card.speed == Card.FAST else 0) for card in self.cards_in_play)
 
     @property
     def remaining_bargain_cost(self):
