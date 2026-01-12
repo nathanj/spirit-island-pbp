@@ -802,6 +802,137 @@ class TestPlayCost(TestCase):
     def test_slow_blitz(self):
         self.assert_cost(['Call to Vigilance'], 2, scenario='Blitz')
 
+class TestDiscard(TestCase):
+    def test_discard_from_play(self):
+        game = Game.objects.create()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='River'))
+        card1 = Card.objects.get(name='Call to Isolation')
+        card2 = Card.objects.get(name='Call to Ferocity')
+        player.play.set([card1, card2])
+
+        self.assertEqual([], list(player.discard.all()))
+
+        Client().post(f"/game/{player.id}/discard/{card1.id}")
+
+        self.assertEqual(['Call to Ferocity'], list(player.play.values_list('name', flat=True)))
+        self.assertEqual(['Call to Isolation'], list(player.discard.values_list('name', flat=True)))
+
+    def test_discard_from_hand(self):
+        game = Game.objects.create()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='River'))
+        card1 = Card.objects.get(name='Call to Isolation')
+        card2 = Card.objects.get(name='Call to Ferocity')
+        player.hand.set([card1, card2])
+
+        self.assertEqual([], list(player.discard.all()))
+
+        Client().post(f"/game/{player.id}/discard/{card1.id}")
+
+        self.assertEqual(['Call to Ferocity'], list(player.hand.values_list('name', flat=True)))
+        self.assertEqual(['Call to Isolation'], list(player.discard.values_list('name', flat=True)))
+
+    def test_discard_nonexistent(self):
+        game = Game.objects.create()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='River'))
+        card1 = Card.objects.get(name='Call to Isolation')
+        card2 = Card.objects.get(name='Call to Ferocity')
+        card3 = Card.objects.get(name='Call to Trade')
+        player.hand.set([card1])
+        player.play.set([card2])
+
+        Client().post(f"/game/{player.id}/discard/{card3.id}")
+
+        self.assertEqual([], list(player.discard.all()))
+        self.assertEqual(['Call to Isolation'], list(player.hand.values_list('name', flat=True)))
+        self.assertEqual(['Call to Ferocity'], list(player.play.values_list('name', flat=True)))
+
+class TestForget(TestCase):
+    def test_forget_from_play(self):
+        game = Game.objects.create()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='River'), color='blue')
+        card1 = Card.objects.get(name='Call to Isolation')
+        card2 = Card.objects.get(name='Call to Ferocity')
+        player.play.set([card1, card2])
+
+        self.assertEqual([], list(game.discard_pile.all()))
+
+        Client().post(f"/game/{player.id}/forget/{card1.id}")
+
+        self.assertEqual(['Call to Ferocity'], list(player.play.values_list('name', flat=True)))
+        self.assertEqual(['Call to Isolation'], list(game.discard_pile.values_list('name', flat=True)))
+        self.assertIn('forgets Call to Isolation', game.gamelog_set.last().text)
+
+    def test_forget_from_hand(self):
+        game = Game.objects.create()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='River'), color='blue')
+        card1 = Card.objects.get(name='Call to Isolation')
+        card2 = Card.objects.get(name='Call to Ferocity')
+        player.hand.set([card1, card2])
+
+        self.assertEqual([], list(game.discard_pile.all()))
+
+        Client().post(f"/game/{player.id}/forget/{card1.id}")
+
+        self.assertEqual(['Call to Ferocity'], list(player.hand.values_list('name', flat=True)))
+        self.assertEqual(['Call to Isolation'], list(game.discard_pile.values_list('name', flat=True)))
+        self.assertIn('forgets Call to Isolation', game.gamelog_set.last().text)
+
+    def test_forget_from_discard(self):
+        game = Game.objects.create()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='River'), color='blue')
+        card1 = Card.objects.get(name='Call to Isolation')
+        card2 = Card.objects.get(name='Call to Ferocity')
+        player.discard.set([card1, card2])
+
+        self.assertEqual([], list(game.discard_pile.all()))
+
+        Client().post(f"/game/{player.id}/forget/{card1.id}")
+
+        self.assertEqual(['Call to Ferocity'], list(player.discard.values_list('name', flat=True)))
+        self.assertEqual(['Call to Isolation'], list(game.discard_pile.values_list('name', flat=True)))
+        self.assertIn('forgets Call to Isolation', game.gamelog_set.last().text)
+
+    def test_forget_from_impending(self):
+        client = Client()
+        game = Game.objects.create()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='Earthquakes'), color='blue')
+        card1 = Card.objects.get(name='Call to Isolation')
+        card2 = Card.objects.get(name='Call to Ferocity')
+        player.hand.set([card1, card2])
+
+        self.assertEqual([], list(game.discard_pile.all()))
+
+        client.post(f"/game/{player.id}/impend/{card1.id}")
+        client.post(f"/game/{player.id}/impend/{card2.id}")
+        client.post(f"/game/{player.id}/forget/{card1.id}")
+
+        self.assertEqual(['Call to Ferocity'], list(player.impending_with_energy.values_list('name', flat=True)))
+        self.assertEqual(['Call to Isolation'], list(game.discard_pile.values_list('name', flat=True)))
+        self.assertIn('forgets Call to Isolation', game.gamelog_set.last().text)
+
+    def test_forget_nonexistent(self):
+        client = Client()
+        game = Game.objects.create()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='Earthquakes'), color='blue')
+        card1 = Card.objects.get(name='Call to Isolation')
+        card2 = Card.objects.get(name='Call to Ferocity')
+        card3 = Card.objects.get(name='Call to Trade')
+        card4 = Card.objects.get(name='Call to Bloodshed')
+        card5 = Card.objects.get(name='Call to Guard')
+        player.hand.set([card1, card2])
+        player.discard.set([card3])
+        player.play.set([card4])
+
+        client.post(f"/game/{player.id}/impend/{card2.id}")
+        client.post(f"/game/{player.id}/forget/{card5.id}")
+
+        self.assertEqual([], list(game.discard_pile.all()))
+        self.assertEqual(['Call to Isolation'], list(player.hand.values_list('name', flat=True)))
+        self.assertEqual(['Call to Ferocity'], list(player.impending_with_energy.values_list('name', flat=True)))
+        self.assertEqual(['Call to Trade'], list(player.discard.values_list('name', flat=True)))
+        self.assertEqual(['Call to Bloodshed'], list(player.play.values_list('name', flat=True)))
+        self.assertEqual([], list(game.gamelog_set.all()))
+
 class TestReclaim(TestCase):
     def test_reclaim_all(self):
         game = Game()
@@ -1104,6 +1235,57 @@ class TestCheckElements(TestCase):
         elements[Elements.Fire] = 6
         elements[Elements.Air] = 2
         self.assertTrue(self.check_elements(elements, '4M3F2A', 'MF'))
+
+class TestDaysThatNeverWere(TestCase):
+    # TODO: Tests for creating initial Days that Never Were
+
+    def test_send_from_selection(self):
+        game = Game.objects.create()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='Fractured'), color='blue')
+        card1 = Card.objects.get(name='Call to Isolation')
+        card2 = Card.objects.get(name='Call to Ferocity')
+        player.selection.set([card1, card2])
+
+        self.assertEqual([], list(player.days.all()))
+
+        Client().post(f"/game/{player.id}/send_days/{card1.id}")
+
+        self.assertEqual(['Call to Ferocity'], list(player.selection.values_list('name', flat=True)))
+        self.assertEqual(['Call to Isolation'], list(player.days.values_list('name', flat=True)))
+        self.assertIn('sends Call to Isolation to the Days That Never Were', game.gamelog_set.last().text)
+
+    def test_send_from_discard(self):
+        game = Game.objects.create()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='Fractured'), color='blue')
+        card1 = Card.objects.get(name='Call to Isolation')
+        card2 = Card.objects.get(name='Call to Ferocity')
+        game.discard_pile.set([card1, card2])
+
+        self.assertEqual([], list(player.days.all()))
+
+        Client().post(f"/game/{player.id}/send_days/{card1.id}")
+
+        self.assertEqual(['Call to Ferocity'], list(game.discard_pile.values_list('name', flat=True)))
+        self.assertEqual(['Call to Isolation'], list(player.days.values_list('name', flat=True)))
+        self.assertIn('sends Call to Isolation to the Days That Never Were', game.gamelog_set.last().text)
+
+    def test_send_nonexistent(self):
+        game = Game.objects.create()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='Fractured'), color='blue')
+        card1 = Card.objects.get(name='Call to Isolation')
+        card2 = Card.objects.get(name='Call to Ferocity')
+        card3 = Card.objects.get(name='Call to Trade')
+        player.selection.set([card1])
+        game.discard_pile.set([card2])
+
+        Client().post(f"/game/{player.id}/send_days/{card3.id}")
+
+        self.assertEqual([], list(player.discard.all()))
+        self.assertEqual(['Call to Isolation'], list(player.selection.values_list('name', flat=True)))
+        self.assertEqual(['Call to Ferocity'], list(game.discard_pile.values_list('name', flat=True)))
+        self.assertEqual([], list(game.gamelog_set.all()))
+
+    # TODO: Tests for gaining card from Days that Never Were
 
 class TestImpending(TestCase):
     def setup_players(self, n=1):
