@@ -1237,7 +1237,23 @@ class TestCheckElements(TestCase):
         self.assertTrue(self.check_elements(elements, '4M3F2A', 'MF'))
 
 class TestDaysThatNeverWere(TestCase):
-    # TODO: Tests for creating initial Days that Never Were
+    def test_create(self):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='Fractured'), color='blue')
+        self.assertEqual([], list(player.days.all()))
+
+        minors_before = game.minor_deck.count()
+        majors_before = game.major_deck.count()
+
+        client.post(f'/game/{player.id}/create_days/4')
+
+        self.assertEqual(player.days.count(), 8)
+        self.assertEqual(player.days.filter(type=Card.MINOR).count(), 4)
+        self.assertEqual(player.days.filter(type=Card.MAJOR).count(), 4)
+        self.assertEqual(game.minor_deck.count(), minors_before - 4)
+        self.assertEqual(game.major_deck.count(), majors_before - 4)
 
     def test_send_from_selection(self):
         game = Game.objects.create()
