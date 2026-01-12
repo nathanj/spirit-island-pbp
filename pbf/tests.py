@@ -1943,3 +1943,25 @@ class TestLog(TestCase):
         self.assertNotIn(player.selection.first().name, game.gamelog_set.last().text)
         self.assertIn(player.selection.first().url(), game.gamelog_set.last().images)
         self.assertIn(player.selection.first().name, game.gamelog_set.last().spoiler_text)
+
+    def test_take_power(self):
+        client = Client()
+        client.post('/new')
+        game = Game.objects.last()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='River'), color='red')
+        client.get(f"/game/{player.id}/take/minor/1")
+        self.assertIn('River takes a minor power:', game.gamelog_set.last().text)
+        self.assertIn(player.hand.first().name, game.gamelog_set.last().text)
+        self.assertIn(player.hand.first().url(), game.gamelog_set.last().images)
+        self.assertEqual('', game.gamelog_set.last().spoiler_text)
+
+    def test_take_power_spoiler(self):
+        client = Client()
+        client.post('/new')
+        game = Game.objects.last()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='River'), color='red')
+        client.get(f"/game/{player.id}/take/minor/1?spoiler_power_gain=on")
+        self.assertIn('River takes a minor power:', game.gamelog_set.last().text)
+        self.assertNotIn(player.hand.first().name, game.gamelog_set.last().text)
+        self.assertIn(player.hand.first().url(), game.gamelog_set.last().images)
+        self.assertIn(player.hand.first().name, game.gamelog_set.last().spoiler_text)
