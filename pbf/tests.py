@@ -680,12 +680,10 @@ class TestChooseCard(TestCase):
         self.assertEqual(len(v), 1, "didn't find one game player; spirit not created successfully?")
         player = v[0]
         client.post(f"/game/{player.id}/gain/{card_type}/{draw}")
-        player.refresh_from_db()
         selected = 0
         while player.selection.exists():
             client.post(f"/game/{player.id}/choose/{player.selection.first().id}")
             selected += 1
-            player.refresh_from_db()
         self.assertEqual(game.discard_pile.count(), draw - selected)
         return selected
 
