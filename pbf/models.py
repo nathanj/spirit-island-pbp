@@ -11,7 +11,7 @@ def chunk(str, n):
 
 def check_elements(elements, desired, equiv_elements=None):
     if type(desired) == type([]):
-        return any([check_elements(elements, d) for d in desired])
+        return any(check_elements(elements, d) for d in desired)
 
     chunks = chunk(desired, 2)
     if equiv_elements:
