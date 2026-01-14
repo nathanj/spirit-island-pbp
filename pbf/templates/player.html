@@ -145,7 +145,7 @@
       </div>
     </div>
   </ul>
-  <button class="btn" hx-get="{% url 'undo_gain_card' player.id %}" hx-confirm="Are you sure?">Oops! Undo gain card</button>
+  <button class="btn" hx-get="{% url 'undo_gain_card' player.id %}" hx-confirm="Undoing the card gain will put the cards back where they came from. Are you sure?">Oops! Undo gain card</button>
 
   <p>Minor powers ({{ player.game.minor_deck.count }} in deck):
   <button class="btn" hx-get="{% url 'minor_deck' player.game.id %}" hx-target="#Minor-deck" hx-swap="innerHTML">Show deck</button>
@@ -250,7 +250,7 @@
 	      <div class="text-center pb-5">
 		<button class="btn" hx-get="{% url 'unplay_card' player.id card.id %}">Unplay</button>
 		<button class="btn" hx-get="{% url 'discard_card' player.id card.id %}">Discard</button>
-		<button class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure?">Forget</button>
+		<button class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure you want to forget {{card.name}}?">Forget</button>
 		{% if 'Bargain' in card.name %}<button class="btn" hx-target="#spirit-energy{% if player.spirit_specific_resource_gives_energy %}-and-resource{% endif %}-{{player.id}}" hx-get="{% url 'change_bargain_cost_per_turn' player.id 1 %}">+Debt</button>{% endif %}
 	      </div>
 	    </div>
@@ -275,7 +275,7 @@
 		<button class="btn" hx-get="{% url 'impend_card' player.id card.id %}">Impend</button>
 		{% endif %}
 		<button class="btn" hx-get="{% url 'discard_card' player.id card.id %}">Discard</button>
-		<button class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure?">Forget</button>
+		<button class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure you want to forget {{card.name}}?">Forget</button>
 	      </div>
 	    </div>
 	  </div>
@@ -327,7 +327,7 @@
 	      </div>
 	      <div class="text-center pb-5">
 		    <button class="btn" hx-get="{% url 'unimpend_card' player.id i.card.id %}">Unimpend</button>
-		    <button class="btn" hx-get="{% url 'forget_card' player.id i.card.id %}" hx-confirm="Are you sure?">Forget</button>
+		    <button class="btn" hx-get="{% url 'forget_card' player.id i.card.id %}" hx-confirm="Are you sure you want to forget {{i.card.name}}?">Forget</button>
 	      </div>
 	    </div>
 	  </div>
@@ -357,7 +357,7 @@
 	      <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      <div class="text-center pb-5">
 		<button class="btn" hx-get="{% url 'reclaim_card' player.id card.id %}">Reclaim</button>
-		<button class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure?">Forget</button>
+		<button class="btn" hx-get="{% url 'forget_card' player.id card.id %}" hx-confirm="Are you sure you want to forget {{card.name}}?">Forget</button>
 	      </div>
 	    </div>
 	  </div>
