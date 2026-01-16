@@ -133,9 +133,12 @@
 		<img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
 	      </div>
 	      <div class="text-center pb-5">
-		<button class="btn" hx-get="{% url 'choose_card' player.id card.id %}">Choose</button>
 		{% if player.spirit.name == 'Fractured' %}
-		<button class="btn" hx-get="{% url 'send_days' player.id card.id %}">Send to Days</button>
+		{# Just in case the counters get in a weird state, we'll not disable the buttons even if the counter is at 0. #}
+		<button class="btn" hx-get="{% url 'choose_card' player.id card.id %}">Choose ({{player.to_hand_left}})</button>
+		<button class="btn" hx-get="{% url 'send_days' player.id card.id %}">Send to Days ({{player.to_days_left}})</button>
+		{% else %}
+		<button class="btn" hx-get="{% url 'choose_card' player.id card.id %}">Choose</button>
 		{% endif %}
 	      </div>
 	    </div>
