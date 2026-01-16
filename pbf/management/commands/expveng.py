@@ -13,7 +13,7 @@ class Command(BaseCommand):
 
         # Player-specific locations, minus impending
         # Not healing because Vengeance of the Dead can't end up there
-        for loc in ('hand', 'discard', 'play', 'selection', 'days'):
+        for loc in ('hand', 'discard', 'play', 'selection', 'days', 'scenario'):
             players = getattr(expl, loc)
             print(f"{players.count()} player {loc}s: {players.first()}... {players.last()}")
 

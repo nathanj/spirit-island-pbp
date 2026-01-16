@@ -255,7 +255,7 @@ class Card(models.Model):
 
         # Player-specific locations, minus impending
         # Not healing since nothing that uses this cares to know
-        for loc in ('hand', 'discard', 'play', 'selection', 'days'):
+        for loc in ('hand', 'discard', 'play', 'selection', 'days', 'scenario'):
             if (players := getattr(self, loc).filter(game=game).values_list('id', 'spirit__name', named=True)):
                 names = " and ".join(player.spirit__name for player in players)
                 locs.append((GamePlayer, [player.id for player in players], loc, f"{names}'s {loc}"))
@@ -326,6 +326,25 @@ class Game(models.Model):
         # Template only uses the name, so just give them that
         return [locname for (_, _, _, locname) in Card.objects.get(name='Vengeance of the Dead exploratory').location_in_game(self)]
 
+    def scenario_setup_from_deck(self) -> bool:
+        scenarios = {
+            'Destiny Unfolds',
+            'Second Wave',
+        }
+        return self.scenario in scenarios
+
+    def scenario_setup_uniques(self) -> bool:
+        scenarios = {
+            'Second Wave',
+        }
+        return self.scenario in scenarios
+
+    def scenario_setup_discard(self) -> bool:
+        scenarios = {
+            'Destiny Unfolds',
+        }
+        return self.scenario in scenarios
+
 colors_to_circle_color_map = {
         'blue': '#705dff',
         'green': '#0d9501',
@@ -369,6 +388,7 @@ class GamePlayer(models.Model):
     play = models.ManyToManyField(Card, related_name='play', blank=True)
     selection = models.ManyToManyField(Card, related_name='selection', blank=True)
     days = models.ManyToManyField(Card, related_name='days', blank=True)
+    scenario = models.ManyToManyField(Card, related_name='scenario', blank=True)
     # had to rename from "impending" to enable ManyToManyField migration
     impending_with_energy = models.ManyToManyField(Card, through='pbf.GamePlayerImpendingWithEnergy', related_name='impending_with_energy', blank=True)
     healing = models.ManyToManyField(Card, related_name='healing', blank=True)
@@ -768,6 +788,15 @@ class GamePlayer(models.Model):
         # still need to return the list of Impending object (not Card).
         _ = self.cards_with_thresholds(imp.card for imp in impends)
         return impends
+
+    def scenario_with_second_wave_thresholds(self) -> Iterable[Card]:
+        cards = self.scenario.all()
+        for card in cards:
+            card.computed_thresholds = [ #type: ignore[attr-defined]
+                Threshold(x, y, sum(int(n[0]) for n in chunk(elts_str, 2)) <= 10)
+                for (x, y, elts_str) in card_thresholds.get(card.name, [])
+            ]
+        return cards
 
     def thresholds(self) -> Iterable[Threshold]:
         elements = self.elements
