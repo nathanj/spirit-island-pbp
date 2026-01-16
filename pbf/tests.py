@@ -1269,6 +1269,38 @@ class TestScenario(TestCase):
         minors_before = game.minor_deck.count()
         majors_before = game.major_deck.count()
         self.assertIn(card, game.major_deck.all())
+        self.assertEqual(0, game.discard_pile.count())
+
+        client.post(f"/game/{player.id}/setup_discard/{card.id}")
+
+        self.assertEqual(['Angry Bears'], list(game.discard_pile.values_list('name', flat=True)))
+        self.assertEqual(minors_before, game.minor_deck.count())
+        self.assertEqual(majors_before - 1, game.major_deck.count())
+        self.assertNotIn(card, game.major_deck.all())
+
+    def test_discard_minor(self):
+        client, game, player = self.setup_game()
+
+        card = Card.objects.get(name='Call to Isolation')
+        minors_before = game.minor_deck.count()
+        majors_before = game.major_deck.count()
+        self.assertIn(card, game.minor_deck.all())
+        self.assertEqual(0, game.discard_pile.count())
+
+        client.post(f"/game/{player.id}/setup_discard/{card.id}")
+
+        self.assertEqual(['Call to Isolation'], list(game.discard_pile.values_list('name', flat=True)))
+        self.assertEqual(minors_before - 1, game.minor_deck.count())
+        self.assertNotIn(card, game.minor_deck.all())
+        self.assertEqual(majors_before, game.major_deck.count())
+
+    def test_discard_major(self):
+        client, game, player = self.setup_game()
+
+        card = Card.objects.get(name='Angry Bears')
+        minors_before = game.minor_deck.count()
+        majors_before = game.major_deck.count()
+        self.assertIn(card, game.major_deck.all())
         self.assertEqual(0, player.scenario.count())
 
         client.post(f"/game/{player.id}/add_to_scenario/{card.id}")
