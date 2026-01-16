@@ -560,7 +560,7 @@ def import_game(request: HttpRequest) -> HttpResponse:
             if gp.full_name() in spirit_additional_cards:
                 cards_in_game |= {Card.objects.get(name=card).id for card in spirit_additional_cards[gp.full_name()]}
 
-        for name in ('discard', 'play', 'selection', 'days', 'healing'):
+        for name in ('discard', 'play', 'selection', 'days', 'healing', 'scenario'):
             if name in player:
                 getattr(gp, name).set(cards := cards_with_name(player[name]))
                 cards_in_game |= {card.id for card in cards}
@@ -962,6 +962,61 @@ def create_days(request: HttpRequest, player_id: int, num: int) -> HttpResponse:
         deck.remove(*days)
         player.days.add(*days)
         add_log_msg(player.game, player=player, text=f'starts with {num} {name} powers in the Days That Never Were', cards=days)
+
+    return with_log_trigger(render(request, 'player.html', {'player': player}))
+
+def setup_deck(request: HttpRequest, player_id: int, type: str) -> HttpResponse:
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    if type == 'minor':
+        cards = player.game.minor_deck.all()
+    elif type == 'major':
+        cards = player.game.major_deck.all()
+    else:
+        raise ValueError(f"invalid card type")
+
+    return render(request, 'power_deck_setup.html', {'name': type.capitalize(), 'player': player, 'cards': cards})
+
+def setup_discard(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
+    # this doesn't actually manipulate the player in any way,
+    # except to return to their setup after the operation is done
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(Card, pk=card_id)
+    if card.type == Card.MINOR:
+        deck: 'Card_ManyRelatedManager[Any]' = player.game.minor_deck
+    elif card.type == Card.MAJOR:
+        deck = player.game.major_deck
+    else:
+        raise ValueError(f"Can't add {card}")
+
+    if deck.filter(id=card_id).exists():
+        deck.remove(card)
+        player.game.discard_pile.add(card)
+
+    return render(request, 'power_deck_setup.html', {'name': card.get_type_display(), 'player': player, 'cards': deck.all()})
+
+def add_to_scenario(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(Card, pk=card_id)
+    if card.type == Card.MINOR:
+        deck: 'Card_ManyRelatedManager[Any]' = player.game.minor_deck
+    elif card.type == Card.MAJOR:
+        deck = player.game.major_deck
+    else:
+        raise ValueError(f"Can't add {card}")
+
+    if deck.filter(id=card_id).exists():
+        deck.remove(card)
+        player.scenario.add(card)
+
+    return render(request, 'power_deck_setup.html', {'name': card.get_type_display(), 'player': player, 'cards': deck.all()})
+
+def gain_scenario(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card = get_object_or_404(player.scenario, pk=card_id)
+    player.hand.add(card)
+    player.scenario.remove(card)
+
+    add_log_msg(player.game, player=player, text=f'gains {card.name} from their Destiny')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
