@@ -976,6 +976,17 @@ def setup_deck(request: HttpRequest, player_id: int, type: str) -> HttpResponse:
 
     return render(request, 'power_deck_setup.html', {'name': type.capitalize(), 'player': player, 'owned': player.scenario.all(), 'deck': cards})
 
+def setup_discard_pile(request: HttpRequest, game_id: str, type: str) -> HttpResponse:
+    game = get_object_or_404(Game, pk=game_id)
+    if type == 'minor':
+        cards = game.minor_deck.all()
+    elif type == 'major':
+        cards = game.major_deck.all()
+    else:
+        raise ValueError('invalid card type')
+
+    return render(request, 'power_deck_setup.html', {'name': type.capitalize(), 'game': game, 'owned': game.discard_pile.all(), 'deck': cards})
+
 # move a card from its corresponding deck (minor or major), if it's there
 # if the card belongs to a deck (major or minor),
 #   returns the card and that deck (regardless of whether the card was moved)
@@ -993,6 +1004,24 @@ def move_card_from_deck(card_id: int, game: Game, dst: 'Card_ManyRelatedManager[
         deck.remove(card)
         dst.add(card)
     return (card, deck)
+
+def setup_discard_card_game(request: HttpRequest, game_id: str, card_id: int) -> HttpResponse:
+    game = get_object_or_404(Game, pk=game_id)
+    card, deck = move_card_from_deck(card_id, game, game.discard_pile)
+    if not deck:
+        raise ValueError(f"Can't add {card}")
+
+    return render(request, 'power_deck_setup.html', {'name': card.get_type_display(), 'game': game, 'owned': game.discard_pile.all(), 'deck': deck.all()})
+
+def setup_discard_card_player(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
+    # this doesn't actually manipulate the player in any way,
+    # except to return to their setup after the operation is done
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    card, deck = move_card_from_deck(card_id, player.game, player.game.discard_pile)
+    if not deck:
+        raise ValueError(f"Can't add {card}")
+
+    return render(request, 'power_deck_setup.html', {'name': card.get_type_display(), 'player': player, 'owned': player.scenario.all(), 'deck': deck.all()})
 
 def add_to_scenario(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)

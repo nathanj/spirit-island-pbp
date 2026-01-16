@@ -2,7 +2,7 @@
 
 {# similarities with power_deck.html, but enough differences (show specific spirit's scenario cards, target element ID, buttons + name) that it makes sense to just separate them #}
 
-<h4>{{player.spirit.name}} ({{owned | length}} cards):</h4>
+<h4>{% if player %}{{player.spirit.name}}{% else %}Discard pile{% endif %} ({{owned | length}} cards):</h4>
 <ul>
   <div class="container-fluid">
     <div class="row">
@@ -30,7 +30,14 @@
 	    <img src="{% static card.url %}" class="img-fluid rounded-top" alt="{{card.name}}">
       {{card.name}}
 	    <div class="text-center pb-5">
+        {% if player %}
 	      <button class="btn" hx-get="{% url 'add_to_scenario' player.id card.id %}">Add</button>
+        {% if player.game.scenario_setup_discard %}
+	      <button class="btn" hx-get="{% url 'setup_discard_card_player' player.id card.id %}">Discard</button>
+        {% endif %}
+        {% elif game and game.scenario_setup_discard %}
+	      <button class="btn" hx-get="{% url 'setup_discard_card_game' game.id card.id %}">Discard</button>
+        {% endif %}
 	    </div>
 	  </div>
 	</div>

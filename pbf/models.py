@@ -332,6 +332,12 @@ class Game(models.Model):
         }
         return self.scenario in scenarios
 
+    def scenario_setup_discard(self) -> bool:
+        scenarios = {
+            'Destiny Unfolds',
+        }
+        return self.scenario in scenarios
+
 colors_to_circle_color_map = {
         'blue': '#705dff',
         'green': '#0d9501',

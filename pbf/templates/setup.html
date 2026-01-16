@@ -56,6 +56,14 @@
 <button type="submit" class="btn">Save player names/colors</button>
 </form>
 
+{% if game.scenario_setup_discard %}
+<p hx-target="#deck" hx-swap="innerHTML">
+Discard:
+<button class="btn" hx-get="{% url 'setup_discard_pile' game.id 'minor' %}">Minor</button>
+<button class="btn" hx-get="{% url 'setup_discard_pile' game.id 'major' %}">Major</button>
+</p>
+{% endif %}
+
 <div id="deck"></div>
 
 <script src="{% static 'pbf/dropdown.min.js' %}"></script>
