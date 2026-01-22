@@ -820,9 +820,9 @@ spirit_thresholds: dict[str, list[tuple[int, int, str | list[str]]]] = {
             (360, 450, '2M2A'),
             (360, 515, '3M'),
             (635, 450, '2M1A'),
-            (635, 480, '2M2N'),
-            (635, 525, '3M2A1N'),
-            (635, 565, '4M3A2N'),
+            (635, 485, '2M2N'),
+            (635, 530, '3M2A1N'),
+            (635, 575, '4M3A2N'),
             ],
         'ViolenceBringer': [
             (650, 450, '1M1A'),
@@ -965,9 +965,9 @@ spirit_thresholds: dict[str, list[tuple[int, int, str | list[str]]]] = {
             (363, 545, '5F5A2W'),
             ],
         'SparkingLightning': [
-            (355, 445, '2S5F3A'),
-            (355, 520, '2F2A'),
-            (355, 550, '1S3F2A'),
+            (365, 445, '2S5F3A'),
+            (365, 520, '2F2A'),
+            (365, 550, '1S3F2A'),
             ],
         'ImmenseLightning': [
             (363, 440, '3F2A'),
@@ -1059,10 +1059,10 @@ spirit_thresholds: dict[str, list[tuple[int, int, str | list[str]]]] = {
             (365, 520, '3S4W1E'),
             ],
         'HavenRiver': [
-            (365, 460, '1S1W'),
-            (365, 490, '1S2W1E'),
-            (365, 530, '1S1N'),
-            (365, 570, '1S1W2P'),
+            (365, 470, '1S1W'),
+            (365, 500, '1S2W1E'),
+            (365, 540, '1S1N'),
+            (365, 585, '1S1W2P'),
             ],
         'TravelRiver': [
             (365, 440, '1S2W'),
@@ -1176,8 +1176,8 @@ spirit_thresholds: dict[str, list[tuple[int, int, str | list[str]]]] = {
         'WarriorThunderspeaker': [
             (370, 425, '4A'),
             (370, 455, '1N'),
-            (630, 508, '1S2F'),
-            (630, 545, '3S3F'),
+            (630, 518, '1S2F'),
+            (630, 555, '3S3F'),
             ],
         'TacticianThunderspeaker': [
             (370, 425, '4A'),
