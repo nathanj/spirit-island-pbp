@@ -313,6 +313,45 @@ class TestSetupPowerCards(TestCase):
         self.assertEqual(player.days.filter(type=Card.MINOR).count(), 4)
         self.assertEqual(player.days.filter(type=Card.MAJOR).count(), 4)
 
+class TestSetupSpiritSpecificResources(TestCase):
+    def setup_game(self, spirit):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        r = client.post(f"/game/{game.id}/add-player", {"spirit": spirit, "color": "random"})
+        v = game.gameplayer_set.all()
+        self.assertEqual(len(v), 1, "didn't find one game player; spirit not created successfully?")
+        player = v[0]
+        return player
+
+    @staticmethod
+    def expected_shifting_memory_elements():
+        return {
+            'sun': 0,
+            'moon': 1,
+            'fire': 0,
+            'air': 1,
+            'water': 0,
+            'earth': 1,
+            'plant': 0,
+            'animal': 0,
+        }
+
+    def test_base_shifting_memory(self):
+        player = self.setup_game('Memory')
+        elements = {elt: count for (_, _, count, elt) in player.spirit_specific_resource_elements()}
+        self.assertEqual(elements, self.expected_shifting_memory_elements())
+
+    def test_intensify_shifting_memory(self):
+        player = self.setup_game('Memory - Intensify')
+        elements = {elt: count for (_, _, count, elt) in player.spirit_specific_resource_elements()}
+        self.assertEqual(elements, self.expected_shifting_memory_elements())
+
+    def test_mentor_shifting_memory(self):
+        player = self.setup_game('Memory - Mentor')
+        elements = {elt: count for (_, _, count, elt) in player.spirit_specific_resource_elements()}
+        self.assertEqual(elements, self.expected_shifting_memory_elements())
+
 class TestEnergyGainAndBargainDebt(TestCase):
     def test_no_debt(self):
         player = GamePlayer(energy=1)
