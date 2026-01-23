@@ -798,6 +798,16 @@ def gain_power(request: HttpRequest, player_id: int, type: str, num: int) -> Htt
         add_log_msg(player.game, player=player, text=f'gains {num} {type} powers', cards=selection, spoiler=spoiler)
         return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards_verb': 'gained', 'taken_cards': selection}))
 
+    if player.spirit.name == 'Fractured':
+        keep = 2 if num == 6 else 1
+        # clear the value, because undo gain doesn't clear it
+        # (consider what would happen if they gain 4, undo, gain 6: should show 2, not 3)
+        player.spirit_specific_per_turn_flags &= ~(GamePlayer.FRACTURED_DAYS_TO_HAND * 3)
+        player.spirit_specific_per_turn_flags &= ~(GamePlayer.FRACTURED_DAYS_TO_DAYS * 3)
+        player.spirit_specific_per_turn_flags |= GamePlayer.FRACTURED_DAYS_TO_HAND * keep
+        player.spirit_specific_per_turn_flags |= GamePlayer.FRACTURED_DAYS_TO_DAYS * keep
+        player.save(update_fields=['spirit_specific_per_turn_flags'])
+
     player.selection.set(selection)
 
     # TODO: Should we set a flag on the player, such that when they actually select the card, it is also spoilered?
@@ -862,7 +872,17 @@ def move_card(card_id: int, srcs: Iterable['Card_ManyRelatedManager[Any]'], dst:
 
 def send_days(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
-    if card := move_card(card_id, [player.selection, player.game.discard_pile], player.days):
+    if card := move_card(card_id, [player.selection], player.days):
+        add_log_msg(player.game, player=player, text=f'sends {card.name} to the Days That Never Were')
+        # Boon of Reimagining: 6 - 4 = 2
+        # normal gain: 4 - 2 = 2
+        if player.selection.count() == 2:
+            player.game.discard_pile.add(*player.selection.all())
+            player.selection.clear()
+        if player.to_days_left > 0:
+            player.spirit_specific_per_turn_flags -= GamePlayer.FRACTURED_DAYS_TO_DAYS
+            player.save(update_fields=['spirit_specific_per_turn_flags'])
+    elif card := move_card(card_id, [player.game.discard_pile], player.days):
         add_log_msg(player.game, player=player, text=f'sends {card.name} to the Days That Never Were')
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -887,7 +907,15 @@ def choose_card(request: HttpRequest, player_id: int, card_id: int) -> HttpRespo
     # we would have to redo this in some way,
     # perhaps by adding a field to GamePlayer indicating the number of cards that are to be gained.
     cards_left = player.selection.count()
-    can_keep_selecting = card.type == Card.MINOR and (cards_left == 5 or player.aspect == 'Mentor' and cards_left > 1)
+    if player.spirit.name == 'Fractured':
+        # Boon of Reimagining: 6 - 4 = 2
+        # normal gain: 4 - 2 = 2
+        can_keep_selecting = cards_left != 2
+        if player.to_hand_left > 0:
+            player.spirit_specific_per_turn_flags -= GamePlayer.FRACTURED_DAYS_TO_HAND
+            player.save(update_fields=['spirit_specific_per_turn_flags'])
+    else:
+        can_keep_selecting = card.type == Card.MINOR and (cards_left == 5 or player.aspect == 'Mentor' and cards_left > 1)
     if not can_keep_selecting:
         player.game.discard_pile.add(*player.selection.all())
         player.selection.clear()

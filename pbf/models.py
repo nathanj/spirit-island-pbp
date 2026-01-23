@@ -449,6 +449,14 @@ class GamePlayer(models.Model):
     # enables the Plant Treasure's one-time button for this turn
     # we assume they want to use it immediately so it's okay to use a per-turn flag for it.
     PLANT_TREASURE_THIS_TURN = 1 << 2
+    # Fractured Days Split the Sky number of cards to add to hand + Days That Never Were
+    # TODO: limitation of using per-turn flag for this: if someone un-readies with a selection, the info is lost.
+    # This may indicate that fundamentally the info should be stored somewhere more persistent.
+    # It's also not a great fit for per-turn flags (both are integers with values 0-2)
+    # while it's possible to interpret an integer 0-2 as two flags (one meaning +1, one meaning +2),
+    # that's not really within the original spirit of the field.
+    FRACTURED_DAYS_TO_HAND = 1 << 2
+    FRACTURED_DAYS_TO_DAYS = 1 << 4
 
     @property
     def last_unready_energy_friendly(self) -> int | str:
@@ -470,6 +478,14 @@ class GamePlayer(models.Model):
 
     def plant_treasure_this_turn(self) -> int:
         return self.spirit_specific_per_turn_flags & GamePlayer.PLANT_TREASURE_THIS_TURN
+
+    @property
+    def to_hand_left(self) -> int:
+        return self.spirit_specific_per_turn_flags >> 2 & 3
+
+    @property
+    def to_days_left(self) -> int:
+        return self.spirit_specific_per_turn_flags >> 4 & 3
 
     def __str__(self) -> str:
         return str(self.game.id) + ' - ' + str(self.spirit.name)
