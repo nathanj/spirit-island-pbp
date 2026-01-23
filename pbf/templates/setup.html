@@ -43,12 +43,28 @@
           {% endfor %}
         </select>
       </td>
+      {% if game.scenario_setup_from_deck %}
+      <td hx-target="#deck" hx-swap="innerHTML">
+  <button class="btn" hx-get="{% url 'setup_deck' player.id 'minor' %}">Minor</button>
+  <button class="btn" hx-get="{% url 'setup_deck' player.id 'major' %}">Major</button>
+      </td>
+      {% endif %}
     </tr>
     {% endfor %}
   </tbody>
 </table>
 <button type="submit" class="btn">Save player names/colors</button>
 </form>
+
+{% if game.scenario_setup_discard %}
+<p hx-target="#deck" hx-swap="innerHTML">
+Discard:
+<button class="btn" hx-get="{% url 'setup_discard_pile' game.id 'minor' %}">Minor</button>
+<button class="btn" hx-get="{% url 'setup_discard_pile' game.id 'major' %}">Major</button>
+</p>
+{% endif %}
+
+<div id="deck"></div>
 
 <script src="{% static 'pbf/dropdown.min.js' %}"></script>
 
@@ -99,7 +115,9 @@
   {% csrf_token %}
   <select name="scenario">
     <option value="">No scenario</option>
+    {# This should just be a for loop over the below scenarios, but Django template language doesn't support list literals. #}
     <option value="Blitz" {% if game.scenario == 'Blitz' %}selected{% endif %}>Blitz</option>
+    <option value="Destiny Unfolds" {% if game.scenario == 'Destiny Unfolds' %}selected{% endif %}>Destiny Unfolds</option>
   </select>
   <button type="submit" class="btn">Change scenario</button>
 </form>

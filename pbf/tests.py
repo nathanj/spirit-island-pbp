@@ -1234,6 +1234,125 @@ class TestCheckElements(TestCase):
         elements[Elements.Air] = 2
         self.assertTrue(self.check_elements(elements, '4M3F2A', 'MF'))
 
+class TestScenario(TestCase):
+    def setup_game(self, n=1):
+        client = Client()
+        client.post("/new")
+        game = Game.objects.last()
+        for i in range(n):
+            client.post(f"/game/{game.id}/add-player", {"spirit": "River", "color": "random"})
+            self.assertEqual(game.gameplayer_set.count(), i + 1, "didn't find correct number of players; spirit not created successfully?")
+        return (client, game, *game.gameplayer_set.all())
+
+    def test_add_minor(self):
+        client, game, player = self.setup_game()
+
+        card = Card.objects.get(name='Call to Isolation')
+        minors_before = game.minor_deck.count()
+        majors_before = game.major_deck.count()
+        self.assertIn(card, game.minor_deck.all())
+        self.assertEqual(0, player.scenario.count())
+
+        client.post(f"/game/{player.id}/add_to_scenario/{card.id}")
+
+        self.assertEqual(['Call to Isolation'], list(player.scenario.values_list('name', flat=True)))
+        self.assertEqual(minors_before - 1, game.minor_deck.count())
+        self.assertNotIn(card, game.minor_deck.all())
+        self.assertEqual(majors_before, game.major_deck.count())
+
+    def test_add_major(self):
+        client, game, player = self.setup_game()
+
+        card = Card.objects.get(name='Angry Bears')
+        minors_before = game.minor_deck.count()
+        majors_before = game.major_deck.count()
+        self.assertIn(card, game.major_deck.all())
+        self.assertEqual(0, player.scenario.count())
+
+        client.post(f"/game/{player.id}/add_to_scenario/{card.id}")
+
+        self.assertEqual(['Angry Bears'], list(player.scenario.values_list('name', flat=True)))
+        self.assertEqual(minors_before, game.minor_deck.count())
+        self.assertEqual(majors_before - 1, game.major_deck.count())
+        self.assertNotIn(card, game.major_deck.all())
+
+    def test_discard_minor_player(self):
+        client, game, player = self.setup_game()
+
+        card = Card.objects.get(name='Call to Isolation')
+        minors_before = game.minor_deck.count()
+        majors_before = game.major_deck.count()
+        self.assertIn(card, game.minor_deck.all())
+        self.assertEqual(0, game.discard_pile.count())
+
+        client.post(f"/game/{player.id}/setup_discard_card_player/{card.id}")
+
+        self.assertEqual(['Call to Isolation'], list(game.discard_pile.values_list('name', flat=True)))
+        self.assertEqual(minors_before - 1, game.minor_deck.count())
+        self.assertNotIn(card, game.minor_deck.all())
+        self.assertEqual(majors_before, game.major_deck.count())
+
+    def test_discard_major_player(self):
+        client, game, player = self.setup_game()
+
+        card = Card.objects.get(name='Angry Bears')
+        minors_before = game.minor_deck.count()
+        majors_before = game.major_deck.count()
+        self.assertIn(card, game.major_deck.all())
+        self.assertEqual(0, game.discard_pile.count())
+
+        client.post(f"/game/{player.id}/setup_discard_card_player/{card.id}")
+
+        self.assertEqual(['Angry Bears'], list(game.discard_pile.values_list('name', flat=True)))
+        self.assertEqual(minors_before, game.minor_deck.count())
+        self.assertEqual(majors_before - 1, game.major_deck.count())
+        self.assertNotIn(card, game.major_deck.all())
+
+    def test_discard_minor_game(self):
+        client, game, _ = self.setup_game()
+
+        card = Card.objects.get(name='Call to Isolation')
+        minors_before = game.minor_deck.count()
+        majors_before = game.major_deck.count()
+        self.assertIn(card, game.minor_deck.all())
+        self.assertEqual(0, game.discard_pile.count())
+
+        client.post(f"/game/{game.id}/setup_discard_card_game/{card.id}")
+
+        self.assertEqual(['Call to Isolation'], list(game.discard_pile.values_list('name', flat=True)))
+        self.assertEqual(minors_before - 1, game.minor_deck.count())
+        self.assertNotIn(card, game.minor_deck.all())
+        self.assertEqual(majors_before, game.major_deck.count())
+
+    def test_discard_major_game(self):
+        client, game, _ = self.setup_game()
+
+        card = Card.objects.get(name='Angry Bears')
+        minors_before = game.minor_deck.count()
+        majors_before = game.major_deck.count()
+        self.assertIn(card, game.major_deck.all())
+        self.assertEqual(0, game.discard_pile.count())
+
+        client.post(f"/game/{game.id}/setup_discard_card_game/{card.id}")
+
+        self.assertEqual(['Angry Bears'], list(game.discard_pile.values_list('name', flat=True)))
+        self.assertEqual(minors_before, game.minor_deck.count())
+        self.assertEqual(majors_before - 1, game.major_deck.count())
+        self.assertNotIn(card, game.major_deck.all())
+
+    def test_gain_scenario(self):
+        client, game, player = self.setup_game()
+
+        card1 = Card.objects.get(name='Call to Isolation')
+        card2 = Card.objects.get(name='Call to Ferocity')
+        player.scenario.set([card1, card2])
+        hand_before = player.hand.count()
+
+        client.post(f"/game/{player.id}/gain_scenario/{card1.id}")
+        self.assertEqual(['Call to Ferocity'], list(player.scenario.values_list('name', flat=True)))
+        self.assertEqual(hand_before + 1, player.hand.count())
+        self.assertIn(card1, player.hand.all())
+
 class TestDaysThatNeverWere(TestCase):
     def test_create(self):
         client = Client()

@@ -33,7 +33,7 @@ class GamePlayerAdmin(admin.ModelAdmin): #type: ignore[type-arg]
     # Doing so via admin interface is not an operation we should offer,
     # as offering it is an implicit promise that it works.
     readonly_fields = ('spirit', )
-    autocomplete_fields = ('hand', 'discard', 'play', 'selection', 'days')
+    autocomplete_fields = ('hand', 'discard', 'play', 'selection', 'days', 'scenario')
 
     # Some fields are specific to one spirit and don't do anything for others.
     # Don't display them, to avoid clutter and data that doesn't make sense.
@@ -45,6 +45,8 @@ class GamePlayerAdmin(admin.ModelAdmin): #type: ignore[type-arg]
             # TODO: Cutting corners, using Days That Never Were for Covets Gleaming Shards,
             # rather than a dedicated association.
             excludes.append('days')
+        if not obj or not obj.game.scenario_setup_from_deck():
+            excludes.append('scenario')
         return excludes
 
     filter_horizontal = ('healing', )
