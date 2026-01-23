@@ -1901,6 +1901,46 @@ class TestImport(TestCase):
         player = game.gameplayer_set.first()
         self.assertEqual(player.aspect, "Travel")
 
+    def test_import_energy_implicit_zero(self):
+        game = self.import_game('{"players": [{"spirit": "River"}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.energy, 0)
+
+    def test_import_energy_explicit_zero(self):
+        game = self.import_game('{"players": [{"spirit": "River", "energy": 0}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.energy, 0)
+
+    def test_import_energy_explicit_nonzero(self):
+        game = self.import_game('{"players": [{"spirit": "River", "energy": 2}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.energy, 2)
+
+    def test_import_energy_explicit_zero_aspect(self):
+        game = self.import_game('{"players": [{"spirit": "River", "aspect": "Sunshine", "energy": 0}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.energy, 0)
+
+    def test_import_energy_explicit_nonzero_aspect(self):
+        game = self.import_game('{"players": [{"spirit": "River", "aspect": "Sunshine", "energy": 2}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.energy, 2)
+
+    def test_last_unready_energy_explicit_nonzero(self):
+        game = self.import_game('{"players": [{"spirit": "River", "last_unready_energy": 1}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.last_unready_energy, 1)
+
+    def test_last_unready_energy_explicit_zero(self):
+        game = self.import_game('{"players": [{"spirit": "River", "aspect": "Sunshine", "last_unready_energy": 0}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.last_unready_energy, 0)
+
+    def test_spirit_specific_resources_explicit_zero(self):
+        game = self.import_game('{"players": [{"spirit": "Memory", "spirit_specific_resource": 0}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.spirit_specific_resource, 0)
+
     def test_locus_presence_removed_on_import(self):
         game = self.import_game('{"players": [{"spirit": "Serpent"}]}')
         player = game.gameplayer_set.first()
