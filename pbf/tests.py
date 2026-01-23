@@ -1955,6 +1955,16 @@ class TestImport(TestCase):
         player = game.gameplayer_set.first()
         self.assertEqual(player.energy, 2)
 
+    def test_import_energy_implicit_nonzero_spirit(self):
+        game = self.import_game('{"players": [{"spirit": "Vigil"}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.energy, 1)
+
+    def test_import_energy_implicit_nonzero_aspect(self):
+        game = self.import_game('{"players": [{"spirit": "River", "aspect": "Sunshine"}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.energy, 1)
+
     def test_import_energy_explicit_zero_aspect(self):
         game = self.import_game('{"players": [{"spirit": "River", "aspect": "Sunshine", "energy": 0}]}')
         player = game.gameplayer_set.first()
@@ -1965,8 +1975,18 @@ class TestImport(TestCase):
         player = game.gameplayer_set.first()
         self.assertEqual(player.energy, 2)
 
+    def test_last_unready_energy_implicit_zero(self):
+        game = self.import_game('{"players": [{"spirit": "River"}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.last_unready_energy, 0)
+
     def test_last_unready_energy_explicit_nonzero(self):
         game = self.import_game('{"players": [{"spirit": "River", "last_unready_energy": 1}]}')
+        player = game.gameplayer_set.first()
+        self.assertEqual(player.last_unready_energy, 1)
+
+    def test_last_unready_energy_implicit_nonzero(self):
+        game = self.import_game('{"players": [{"spirit": "River", "aspect": "Sunshine"}]}')
         player = game.gameplayer_set.first()
         self.assertEqual(player.last_unready_energy, 1)
 
@@ -1974,6 +1994,22 @@ class TestImport(TestCase):
         game = self.import_game('{"players": [{"spirit": "River", "aspect": "Sunshine", "last_unready_energy": 0}]}')
         player = game.gameplayer_set.first()
         self.assertEqual(player.last_unready_energy, 0)
+
+    def test_spirit_specific_resources_implicit_shifting_memory(self):
+        game = self.import_game('{"players": [{"spirit": "Memory"}]}')
+        player = game.gameplayer_set.first()
+        elements = {elt: count for (_, _, count, elt) in player.spirit_specific_resource_elements()}
+        expected = {
+            'sun': 0,
+            'moon': 1,
+            'fire': 0,
+            'air': 1,
+            'water': 0,
+            'earth': 1,
+            'plant': 0,
+            'animal': 0,
+        }
+        self.assertEqual(elements, expected)
 
     def test_spirit_specific_resources_explicit_zero(self):
         game = self.import_game('{"players": [{"spirit": "Memory", "spirit_specific_resource": 0}]}')
