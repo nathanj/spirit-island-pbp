@@ -517,6 +517,23 @@ def import_game(request: HttpRequest) -> HttpResponse:
                 color=player.get('color', next(iter(available_colours))),
                 spirit=Spirit.objects.get(name__iexact=spirit_name),
                 )
+
+        # If these basic attributes aren't set, we'll use the values at the start of a new game,
+        # which are different from database defaults.
+        # This makes the common case of starting a new game from import more convenient,
+        # as fewer fields need to be specified.
+        #
+        # It's unlikely that this inconveniences importing from an existing game,
+        # as in that case the JSON is likely being created automatically,
+        # and it's no additional inconvenience for that automation to specify these fields.
+        if 'energy' not in player:
+            spirit_and_aspect = f'{gp.spirit.name} - {gp.aspect}' if gp.aspect else gp.spirit.name
+            gp.energy = spirit_setup_energy.get(spirit_and_aspect, 0)
+        if 'last_unready_energy' not in player:
+            gp.last_unready_energy = gp.energy
+        if 'spirit_specific_resource' not in player and gp.spirit.name == 'Memory':
+            gp.init_shifting_memory_prepared_elements()
+
         if gp.color in available_colours:
             available_colours.remove(gp.color)
             # if there are no colours left, we'll just have to repopulate.

@@ -652,9 +652,12 @@ class GamePlayer(models.Model):
     def init_spirit(self) -> None:
         self.last_unready_energy = self.energy
         if self.spirit.name == "Memory":
-            for e in (Elements.Moon, Elements.Air, Elements.Earth):
-                # Prepare one of each.
-                self.spirit_specific_resource += 1 << (ELEMENT_WIDTH * (e.value - 1))
+            self.init_shifting_memory_prepared_elements()
+
+    def init_shifting_memory_prepared_elements(self) -> None:
+        for e in (Elements.Moon, Elements.Air, Elements.Earth):
+            # Prepare one of each.
+            self.spirit_specific_resource += 1 << (ELEMENT_WIDTH * (e.value - 1))
 
     def full_name(self) -> str:
         name = self.spirit.name
