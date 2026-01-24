@@ -774,6 +774,21 @@ def take_powers(request: HttpRequest, player_id: int, type: str, num: int) -> Ht
 
     return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
 
+def take_play_powers(request: HttpRequest, player_id: int, type: str, num: int) -> HttpResponse:
+    player = get_object_or_404(GamePlayer, pk=player_id)
+    # most compliant browsers should send 'on', but we'll allow 'true' as well
+    spoiler = request.GET.get('spoiler_power_gain', '') in ('on', 'true')
+
+    taken_cards = cards_from_deck(player.game, num, type)
+    player.play.add(*taken_cards)
+
+    if num == 1:
+        add_log_msg(player.game, player=player, text=f'takes and plays a {type} power', cards=taken_cards, spoiler=spoiler)
+    else:
+        add_log_msg(player.game, player=player, text=f'takes and plays {num} {type} powers', cards=taken_cards, spoiler=spoiler)
+
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
+
 def gain_healing(request: HttpRequest, player_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     if player.selection.exists():
@@ -807,10 +822,9 @@ def gain_power(request: HttpRequest, player_id: int, type: str, num: int) -> Htt
         # so the verb "take" would be inappropriate.
         #
         # Why not put this in take_powers but special-case Mentor's verb then?
-        # Because Mentor's gain 2 keep 2 should use verb "gain",
-        # but Transformative Sacrifice take 2 used on Mentor should use verb "take".
-        # Putting this in take_powers would leave no way to tell the difference between these two.
-        # Instead, we keep it here, and call either gain_power or take_powers as appropriate.
+        # That would work, but causes take_powers to diverge more from take_play_powers,
+        # making the two harder to unify (if that's desired in the future).
+        # Overall it seems better to put this in the function matching its verb.
         player.hand.add(*selection)
         add_log_msg(player.game, player=player, text=f'gains {num} {type} powers', cards=selection, spoiler=spoiler)
         return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards_verb': 'gained', 'taken_cards': selection}))
