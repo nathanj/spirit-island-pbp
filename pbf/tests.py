@@ -536,6 +536,34 @@ class TestReshuffleOrNot(TestCase):
         self.assertEqual(game.major_deck.count(), available_cards - 2)
         self.assertEqual(game.discard_pile.count(), 0)
 
+    def test_not_reshuffle_on_take_play(self):
+        arbitrary_cards_in_deck = 7
+        client, game, player = self.setup_game(arbitrary_cards_in_deck)
+
+        discard_before = game.discard_pile.count()
+        majors_before = player.play.filter(type=Card.MAJOR).count()
+
+        client.post(f"/game/{player.id}/take_play/major/4")
+
+        self.assertEqual(player.play.filter(type=Card.MAJOR).count(), majors_before + 4)
+        self.assertEqual(game.major_deck.count(), arbitrary_cards_in_deck - 4)
+        self.assertEqual(game.discard_pile.count(), discard_before)
+
+    def test_reshuffle_on_take_play(self):
+        client, game, player = self.setup_game(1)
+
+        remaining = list(game.major_deck.all())
+        majors_before = player.play.filter(type=Card.MAJOR).count()
+        available_cards = game.major_deck.count() + game.discard_pile.count()
+
+        client.post(f"/game/{player.id}/take_play/major/2")
+
+        self.assertEqual(player.play.filter(type=Card.MAJOR).count(), majors_before + 2)
+        for rem in remaining:
+            self.assertIn(rem, player.play.all(), "card in deck before reshuffle should have been taken")
+        self.assertEqual(game.major_deck.count(), available_cards - 2)
+        self.assertEqual(game.discard_pile.count(), 0)
+
     def test_not_reshuffle_on_host_draw(self):
         arbitrary_cards_in_deck = 7
         client, game, _ = self.setup_game(arbitrary_cards_in_deck)
@@ -2237,6 +2265,17 @@ class TestLog(TestCase):
         self.assertIn('River takes a minor power:', game.gamelog_set.last().text)
         self.assertIn(player.hand.first().name, game.gamelog_set.last().text)
         self.assertIn(player.hand.first().url(), game.gamelog_set.last().images)
+        self.assertEqual('', game.gamelog_set.last().spoiler_text)
+
+    def test_take_play_power(self):
+        client = Client()
+        client.post('/new')
+        game = Game.objects.last()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='River'), color='red')
+        client.get(f"/game/{player.id}/take_play/minor/1")
+        self.assertIn('River takes and plays a minor power:', game.gamelog_set.last().text)
+        self.assertIn(player.play.first().name, game.gamelog_set.last().text)
+        self.assertIn(player.play.first().url(), game.gamelog_set.last().images)
         self.assertEqual('', game.gamelog_set.last().spoiler_text)
 
     def test_take_power_spoiler(self):
