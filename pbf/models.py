@@ -128,7 +128,7 @@ class Spirit(models.Model):
         return Card.objects.filter(spirit_id=self.id)
 
     def url(self) -> str:
-        return '/pbf/' + self.name.replace(' ', '-').lower() + '.jpg'
+        return 'pbf/' + self.name.replace(' ', '-').lower() + '.jpg'
 
 class Card(models.Model):
     class Meta:
@@ -213,7 +213,7 @@ class Card(models.Model):
         return self.type in (self.MINOR, self.MAJOR)
 
     def url(self) -> str:
-        return '/pbf/' + self.name.replace(",", '').replace("-", '').replace("'", '').replace(' ', '_').lower() + '.jpg'
+        return 'pbf/' + self.name.replace(",", '').replace("-", '').replace("'", '').replace(' ', '_').lower() + '.jpg'
 
     def get_elements(self) -> Counter[Elements]:
         counter = Counter[Elements]()

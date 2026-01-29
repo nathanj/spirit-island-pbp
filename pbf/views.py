@@ -36,7 +36,7 @@ def add_log_msg(game: Game, *, text: str, player: GamePlayer | None = None, card
         raise TypeError("specified both cards and images, but cards would overwrite images")
     card_names = ', '.join(card.name for card in cards) if cards else ''
     if cards:
-        images = ','.join('./pbf/static' + card.url() for card in cards)
+        images = ','.join('./pbf/static/' + card.url() for card in cards)
     if spoiler and cards:
         # We only need to spoiler certain information.
         # For the things we're spoilering (gain power, take power),
