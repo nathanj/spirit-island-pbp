@@ -196,6 +196,12 @@ class Card(models.Model):
         unknown_speed = not_healing.exclude(speed__in=(cls.FAST, cls.SLOW))
         errors.extend(checks.Warning('unknown speed', obj=card) for card in unknown_speed)
 
+        non_uniques_with_spirit = cls.objects.filter(type__in=(cls.MAJOR, cls.MINOR)).exclude(spirit=None)
+        errors.extend(checks.Warning("has a spirit but shouldn't", obj=card) for card in non_uniques_with_spirit)
+
+        uniques_without_spirit = cls.objects.filter(type=cls.UNIQUE, spirit=None).exclude(name__in=('Belligerent and Aggressive Crops', 'Smite the Land with Fulmination'))
+        errors.extend(checks.Warning("doesn't have a spirit but should", obj=card) for card in uniques_without_spirit)
+
         no_elements = not_healing.filter(elements='').exclude(name__in=('Elemental Boon', "Gift of Nature's Connection", 'Draw Towards a Consuming Void'))
         errors.extend(checks.Warning('no elements', obj=card) for card in no_elements)
 
