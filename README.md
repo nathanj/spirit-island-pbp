@@ -88,7 +88,9 @@ The Discord bot is responsible for receiving updates from the website and postin
 When running the site locally for development, typically the bot is not needed.
 You only need the bot when specifically testing bot-related functionality.
 
-You will need a running instance of [Redis](https://redis.io/) for the Discord bot to receive updates from the website.
+You will need to decide what IPC method the website should use to send updates to the bot and set `IPC_METHOD` accordingly:
+* `redis`, which requires a running instance of [Redis](https://redis.io/)
+* `socket`, which requires the OS to support Unix domain sockets
 
 You can locally test whether the bot is correctly receiving updates with these steps:
 
