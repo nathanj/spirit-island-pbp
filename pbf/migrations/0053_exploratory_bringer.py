@@ -16,6 +16,7 @@ def delete_exploratory_bringer(apps, schema_editor):
     Spirit = apps.get_model('pbf', 'Spirit')
 
     if GamePlayer.objects.filter(spirit__name='Exploratory Bringer').exists():
+        # this should not happen, because the migration runs convert_exploratory_bringer first.
         raise Exception("Someone is using Exploratory Bringer")
 
     try:
