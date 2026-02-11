@@ -1,13 +1,5 @@
 from django.db import migrations, models
 
-def count_exploratory_bringer(apps, schema_editor):
-    GamePlayer = apps.get_model('pbf', 'GamePlayer')
-    Card = apps.get_model('pbf', 'Card')
-
-    players = GamePlayer.objects.filter(spirit__name='Exploratory Bringer').count()
-    cards = Card.objects.filter(spirit__name='Exploratory Bringer').count()
-    print(f"{players} players {cards} cards using Exploratory Bringer")
-
 def convert_exploratory_bringer(apps, schema_editor):
     GamePlayer = apps.get_model('pbf', 'GamePlayer')
     Spirit = apps.get_model('pbf', 'Spirit')
@@ -15,13 +7,16 @@ def convert_exploratory_bringer(apps, schema_editor):
     bringer = Spirit.objects.get(name='Bringer')
     players = GamePlayer.objects.filter(spirit__name='Exploratory Bringer')
 
-    players.update(spirit=bringer, aspect='Exploratory')
+    updated = players.update(spirit=bringer, aspect='Exploratory')
+    if updated:
+        print(f"{updated} players converted from Exploratory Bringer")
 
 def delete_exploratory_bringer(apps, schema_editor):
     GamePlayer = apps.get_model('pbf', 'GamePlayer')
     Spirit = apps.get_model('pbf', 'Spirit')
 
     if GamePlayer.objects.filter(spirit__name='Exploratory Bringer').exists():
+        # this should not happen, because the migration runs convert_exploratory_bringer first.
         raise Exception("Someone is using Exploratory Bringer")
 
     try:
@@ -39,7 +34,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-            migrations.RunPython(count_exploratory_bringer, migrations.RunPython.noop),
             migrations.RunPython(convert_exploratory_bringer, migrations.RunPython.noop),
             #migrations.RunPython(delete_exploratory_bringer, add_exploratory_bringer),
             migrations.RunPython(delete_exploratory_bringer, migrations.RunPython.noop),
