@@ -37,6 +37,9 @@ async-timeout = "^5.0.0"
 [tool.poetry.group.dev.dependencies]
 django-debug-toolbar = "^6.0.0"
 
+[tool.poetry.group.typecheck]
+optional = true
+
 [tool.poetry.group.typecheck.dependencies]
 mypy = "^1.18.0"
 django-stubs = "^5.0.0"
