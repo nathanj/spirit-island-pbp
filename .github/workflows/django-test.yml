@@ -25,4 +25,6 @@ jobs:
       - run: pip install 'poetry < 2'
       - run: poetry install --no-root --only main
       - run: poetry run ./manage.py migrate
+        env:
+          IPC_METHOD: socket # if IPC_METHOD=redis, redis packages need to be installed
       - run: poetry run ./manage.py test

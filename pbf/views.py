@@ -20,7 +20,9 @@ match os.getenv('IPC_METHOD', 'redis'):
         bot_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         redis_client = None
     case 'redis':
-        import redis
+        # for type-checking, this code path is statically checked regardless of IPC_METHOD,
+        # and we don't want to force type-checking to install redis
+        import redis #type: ignore[import-not-found]
 
         REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
         REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
