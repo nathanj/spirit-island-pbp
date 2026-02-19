@@ -4,6 +4,14 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from .models import Card, Elements, Game, GamePlayer, Spirit
 
+# TODO: We need to run this before the top-level code in views is run,
+# but only TestSocket cares about this.
+# If we ever split these tests into multiple files,
+# these lines should only go to the file that contains TestSocket.
+import tempfile
+os.environ['IPC_METHOD'] = 'socket'
+os.environ['SOCKET_PATH'] = os.path.join(tempfile.gettempdir(), 'si.sock')
+
 class TestDecks(TestCase):
     def test_decks_on_setup(self):
         client = Client()
@@ -2288,3 +2296,34 @@ class TestLog(TestCase):
         self.assertNotIn(player.hand.first().name, game.gamelog_set.last().text)
         self.assertIn(player.hand.first().url(), game.gamelog_set.last().images)
         self.assertIn(player.hand.first().name, game.gamelog_set.last().spoiler_text)
+
+class TestSocket(TestCase):
+    @staticmethod
+    def add_log_msg(*args, **kwargs):
+        from .views import add_log_msg
+        return add_log_msg(*args, **kwargs)
+
+    @staticmethod
+    def create_socket():
+        import socket
+
+        SOCKET_PATH = os.getenv('SOCKET_PATH')
+        if os.path.exists(SOCKET_PATH):
+            os.remove(SOCKET_PATH)
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        sock.bind(SOCKET_PATH)
+        return sock
+
+    def test_anything(self):
+        import json
+
+        game = Game.objects.create(discord_channel='test_channel')
+        sock = self.create_socket()
+        self.add_log_msg(game, text='hello world')
+        sock.settimeout(1.0)
+        data, _addr = sock.recvfrom(1024)
+        j = json.loads(data.decode())
+        self.assertEqual(j['channel'], 'test_channel')
+        self.assertEqual(j['text'], 'hello world')
+        sock.close()
+        os.unlink(os.getenv('SOCKET_PATH'))
