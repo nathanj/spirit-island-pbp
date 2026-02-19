@@ -13,11 +13,23 @@ from typing import Any
 
 from .models import *
 
-import redis
+match os.getenv('IPC_METHOD', 'redis'):
+    case 'socket':
+        SOCKET_PATH = os.getenv('SOCKET_PATH', 'si.sock')
+        import socket
+        bot_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        redis_client = None
+    case 'redis':
+        # for type-checking, this code path is statically checked regardless of IPC_METHOD,
+        # and we don't want to force type-checking to install redis
+        import redis #type: ignore[import-not-found]
 
-REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
-REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
-redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1)
+        REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+        REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+        bot_socket = None #type: ignore[assignment]
+        redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1)
+    case _:
+        raise ValueError('unknown IPC method')
 
 # If player is set, the text will be prefixed with their colour and spirit name.
 #
@@ -54,7 +66,18 @@ def add_log_msg(game: Game, *, text: str, player: GamePlayer | None = None, card
             j['images'] = images
         if spoiler:
             j['spoiler'] = True
-        redis_client.publish(f'log-relay:{game.discord_channel}', json.dumps(j))
+        if redis_client:
+            redis_client.publish(f'log-relay:{game.discord_channel}', json.dumps(j))
+        elif bot_socket:
+            j['channel'] = game.discord_channel
+            try:
+                bot_socket.sendto(json.dumps(j).encode(), SOCKET_PATH)
+            except ConnectionRefusedError:
+                print("nobody there")
+            except FileNotFoundError:
+                print("no file")
+        else:
+            print("Neither Redis nor socket?")
 
 class GameForm(ModelForm): #type: ignore[type-arg]
     class Meta:
