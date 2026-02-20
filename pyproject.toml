@@ -3,7 +3,7 @@ name = "spirit-island"
 version = "0.1.0"
 description = ""
 authors = [{ name = "Nathan Jones", email = "nathanj439@gmail.com" }]
-requires-python = ">=3.10,<4"
+requires-python = ">=3.12,<4"
 dependencies = [
     "Django>=5.0.0,<6",
     "django-cleanup>=9.0.0,<10",
