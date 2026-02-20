@@ -5,7 +5,7 @@ description = ""
 authors = [{ name = "Nathan Jones", email = "nathanj439@gmail.com" }]
 requires-python = ">=3.12,<4"
 dependencies = [
-    "Django>=5.0.0,<6",
+    "Django>=6.0.0,<7",
     "django-cleanup>=9.0.0,<10",
     "Pillow>=12.0.0,<13",
     "django-ninja>=1.0.0,<2",
