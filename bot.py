@@ -6,7 +6,6 @@ import asyncio
 import datetime
 import json
 import structlog
-import async_timeout
 import re
 import typing
 from dotenv import load_dotenv
@@ -538,7 +537,7 @@ async def logger():
 
         while True:
             try:
-                async with async_timeout.timeout(30):
+                async with asyncio.timeout(30):
                     message = await pubsub.get_message(ignore_subscribe_messages=True)
                     if message is not None:
                         LOG.msg("got message (Redis)", message=message)

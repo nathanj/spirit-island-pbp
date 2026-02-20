@@ -17,10 +17,6 @@ dependencies = [
     # so any upper bound is unnecessarily restrictive
     "structlog>=25.1.0",
     "django-prometheus>=2.2.0,<3",
-    # TODO: remove this dependency once all installations are using Python 3.11,
-    # since 3.11 has asyncio.timeout in the standard library
-    # will need to first migrate bot.py to use the standard library
-    "async-timeout>=5.0.0,<6",
 ]
 
 [dependency-groups]
