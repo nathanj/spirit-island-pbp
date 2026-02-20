@@ -246,7 +246,7 @@ class Card(models.Model):
                 Threshold(2, y + 8, num_healing_cards == 0),
             ]
 
-    CardLocation = tuple[Type['Game'], None, str, str] | tuple[Type['GamePlayer'], list[int], str, str] | tuple[Type['GamePlayerImpendingWithEnergy'], list[int], str, str]
+    type CardLocation = tuple[Type[Game], None, str, str] | tuple[Type[GamePlayer], list[int], str, str] | tuple[Type[GamePlayerImpendingWithEnergy], list[int], str, str]
 
     # Returns array of tuples: (class, IDs if applicable, attribute name, human-friendly name)
     def location_in_game(self, game: 'Game') -> Iterable[CardLocation]:
