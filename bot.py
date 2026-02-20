@@ -491,9 +491,9 @@ async def logger():
 
     def enqueue(channel_id, raw, parse):
         if channel_id in game_log_buffer:
-            game_log_buffer[channel_id]['timestamp'] = datetime.datetime.utcnow()
+            game_log_buffer[channel_id]['timestamp'] = datetime.datetime.now()
         else:
-            game_log_buffer[channel_id] = {'timestamp': datetime.datetime.utcnow(), 'logs': []}
+            game_log_buffer[channel_id] = {'timestamp': datetime.datetime.now(), 'logs': []}
 
         if last_message.get(channel_id) == raw:
             LOG.msg('drop duplicate message')
@@ -504,7 +504,7 @@ async def logger():
     async def dequeue():
         keys = list(game_log_buffer.keys())
         for channel_id in keys:
-            if game_log_buffer[channel_id]['timestamp'] + datetime.timedelta(seconds=20) < datetime.datetime.utcnow():
+            if game_log_buffer[channel_id]['timestamp'] + datetime.timedelta(seconds=20) < datetime.datetime.now():
                 LOG.msg('sending', channel_id=channel_id)
                 logs = game_log_buffer[channel_id]['logs']
                 del game_log_buffer[channel_id]
