@@ -1,8 +1,8 @@
 #!/bin/sh
 export PYTHONUNBUFFERED=TRUE
 PATH=/home/si/.local/bin:$PATH
-poetry --version
-poetry install --no-root --only main,redis
-poetry run python3 ./manage.py collectstatic --noinput
-poetry run python3 ./manage.py migrate
-exec poetry run gunicorn island.wsgi
+uv self version
+uv sync --no-dev --group redis
+uv run --no-dev --locked ./manage.py collectstatic --noinput
+uv run --no-dev --locked ./manage.py migrate
+exec uv run --no-dev --locked gunicorn island.wsgi

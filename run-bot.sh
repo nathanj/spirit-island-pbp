@@ -1,6 +1,6 @@
 #!/bin/sh
 export PYTHONUNBUFFERED=TRUE
 PATH=/home/si/.local/bin:$PATH
-poetry --version
-poetry install --no-root --only main,redis
-exec poetry run python3 ./bot.py
+uv self version
+uv sync --no-dev --group redis
+exec uv run --no-dev --locked python3 ./bot.py
