@@ -3,6 +3,8 @@ from collections import Counter
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from .models import Card, Elements, Game, GamePlayer, Spirit
+import sys
+import unittest
 
 os.environ['IPC_METHOD'] = 'delay_setup_for_testing'
 
@@ -2291,6 +2293,14 @@ class TestLog(TestCase):
         self.assertIn(player.hand.first().url(), game.gamelog_set.last().images)
         self.assertIn(player.hand.first().name, game.gamelog_set.last().spoiler_text)
 
+# We can't run TestSocket on Windows yet.
+# It results in an error that socket.AF_UNIX is not defined.
+# Although there's a 2017 Microsoft dev blog post announcing the availability of AF_UNIX on Windows,
+# Python's socket library also needs to support it as well.
+# As of Python 3.13 it is not added yet,
+# due to some limitations in the available functionality.
+# Check https://github.com/python/cpython/issues/77589 for the status of AF_UNIX on Windows.
+@unittest.skipIf(sys.platform.startswith("win"), "Unix sockets (socket.AF_UNIX) yet to be supported by Python on Windows, check https://github.com/python/cpython/issues/77589")
 class TestSocket(TestCase):
     @staticmethod
     def add_log_msg(*args, **kwargs):
