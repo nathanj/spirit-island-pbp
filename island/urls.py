@@ -52,6 +52,7 @@ urlpatterns = [
     path('game/<int:player_id>/setup_discard_card_player/<int:card_id>', views.setup_discard_card_player, name='setup_discard_card_player'),
     path('game/<int:player_id>/add_to_scenario/<int:card_id>', views.add_to_scenario, name='add_to_scenario'),
     path('game/<int:player_id>/gain_scenario/<int:card_id>', views.gain_scenario, name='gain_scenario'),
+    path('game/<int:player_id>/discard_scenario/<int:card_id>', views.discard_scenario, name='discard_scenario'),
     path('game/<int:player_id>/create_plant_treasure', views.create_plant_treasure, name='create_plant_treasure'),
     path('game/<int:player_id>/take_plant_treasure', views.take_plant_treasure, name='take_plant_treasure'),
     path('game/<int:player_id>/discard-pile', views.discard_pile, name='discard_pile'),
