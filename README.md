@@ -4,29 +4,28 @@ A website to assist playing Spirit Island over discord in the play by post secti
 
 ## Pre-requisites
 
-Ensure that you've installed [Python](https://www.python.org/downloads/) and [Poetry](https://python-poetry.org/docs/#installing-with-pipx) before starting.
+Ensure that you've installed [Python](https://www.python.org/downloads/) and [uv](https://docs.astral.sh/uv/getting-started/installation/) before starting.
 
 ## Running the site locally
 
 Copy `.env.template` to `.env` and fill in the variables
 
-```
-poetry install --no-root
-poetry run ./manage.py migrate auth
-poetry run ./manage.py migrate
-poetry run ./manage.py runserver
+``
+uv run ./manage.py migrate auth
+uv run ./manage.py migrate
+uv run ./manage.py runserver
 ```
 
-*NOTE*: If running in a Windows shell, instead run the above manage.py commands with the format `poetry run python .\manage.py [...]`. E.g.
+*NOTE*: If running in a Windows shell, instead run the above manage.py commands with the format `uv run python .\manage.py [...]`. E.g.
 
 ```
-poetry run python .\manage.py migrate auth
+uv run python .\manage.py migrate auth
 ```
 
 ## Test
 
 ```
-poetry run ./manage.py test
+uv run ./manage.py test
 ```
 
 ## Type checking
@@ -34,20 +33,20 @@ poetry run ./manage.py test
 Install the type checker:
 
 ```
-poetry install --no-root --with typecheck
+uv sync --group typecheck
 ```
 
 Run the type checker:
 
 ```
-poetry run mypy .
-poetry run mypy --strict pbf/{admin,models,views}.py
+uv run mypy .
+uv run mypy --strict pbf/{admin,models,views}.py
 ```
 
 ## Making a new admin account for your instance
 
 ```
-poetry run ./manage.py createsuperuser
+uv run ./manage.py createsuperuser
 ```
 
 ## Troubleshooting
@@ -60,23 +59,12 @@ Doing so makes Django serve [static files](https://docs.djangoproject.com/en/sta
 
 If no images are showing up when running in production, check that you've configured your chosen web server to serve the static files (exact configuration depends on the web server).
 
-### `poetry install` DBus UnknownMethod
+### `uv run` / `uv sync` file not found on Windows
 
-If `poetry install` fails with an error like:
-
-```
-[org.freedesktop.DBus.Error.UnknownMethod] ('Object does not exist at path “/org/freedesktop/secrets/collection/login”',)
-```
-
-you can run `export PYTHON_KEYRING_BACKEND=keyring.backends.fail.Keyring` before the `poetry install`
-(as stated in https://github.com/python-poetry/poetry/issues/1917).
-
-### `poetry install` file not found on Windows
-
-If you encounter file not found errors on Windows when running `poetry install` with paths that look similar to the following:
+If you encounter file not found errors on Windows when running `uv` with paths that look similar to the following:
 
 ```
-C:\Users\username\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\Local\pypoetry\Cache\virtualenvs\spirit-island-zmMjpaKz-py3.12\Lib\site-packages\pkg_resources\tests\data\my-test-package_unpacked-egg\my_test_package-1.0-py3.7.egg\EGG-INFO
+C:\Users\username\AppData\Local\uv\cache\builds-v0\.tmpu9Mmm2\Lib\site-packages\setuptools\_distutils\dist.py
 ```
 
 The problem is likely that the path exceeds Windows' default allowed path length.
@@ -90,14 +78,14 @@ You only need the bot when specifically testing bot-related functionality.
 
 You will need to decide what IPC method the website should use to send updates to the bot and set `IPC_METHOD` accordingly:
 * `redis`, which requires a running instance of [Redis](https://redis.io/)
-  * you will also need to run `--with redis` to your `python install` command
+  * you will also need to add `--group redis` to your `uv` commands (e.g. `uv sync --group redis`)
 * `socket`, which requires the OS to support Unix domain sockets
 
 You can locally test whether the bot is correctly receiving updates with these steps:
 
 1. Set the Discord channel for a test game to any non-empty value.
    You can use the Django admin interface to do this.
-1. `poetry run python bot.py --fake-discord`
+1. `uv run python bot.py --fake-discord`
 1. Make a change in the test game that will produce a log message.
 1. Check the bot's output on stdout to see whether it receives the messages.
    The output will say "got message" when it receives it, and "sending" when it would send it to Discord.
@@ -133,7 +121,7 @@ and configured the bot's `DISCORD_KEY` and other settings,
 you are ready to run the bot.
 
 ```
-poetry run python bot.py
+uv run python bot.py
 ```
 
 ## Running the site in production
@@ -141,10 +129,10 @@ poetry run python bot.py
 A full treatment of this topic is beyond the scope of this document, but here are some notes specific to this project:
 
 * Remember to turn `DEBUG` off in the `.env` file.
-* `poetry run ./manage.py collectstatic` will copy all [static files](https://docs.djangoproject.com/en/stable/howto/static-files/) into `static/`.
+* `uv run ./manage.py collectstatic` will copy all [static files](https://docs.djangoproject.com/en/stable/howto/static-files/) into `static/`.
   You will need to configure your web server to serve static files out of this directory.
 * You will also need to configure your web server to serve uploaded files out of the `screenshots/` directory.
-* You should use the `--only main` or `--without dev` flags to `poetry install` to exclude development dependencies.
+* You should use the `--no-dev` flag to `uv` to exclude development dependencies.
 * This repo already contains all the necessary configuration to be run by [Gunicorn](https://gunicorn.org/).
 * [Gunicorn deployment docs](https://docs.gunicorn.org/en/latest/deploy.html) recommend deploying Gunicorn behind a proxy server.
   They themselves recommend [nginx](https://nginx.org/).

@@ -20,8 +20,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      # nothing specific against Poetry 2, but not everyone running this project is using it.
-      - run: pip install 'poetry < 2'
-      - run: poetry install --no-root --only main,typecheck
-      - run: poetry run mypy .
-      - run: poetry run mypy pbf/{admin,models,views}.py --strict
+      - run: pip install uv
+      - run: uv sync --no-dev --group typecheck
+      - run: uv run --no-dev --locked mypy .
+      - run: uv run --no-dev --locked mypy pbf/{admin,models,views}.py --strict

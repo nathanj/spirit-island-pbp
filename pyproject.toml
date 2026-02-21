@@ -1,55 +1,50 @@
-[tool.poetry]
+[project]
 name = "spirit-island"
 version = "0.1.0"
 description = ""
-authors = ["Nathan Jones <nathanj439@gmail.com>"]
-# TODO: We would like to be able to set this,
-# which would allow us to remove the --no-root flag,
-# but it requires Poetry 1.8.0, which not every instance of the site is using.
-# package-mode = false
+authors = [{ name = "Nathan Jones", email = "nathanj439@gmail.com" }]
+requires-python = ">=3.10,<4"
+dependencies = [
+    "Django>=5.0.0,<6",
+    "django-cleanup>=9.0.0,<10",
+    "Pillow>=12.0.0,<13",
+    "django-ninja>=1.0.0,<2",
+    "gunicorn>=25.0.0,<26",
+    "python-dotenv>=1.0.0,<2",
+    "discord.py>=2.5.0,<3",
+    "requests>=2.0.0,<3",
+    # structlog uses calendar versioning,
+    # so any upper bound is unnecessarily restrictive
+    "structlog>=25.1.0",
+    "django-prometheus>=2.2.0,<3",
+    # TODO: remove this dependency once all installations are using Python 3.11,
+    # since 3.11 has asyncio.timeout in the standard library
+    # will need to first migrate bot.py to use the standard library
+    "async-timeout>=5.0.0,<6",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-Django = "^5.0.0"
-django-cleanup = "^9.0.0"
-Pillow = "^12.0.0"
-django-ninja = "^1.0.0"
-gunicorn = "^25.0.0"
-python-dotenv = "^1.0.0"
-"discord.py" = "^2.5.0"
-requests = "^2.0.0"
-# structlog uses calendar versioning,
-# so using ^ is unnecessarily restrictive
-structlog = ">= 25.1.0"
-django-prometheus = "^2.2.0"
-# TODO: remove this dependency once all installations are using Python 3.11,
-# since 3.11 has asyncio.timeout in the standard library
-# will need to first migrate bot.py to use the standard library
-async-timeout = "^5.0.0"
-
-[tool.poetry.group.dev.dependencies]
-django-debug-toolbar = "^6.0.0"
-
-[tool.poetry.group.redis]
-optional = true
-
-[tool.poetry.group.redis.dependencies]
+[dependency-groups]
+dev = ["django-debug-toolbar>=6.0.0,<7"]
 # 6.0.0 and above only officially supports Redis 7.2, 7.4, and 8.0.
 # We've unofficially observed that it will still work for older versions,
 # but need more data before being able to rely on this.
 # We don't need the token auth functionality of 5.3.0,
 # and it introduces a dependency on pyjwt that we don't need,
 # so we'll skip that to keep fewer dependencies.
-redis = "~5.2"
+redis = ["redis>=5.2,<5.3"]
+typecheck = [
+    "mypy>=1.18.0,<2",
+    "django-stubs>=5.0.0,<6",
+    "types-requests>=2.32.4,<3",
+]
 
-[tool.poetry.group.typecheck]
-optional = true
-
-[tool.poetry.group.typecheck.dependencies]
-mypy = "^1.18.0"
-django-stubs = "^5.0.0"
-types-requests = "^2.32.4"
+[tool.uv]
+default-groups = ["dev"]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.10.4,<0.11.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = "./"
+module-name = "pbf"
