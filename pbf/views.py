@@ -13,23 +13,39 @@ from typing import Any
 
 from .models import *
 
-match os.getenv('IPC_METHOD', 'redis'):
-    case 'socket':
-        SOCKET_PATH = os.getenv('SOCKET_PATH', 'si.sock')
-        import socket
-        bot_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        redis_client = None
-    case 'redis':
-        # for type-checking, this code path is statically checked regardless of IPC_METHOD,
-        # and we don't want to force type-checking to install redis
-        import redis #type: ignore[import-not-found]
+# These are used for inter-process communication (IPC) between the site and the bot.
+bot_socket = None
+redis_client = None
+SOCKET_PATH = ''
 
-        REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
-        REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
-        bot_socket = None #type: ignore[assignment]
-        redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1)
-    case _:
-        raise ValueError('unknown IPC method')
+def set_ipc_method(method: str) -> None:
+    global bot_socket, redis_client, SOCKET_PATH
+    match method:
+        case 'socket':
+            SOCKET_PATH = os.getenv('SOCKET_PATH', 'si.sock')
+            import socket
+            bot_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+            redis_client = None
+        case 'redis':
+            # for type-checking, this code path is statically checked regardless of IPC_METHOD,
+            # and we don't want to force type-checking to install redis
+            import redis #type: ignore[import-not-found]
+
+            REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+            REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+            bot_socket = None
+            redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1)
+        case _:
+            raise ValueError('unknown IPC method')
+
+# For production, we want to set the IPC method immediately,
+# so that it fails fast if a required package is not installed,
+# rather than only surfacing the error when attempting to relay a log message.
+#
+# For testing, we'll allow each test to individually set up its own IPC method,
+# so as to not require Redis nor Unix sockets on systems that lack them.
+if (ipc_method := os.getenv('IPC_METHOD', 'redis')) != 'delay_setup_for_testing':
+    set_ipc_method(ipc_method)
 
 # If player is set, the text will be prefixed with their colour and spirit name.
 #

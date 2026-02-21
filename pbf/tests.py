@@ -4,13 +4,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from .models import Card, Elements, Game, GamePlayer, Spirit
 
-# TODO: We need to run this before the top-level code in views is run,
-# but only TestSocket cares about this.
-# If we ever split these tests into multiple files,
-# these lines should only go to the file that contains TestSocket.
-import tempfile
-os.environ['IPC_METHOD'] = 'socket'
-os.environ['SOCKET_PATH'] = os.path.join(tempfile.gettempdir(), 'si.sock')
+os.environ['IPC_METHOD'] = 'delay_setup_for_testing'
 
 class TestDecks(TestCase):
     def test_decks_on_setup(self):
@@ -2303,27 +2297,31 @@ class TestSocket(TestCase):
         from .views import add_log_msg
         return add_log_msg(*args, **kwargs)
 
-    @staticmethod
-    def create_socket():
+    def setUp(self):
         import socket
+        import tempfile
+        from .views import set_ipc_method
 
-        SOCKET_PATH = os.getenv('SOCKET_PATH')
-        if os.path.exists(SOCKET_PATH):
-            os.remove(SOCKET_PATH)
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        sock.bind(SOCKET_PATH)
-        return sock
+        self.socket_path = os.path.join(tempfile.gettempdir(), 'si.sock')
+        os.environ['SOCKET_PATH'] = self.socket_path
+        set_ipc_method('socket')
+
+        if os.path.exists(self.socket_path):
+            os.remove(self.socket_path)
+        self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.socket.settimeout(1.0)
+        self.socket.bind(self.socket_path)
+
+    def tearDown(self):
+        self.socket.close()
+        os.unlink(self.socket_path)
 
     def test_anything(self):
         import json
 
         game = Game.objects.create(discord_channel='test_channel')
-        sock = self.create_socket()
         self.add_log_msg(game, text='hello world')
-        sock.settimeout(1.0)
-        data, _addr = sock.recvfrom(1024)
+        data, _addr = self.socket.recvfrom(1024)
         j = json.loads(data.decode())
         self.assertEqual(j['channel'], 'test_channel')
         self.assertEqual(j['text'], 'hello world')
-        sock.close()
-        os.unlink(os.getenv('SOCKET_PATH'))
