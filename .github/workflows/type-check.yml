@@ -13,7 +13,10 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - '3.10'
+          - '3.12'
+          # unlikely to see any changes in type checking between oldest and newest,
+          # so just those two will suffice
+          - '3.14'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
