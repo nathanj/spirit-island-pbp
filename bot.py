@@ -112,7 +112,6 @@ else:
 list_guilds = '--list-guilds' in sys.argv
 
 LOG = structlog.get_logger()
-debug = os.environ.get('DEBUG', None) == 'yes'
 
 DISCORD_KEY = os.getenv('DISCORD_KEY', '')
 DJANGO_HOST = os.getenv('DJANGO_HOST', 'localhost')
