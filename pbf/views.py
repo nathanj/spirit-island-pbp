@@ -28,10 +28,14 @@ def set_ipc_method(method: str) -> None:
             bot_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
             redis_client = None
         case 'redis':
-            # for type-checking, this code path is statically checked regardless of IPC_METHOD,
-            # and we don't want to force type-checking to install redis
-            import redis #type: ignore[import-not-found]
-
+            try:
+                # for type-checking, this code path is statically checked regardless of IPC_METHOD,
+                # and we don't want to force type-checking to install redis
+                import redis #type: ignore[import-not-found]
+            except ImportError as e:
+                e.add_note("If you want to use Redis to relay log messages to Discord, add `--group redis` to your `uv run` command.")
+                e.add_note("If you just want to develop the site (not running in production) and don't need to send messages to Discord, see .env.template for instructions on running in debug mode")
+                raise
             REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
             REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
             bot_socket = None
