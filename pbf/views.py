@@ -4,6 +4,7 @@ import random
 import os
 
 from collections.abc import Iterable
+from django.conf import settings
 from django.db import transaction
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse
@@ -38,14 +39,24 @@ def set_ipc_method(method: str) -> None:
         case _:
             raise ValueError('unknown IPC method')
 
-# For production, we want to set the IPC method immediately,
-# so that it fails fast if a required package is not installed,
-# rather than only surfacing the error when attempting to relay a log message.
-#
-# For testing, we'll allow each test to individually set up its own IPC method,
-# so as to not require Redis nor Unix sockets on systems that lack them.
-if (ipc_method := os.getenv('IPC_METHOD', 'redis')) != 'delay_setup_for_testing':
-    set_ipc_method(ipc_method)
+match os.getenv('IPC_METHOD'):
+    case None:
+        if settings.DEBUG:
+            # In development, it's still useful to run the site without a Discord bot,
+            # so IPC can be disabled by default.
+            # That way, a developer doesn't have to install IPC-related packages unless they want to.
+            print("\033[1;33mWARNING: Not sending messages to Discord. If Discord messages are needed, set IPC_METHOD to a valid value\033[0m")
+        else:
+            # For production, we want to set the IPC method immediately,
+            # so that it fails fast if a required package is not installed,
+            # rather than only surfacing the error when attempting to relay a log message.
+            set_ipc_method('redis')
+    case 'delay_setup_for_testing':
+        # For testing, we'll allow each test to individually set up its own IPC method,
+        # so as to not require Redis nor Unix sockets on systems that lack them.
+        pass
+    case ipc_method:
+        set_ipc_method(ipc_method)
 
 # If player is set, the text will be prefixed with their colour and spirit name.
 #
