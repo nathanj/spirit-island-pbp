@@ -10,7 +10,7 @@ Ensure that you've installed [Python](https://www.python.org/downloads/) and [uv
 
 Copy `.env.template` to `.env` and fill in the variables
 
-``
+```
 uv run ./manage.py migrate auth
 uv run ./manage.py migrate
 uv run ./manage.py runserver
