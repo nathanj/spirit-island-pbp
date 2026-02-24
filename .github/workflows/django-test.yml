@@ -23,8 +23,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install uv
-      - run: uv sync --no-dev
-      - run: uv run --no-dev --locked ./manage.py migrate
+      - run: uv sync --no-default-groups
+      - run: uv run --no-default-groups --locked ./manage.py migrate
         env:
           IPC_METHOD: socket # if IPC_METHOD=redis, redis packages need to be installed
-      - run: uv run --no-dev --locked ./manage.py test
+      - run: uv run --no-default-groups --locked ./manage.py test

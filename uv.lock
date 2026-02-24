@@ -979,7 +979,6 @@ name = "spirit-island"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "discord-py" },
     { name = "django" },
     { name = "django-cleanup" },
     { name = "django-ninja" },
@@ -987,11 +986,14 @@ dependencies = [
     { name = "gunicorn" },
     { name = "pillow" },
     { name = "python-dotenv" },
-    { name = "requests" },
-    { name = "structlog" },
 ]
 
 [package.dev-dependencies]
+bot = [
+    { name = "discord-py" },
+    { name = "requests" },
+    { name = "structlog" },
+]
 dev = [
     { name = "django-debug-toolbar" },
 ]
@@ -1006,7 +1008,6 @@ typecheck = [
 
 [package.metadata]
 requires-dist = [
-    { name = "discord-py", specifier = ">=2.5.0,<3" },
     { name = "django", specifier = ">=6.0.0,<7" },
     { name = "django-cleanup", specifier = ">=9.0.0,<10" },
     { name = "django-ninja", specifier = ">=1.0.0,<2" },
@@ -1014,11 +1015,14 @@ requires-dist = [
     { name = "gunicorn", specifier = ">=25.0.0,<26" },
     { name = "pillow", specifier = ">=12.0.0,<13" },
     { name = "python-dotenv", specifier = ">=1.0.0,<2" },
-    { name = "requests", specifier = ">=2.0.0,<3" },
-    { name = "structlog", specifier = ">=25.1.0" },
 ]
 
 [package.metadata.requires-dev]
+bot = [
+    { name = "discord-py", specifier = ">=2.5.0,<3" },
+    { name = "requests", specifier = ">=2.0.0,<3" },
+    { name = "structlog", specifier = ">=25.1.0" },
+]
 dev = [{ name = "django-debug-toolbar", specifier = ">=6.0.0,<7" }]
 redis = [{ name = "redis", specifier = ">=5.2,<5.3" }]
 typecheck = [

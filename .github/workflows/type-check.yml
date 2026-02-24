@@ -26,4 +26,5 @@ jobs:
       - run: pip install uv
       - run: uv sync --no-dev --group typecheck
       - run: uv run --no-dev --locked mypy .
-      - run: uv run --no-dev --locked mypy pbf/{admin,models,views}.py --strict
+      - run: uv sync --no-default-groups --group typecheck
+      - run: uv run --no-default-groups --locked mypy pbf/{admin,models,views}.py --strict
