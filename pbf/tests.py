@@ -199,7 +199,7 @@ class TestSetupEnergyAndBaseGain(TestCase):
         client = Client()
         game = Game()
         game.save()
-        r = client.post(f"/game/{game.id}/add-player", {"spirit": spirit, "color": "random"})
+        client.post(f"/game/{game.id}/add-player", {"spirit": spirit, "color": "random"})
         v = game.gameplayer_set.all()
         self.assertEqual(len(v), 1, "didn't find one game player; spirit not created successfully?")
         player = v[0]
@@ -207,43 +207,43 @@ class TestSetupEnergyAndBaseGain(TestCase):
         self.assertEqual(player.energy, setup, "setup energy incorrect")
 
     def test_base_spirit_with_aspect(self):
-        s = self.assert_spirit("River", per_turn=1)
+        self.assert_spirit("River", per_turn=1)
 
     def test_aspect_modifying_setup_energy(self):
-        s = self.assert_spirit("River - Sunshine", per_turn=1, setup=1)
+        self.assert_spirit("River - Sunshine", per_turn=1, setup=1)
 
     def test_aspect_modifying_nothing(self):
-        s = self.assert_spirit("River - Haven", per_turn=1)
+        self.assert_spirit("River - Haven", per_turn=1)
 
     def test_base_spirit_with_aspect2(self):
-        s = self.assert_spirit("Bringer", per_turn=2)
+        self.assert_spirit("Bringer", per_turn=2)
 
     def test_aspect_modifying_setup_energy2(self):
-        s = self.assert_spirit("Bringer - Violence", per_turn=2, setup=1)
+        self.assert_spirit("Bringer - Violence", per_turn=2, setup=1)
 
     def test_aspect_modifying_nothing2(self):
-        s = self.assert_spirit("Bringer - Enticing", per_turn=2)
+        self.assert_spirit("Bringer - Enticing", per_turn=2)
 
     def test_base_spirit_with_aspect3(self):
-        s = self.assert_spirit("Lightning", per_turn=1)
+        self.assert_spirit("Lightning", per_turn=1)
 
     def test_aspect_modifying_nothing3(self):
-        s = self.assert_spirit("Lightning - Wind", per_turn=1)
+        self.assert_spirit("Lightning - Wind", per_turn=1)
 
     def test_aspect_multiplying_gain(self):
-        s = self.assert_spirit("Lightning - Immense", per_turn=2)
+        self.assert_spirit("Lightning - Immense", per_turn=2)
 
     def test_base_spirit_with_aspect4(self):
-        s = self.assert_spirit("Keeper", per_turn=2)
+        self.assert_spirit("Keeper", per_turn=2)
 
     def test_aspect_modifying_setup_and_base_gain(self):
-        s = self.assert_spirit("Keeper - Spreading Hostility", per_turn=1, setup=1)
+        self.assert_spirit("Keeper - Spreading Hostility", per_turn=1, setup=1)
 
     def test_spirit_with_initial(self):
-        s = self.assert_spirit("Vigil", per_turn=0, setup=1)
+        self.assert_spirit("Vigil", per_turn=0, setup=1)
 
     def test_spirit_with_initial_2(self):
-        s = self.assert_spirit("Waters", per_turn=0, setup=4)
+        self.assert_spirit("Waters", per_turn=0, setup=4)
 
 class TestSetupPowerCards(TestCase):
     NUM_MINORS = Card.objects.filter(type=Card.MINOR).count()
@@ -252,7 +252,7 @@ class TestSetupPowerCards(TestCase):
         client = Client()
         client.post("/new")
         game = Game.objects.last()
-        r = client.post(f"/game/{game.id}/add-player", {"spirit": spirit, "color": "random"})
+        client.post(f"/game/{game.id}/add-player", {"spirit": spirit, "color": "random"})
         v = game.gameplayer_set.all()
         self.assertEqual(len(v), 1, "didn't find one game player; spirit not created successfully?")
         player = v[0]
@@ -322,7 +322,7 @@ class TestSetupSpiritSpecificResources(TestCase):
         client = Client()
         client.post("/new")
         game = Game.objects.last()
-        r = client.post(f"/game/{game.id}/add-player", {"spirit": spirit, "color": "random"})
+        client.post(f"/game/{game.id}/add-player", {"spirit": spirit, "color": "random"})
         v = game.gameplayer_set.all()
         self.assertEqual(len(v), 1, "didn't find one game player; spirit not created successfully?")
         player = v[0]
@@ -634,7 +634,6 @@ class TestReshuffleOrNot(TestCase):
         game.minor_deck.set(cards[:2])
         game.discard_pile.add(*cards[2:])
 
-        remaining = list(game.minor_deck.all())
         available_cards = game.minor_deck.count() + game.discard_pile.filter(type=Card.MINOR).count()
         majors_in_discard = game.discard_pile.filter(type=Card.MAJOR).count()
 
@@ -650,7 +649,7 @@ class TestRot(TestCase):
         client = Client()
         game = Game()
         game.save()
-        r = client.post(f"/game/{game.id}/add-player", {"spirit": "Rot" + (" - Round Down" if round_down else ""), "color": "random"})
+        client.post(f"/game/{game.id}/add-player", {"spirit": "Rot" + (" - Round Down" if round_down else ""), "color": "random"})
         v = game.gameplayer_set.all()
         self.assertEqual(len(v), 1, "didn't find one game player; spirit not created successfully?")
         player = v[0]
@@ -1945,7 +1944,6 @@ class TestImport(TestCase):
         return Game.objects.get(id=resp.url.split('/')[-1])
 
     def test_import_nothing(self):
-        num_games = Game.objects.count()
         self.import_game('{}')
         # no additional asserts; import_game has already asserted that a game was created
 
@@ -2133,7 +2131,6 @@ class TestImport(TestCase):
 
     def test_import_impending_energy(self):
         game = self.import_game('{"players": [{"spirit": "Earthquakes", "impending": [{"card": "Call to Bloodshed", "energy": 1}]}]}')
-        minor = Card.objects.get(name="Call to Bloodshed")
         player = game.gameplayer_set.first()
         self.assertEqual(list(player.gameplayerimpendingwithenergy_set.values_list('energy', flat=True)), [1])
 

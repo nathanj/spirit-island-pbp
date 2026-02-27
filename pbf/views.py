@@ -5,7 +5,6 @@ import os
 
 from collections.abc import Iterable
 from django.conf import settings
-from django.db import transaction
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
@@ -705,7 +704,7 @@ def view_game(request: HttpRequest, game_id: str, spirit_spec: str | None = None
             form = form_class(request.POST, request.FILES, instance=game)
             if form.is_valid():
                 form.save()
-                add_log_msg(game, text=f'New screenshot uploaded.', images='.' + getattr(game, key).url)
+                add_log_msg(game, text='New screenshot uploaded.', images='.' + getattr(game, key).url)
 
         return redirect(reverse('view_game', args=[game.id, spirit_spec] if spirit_spec else [game.id]))
 
@@ -1160,7 +1159,7 @@ def create_plant_treasure(request: HttpRequest, player_id: int) -> HttpResponse:
 
     game = player.game
     majors = cards_from_deck(game, 3, 'major')
-    add_log_msg(game, player=player, text=f'stores the Plant Treasure and sets aside 3 major powers', cards=majors)
+    add_log_msg(game, player=player, text='stores the Plant Treasure and sets aside 3 major powers', cards=majors)
     player.plant_treasure.add(*majors)
     player.spirit_specific_per_turn_flags &= ~GamePlayer.PLANT_TREASURE_THIS_TURN
     player.save(update_fields=['spirit_specific_per_turn_flags'])
@@ -1179,7 +1178,7 @@ def take_plant_treasure(request: HttpRequest, player_id: int) -> HttpResponse:
     if player.plant_treasure.exists():
         player.hand.add(*player.plant_treasure.all())
         player.plant_treasure.clear()
-        add_log_msg(player.game, player=player, text=f'takes their Plant Treasure powers')
+        add_log_msg(player.game, player=player, text='takes their Plant Treasure powers')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
@@ -1368,10 +1367,10 @@ def ready(request: HttpRequest, player_id: int) -> HttpResponse:
     add_log_msg(player.game, player=player, text=f'started with {player.last_unready_energy_friendly} energy and now has {player.energy} energy')
     if player.has_spirit_specific_resource():
         add_spirit_specific_resource_msgs(player)
-    add_log_msg(player.game, player=player, text=f'is ready')
+    add_log_msg(player.game, player=player, text='is ready')
 
     if player.game.gameplayer_set.filter(ready=False).count() == 0:
-        add_log_msg(player.game, text=f'All spirits are ready!')
+        add_log_msg(player.game, text='All spirits are ready!')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 

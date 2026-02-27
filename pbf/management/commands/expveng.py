@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from pbf.models import Card, Game
+from pbf.models import Card
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
