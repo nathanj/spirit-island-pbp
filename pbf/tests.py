@@ -1227,7 +1227,7 @@ class TestElements(TestCase):
 class TestCheckElements(TestCase):
     @staticmethod
     def check_elements(*args):
-        from .views import check_elements
+        from .models import check_elements
         return check_elements(*args)
 
     def test_single_element_none(self):

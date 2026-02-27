@@ -9,9 +9,12 @@ from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-from .models import *
+from .models import Card, Elements, Game, GamePlayer, GamePlayerImpendingWithEnergy, Presence, Spirit
+
+if TYPE_CHECKING:
+    from .models import Card_ManyRelatedManager
 
 # These are used for inter-process communication (IPC) between the site and the bot.
 bot_socket = None
