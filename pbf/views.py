@@ -5,7 +5,6 @@ import os
 
 from collections.abc import Iterable
 from django.conf import settings
-from django.db import transaction
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
