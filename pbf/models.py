@@ -124,9 +124,6 @@ class Spirit(models.Model):
     def __str__(self) -> str:
         return self.name
 
-    def starting_hand(self) -> Iterable['Card']:
-        return Card.objects.filter(spirit_id=self.id)
-
     def url(self) -> str:
         return 'pbf/' + self.name.replace(' ', '-').lower() + '.jpg'
 
