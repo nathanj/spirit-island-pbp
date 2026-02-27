@@ -173,7 +173,7 @@ ATOMIC_REQUESTS = True
 #}
 
 
-if DEBUG == False:
+if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
