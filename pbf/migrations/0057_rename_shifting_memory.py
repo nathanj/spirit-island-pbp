@@ -1,4 +1,4 @@
-from django.db import migrations, models
+from django.db import migrations
 
 def rename_spirit(apps, old_name, new_name):
     Spirit = apps.get_model('pbf', 'Spirit')
