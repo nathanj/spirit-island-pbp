@@ -717,7 +717,7 @@ class GamePlayer(models.Model):
         return (self.rot_loss() + (0 if self.aspect == 'Round Down' else 1)) // 2
 
     @functools.cached_property
-    def plant_treasure(self) -> 'Card_ManyRelatedManager[GamePlayer_days]':
+    def plant_treasure(self) -> 'Card_ManyRelatedManager[GamePlayer_days]': #noqa: F821
         # Reusing the existing Days That Never Were association,
         # as the two are similar (cards that you might have in the future, but not now)
         # TODO: If it's a problem in the future, we can consider using a dedicated association.
