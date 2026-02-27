@@ -237,7 +237,7 @@ async def on_message(message):
             await message.channel.send("Failed to pin the message due to an HTTP error, so you'll have to pin the link yourself, but I'll still relay game logs.")
     if message.content.startswith('$help'):
         # The message starts with the specified word
-        LOG.msg(f'$help called')
+        LOG.msg('$help called')
         text = "\n".join((
             "[Github link](<https://github.com/nathanj/spirit-island-pbp>)",
             "",
