@@ -1,4 +1,4 @@
-from django.db import models, migrations
+from django.db import migrations
 
 def add_vengeance_of_the_dead_exploratory(apps, schema_editor):
     Card = apps.get_model("pbf", "Card")

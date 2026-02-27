@@ -1,4 +1,4 @@
-from django.db import models, migrations
+from django.db import migrations
 
 def load_spreading_rot(apps, schema_editor):
     Spirit = apps.get_model("pbf", "Spirit")

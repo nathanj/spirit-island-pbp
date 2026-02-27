@@ -1,4 +1,4 @@
-from django.db import migrations, models
+from django.db import migrations
 
 def convert_exploratory_bringer(apps, schema_editor):
     GamePlayer = apps.get_model('pbf', 'GamePlayer')
