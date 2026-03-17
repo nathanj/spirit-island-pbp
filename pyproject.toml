@@ -33,7 +33,7 @@ bot = [
 ]
 typecheck = [
     "mypy>=1.18.0,<2",
-    "django-stubs>=5.0.0,<6",
+    "django-stubs>=6.0.0,<7",
     "types-requests>=2.32.4,<3",
 ]
 
