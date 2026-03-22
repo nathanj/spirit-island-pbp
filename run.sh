@@ -6,4 +6,4 @@ uv sync --no-dev --group redis
 uv run --no-dev --locked python --version
 uv run --no-dev --locked ./manage.py collectstatic --noinput
 uv run --no-dev --locked ./manage.py migrate
-exec uv run --no-dev --locked gunicorn island.wsgi
+exec uv run --no-dev --locked gunicorn --no-control-socket island.wsgi
