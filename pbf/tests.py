@@ -2361,3 +2361,16 @@ class TestSocket(TestCase):
         j = json.loads(data.decode())
         self.assertEqual(j['channel'], 'test_channel')
         self.assertEqual(j['text'], 'hello world')
+
+    def test_spoiler(self):
+        import json
+
+        game = Game.objects.create(discord_channel='test_channel')
+        card = Card.objects.get(name='Irresistible Call')
+        self.add_log_msg(game, text='look at this card', cards=[card], spoiler=True)
+        data, _addr = self.socket.recvfrom(1024)
+        j = json.loads(data.decode())
+        self.assertEqual(j['channel'], 'test_channel')
+        self.assertEqual(j['text'], 'look at this card: ||Irresistible Call||')
+        self.assertTrue(j['spoiler'])
+        self.assertIn(card.url(), j['images'])
