@@ -11,7 +11,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from typing import Any, TYPE_CHECKING
 
-from .models import Card, Elements, Game, GamePlayer, GamePlayerImpendingWithEnergy, Presence, Spirit
+from .models import Card, Elements, Game, GameLog, GamePlayer, GamePlayerImpendingWithEnergy, Presence, Spirit
 
 if TYPE_CHECKING:
     from .models import Card_ManyRelatedManager
@@ -86,31 +86,33 @@ def add_log_msg(game: Game, *, text: str, player: GamePlayer | None = None, card
         # We only need to spoiler certain information.
         # For the things we're spoilering (gain power, take power),
         # that's just the card names (it's okay not to spoiler who gains the card).
-        discord_text = f"{text}: ||{card_names}||"
-        game.gamelog_set.create(text=f"{text}:", spoiler_text=card_names, images=images)
+        log = game.gamelog_set.create(text=f"{text}:", spoiler_text=card_names, images=images)
     else:
         if cards:
             text += ': ' + card_names
-        discord_text = text
-        game.gamelog_set.create(text=text, images=images)
-    if len(game.discord_channel) > 0:
-        j: dict[str, str | bool] = {'text': discord_text}
-        if images is not None:
-            j['images'] = images
-        if spoiler:
-            j['spoiler'] = True
-        if redis_client:
-            redis_client.publish(f'log-relay:{game.discord_channel}', json.dumps(j))
-        elif bot_socket:
-            j['channel'] = game.discord_channel
-            try:
-                bot_socket.sendto(json.dumps(j).encode(), SOCKET_PATH)
-            except ConnectionRefusedError:
-                print("nobody there")
-            except FileNotFoundError:
-                print("no file")
-        else:
-            print("Neither Redis nor socket?")
+        log = game.gamelog_set.create(text=text, images=images)
+    send_log(log)
+
+def send_log(log: GameLog) -> None:
+    if not (channel := log.game.discord_channel):
+        return
+    j: dict[str, str | bool] = {'text': f"{log.text} ||{log.spoiler_text}||" if log.spoiler_text else log.text}
+    if log.images:
+        j['images'] = log.images
+    if log.spoiler_text:
+        j['spoiler'] = True
+    if redis_client:
+        redis_client.publish(f'log-relay:{channel}', json.dumps(j))
+    elif bot_socket:
+        j['channel'] = channel
+        try:
+            bot_socket.sendto(json.dumps(j).encode(), SOCKET_PATH)
+        except ConnectionRefusedError:
+            print("nobody there")
+        except FileNotFoundError:
+            print("no file")
+    else:
+        print("Neither Redis nor socket?")
 
 class GameForm(ModelForm): #type: ignore[type-arg]
     class Meta:
