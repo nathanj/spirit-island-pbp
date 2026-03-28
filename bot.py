@@ -384,7 +384,11 @@ def load_emojis(emojis):
 def adjust_msg(msg):
     if len(words := msg.split()) > 1:
         spirit_name = words[1]
-        if (spirit_emoji := resolved_spirit_emoji.get(spirit_name)):
+        # we check that the first word is a heart because of potential message like:
+        # Accelerated Rot returned to the deck
+        # second word should not be replaced with Spreading Rot Renews the Earth's emoji
+        heart = words[0] == '❤️' or len(words[0]) == 1 and words[0] != 'A'
+        if heart and (spirit_emoji := resolved_spirit_emoji.get(spirit_name)):
             # replace only one occurrence (consider Earth playing Rumbling Earthquakes)
             msg = msg.replace(spirit_name, str(spirit_emoji), 1)
     try:
