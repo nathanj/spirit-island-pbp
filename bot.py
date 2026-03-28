@@ -48,7 +48,7 @@ spirit_emoji_map = {
 'Vigil': 'SpiritHearthVigil',
 'Voice': 'SpiritWanderingVoice',
 'Volcano': 'SpiritVolcanoLoomingHigh',
-'Waters': 'SpiritWoundedWaters',
+'Waters': 'SpiritWoundedWatersWWB',
 'Whirlwind': 'SpiritKittySunBrightWhirlwind',
 'Wildfire': 'SpiritHeartWildfire',
 }
