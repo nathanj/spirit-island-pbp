@@ -366,11 +366,7 @@ def load_emojis(emojis):
         #LOG.msg(f'found emoji = {e.name} {str(e)}')
         if e.name in spirit_emoji_map.values():
             emoji_to_discord_map[e.name] = str(e)
-        if e.name == 'Energy1':
-            energy_to_discord_map[e.name] = str(e)
-        if e.name == 'Energy2':
-            energy_to_discord_map[e.name] = str(e)
-        if e.name == 'Energy3':
+        if e.name in ('Energy1', 'Energy2', 'Energy3'):
             energy_to_discord_map[e.name] = str(e)
     for spirit in spirit_emoji_map:
         if spirit_emoji_map[spirit] not in emoji_to_discord_map:
