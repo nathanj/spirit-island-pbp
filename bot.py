@@ -385,8 +385,8 @@ def adjust_msg(msg):
     if len(words := msg.split()) > 1:
         spirit_name = words[1]
         if (spirit_emoji := resolved_spirit_emoji.get(spirit_name)):
-            # \\S+ matches the emoji representing the spirit; (.) does not successfully match ❤️
-            msg = re.sub(f'^(\\S+) {spirit_name} ', '\\1 ' + str(spirit_emoji) + ' ', msg)
+            # replace only one occurrence (consider Earth playing Rumbling Earthquakes)
+            msg = msg.replace(spirit_name, str(spirit_emoji), 1)
     try:
         # For now, don't want to replace the "started with N energy and now has M energy" messages,
         # because the message may be excessively long if the spirit has a lot.
