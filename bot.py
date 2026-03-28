@@ -11,49 +11,53 @@ import typing
 from dotenv import load_dotenv
 from PIL import Image
 
-spirit_emoji_map = {
-'Behemoth': 'SpiritEmberEyedBehemothEEB',
-'Breath': 'SpiritBreathOfDarknessBoDDYS',
-'Bringer': 'SpiritBringerDreamNightmareBoDaN',
-'Covets': 'SpiritCovetsGleaming',
-'Downpour': 'SpiritDownpourDrenchesWorld',
-'Earthquakes': 'SpiritDancesUpEarthquakesDUE',
-'Earth': 'SpiritVitalStrengthEarth',
-'Eyes': 'SpiritEyesWatchTrees',
-'Fangs': 'SpiritSharpFangsLeaves',
-'Finder': 'SpiritFinderPathsUnseen',
-'Fractured': 'SpiritFracturedDaysSplitSky',
-'Gaze': 'SpiritRelentlessGazeOfSun',
-'Green': 'SpiritSpreadRampantGreen',
-'Heat': 'SpiritRisingHeatStoneSand',
-'Keeper': 'SpiritKeeperForbiddenWilds',
-'Lightning': 'SpiritLightningSwiftStrike',
-'Lure': 'SpiritLureDeepWilderness',
-'Memory': 'SpiritShiftingMemoryAges',
-'Minds': 'SpiritManyMindsMoveOneMMMAO',
-'Mist': 'SpiritShroudSilentMist',
-'Mud': 'SpiritOtterFathomlessMud',
-'Ocean': 'SpiritOceanHungryGrasp',
-'River': 'SpiritRiverSurgesSunlight',
-'Roots': 'SpiritToweringRoots',
-'Rot': 'SpiritSpreadingRotRenews',
-'Serpent': 'SpiritSerpentSlumberingSnek',
-'Shadows': 'SpiritShadowsFlickerFlame',
-'Starlight': 'SpiritStarlightSeeksForm',
-'Stone': 'SpiritStoneUnyieldingDefiance',
-'Teeth': 'SpiritChompDevouringTeeth',
-'Thunderspeaker': 'SpiritThunderspeaker',
-'Trickster': 'SpiritGrinningTrickster',
-'Vengeance': 'SpiritVengeanceBurningPlague',
-'Vigil': 'SpiritHearthVigil',
-'Voice': 'SpiritWanderingVoice',
-'Volcano': 'SpiritVolcanoLoomingHigh',
-'Waters': 'SpiritWoundedWatersWWB',
-'Whirlwind': 'SpiritKittySunBrightWhirlwind',
-'Wildfire': 'SpiritHeartWildfire',
+spirit_names = (
+'Behemoth',
+'Breath',
+'Bringer',
+'Covets',
+'Downpour',
+'Earth',
+'Earthquakes',
+'Eyes',
+'Fangs',
+'Finder',
+'Fractured',
+'Gaze',
+'Green',
+'Heat',
+'Keeper',
+'Lightning',
+'Lure',
+'Memory',
+'Minds',
+'Mist',
+'Mud',
+'Ocean',
+'River',
+'Roots',
+'Rot',
+'Serpent',
+'Shadows',
+'Starlight',
+'Stone',
+'Teeth',
+'Thunderspeaker',
+'Trickster',
+'Vengeance',
+'Vigil',
+'Voice',
+'Volcano',
+'Waters',
+'Whirlwind',
+'Wildfire',
+)
+spirit_disambig = {
+    'Earth': 'Vital.*Earth', # just "Earth" is ambiguous (Earthquakes)
+    'Stone': 'Stones?(Unyielding|.*Defiance)', # just "Stone" is ambiguous (Rising Heat of Stone and Sand)
 }
 
-emoji_to_discord_map = {}
+resolved_spirit_emoji = {}
 energy_to_discord_map = {}
 
 load_dotenv()
@@ -363,28 +367,31 @@ async def report_success(command_message, verb):
 
 def load_emojis(emojis):
     for e in emojis:
-        #LOG.msg(f'found emoji = {e.name} {str(e)}')
-        if e.name in spirit_emoji_map.values():
-            emoji_to_discord_map[e.name] = str(e)
-        if e.name == 'Energy1':
+        if e.name in ('Energy1', 'Energy2', 'Energy3'):
             energy_to_discord_map[e.name] = str(e)
-        if e.name == 'Energy2':
-            energy_to_discord_map[e.name] = str(e)
-        if e.name == 'Energy3':
-            energy_to_discord_map[e.name] = str(e)
-    for spirit in spirit_emoji_map:
-        if spirit_emoji_map[spirit] not in emoji_to_discord_map:
+    for spirit in spirit_names:
+        # wrap inner pattern in () so that something like A|B doesn't result in ^SpiritA|B (can match just B)
+        # but also compile the inner pattern separately so that invalid syntax like )( doesn't suddenly become valid when wrapped
+        r = re.compile(f'^Spirit.*({re.compile(spirit_disambig[spirit]).pattern if spirit in spirit_disambig else spirit})')
+        possible_match = [e for e in emojis if r.match(e.name)]
+        if len(possible_match) == 1:
+            resolved_spirit_emoji[spirit] = possible_match[0]
+        elif possible_match:
+            LOG.warn(f'too many possible emoji for {spirit}, please disambiguate between {possible_match}')
+        else:
             LOG.warn(f'missing emoji for {spirit}')
 
 def adjust_msg(msg):
+    if len(words := msg.split()) > 1:
+        spirit_name = words[1]
+        # we check that the first word is a heart because of potential message like:
+        # Accelerated Rot returned to the deck
+        # second word should not be replaced with Spreading Rot Renews the Earth's emoji
+        heart = words[0] == '❤️' or len(words[0]) == 1 and words[0] != 'A'
+        if heart and (spirit_emoji := resolved_spirit_emoji.get(spirit_name)):
+            # replace only one occurrence (consider Earth playing Rumbling Earthquakes)
+            msg = msg.replace(spirit_name, str(spirit_emoji), 1)
     try:
-        for spirit in spirit_emoji_map:
-            try:
-                # searches for keys from spirit_emoji_map and replaces with correct Discord emoji
-                # \\S+ matches the emoji representing the spirit; (.) does not successfully match ❤️
-                msg = re.sub(f'^(\\S+) {spirit} ', '\\1 ' + emoji_to_discord_map[spirit_emoji_map[spirit]] + ' ', msg)
-            except KeyError:
-                pass
         # For now, don't want to replace the "started with N energy and now has M energy" messages,
         # because the message may be excessively long if the spirit has a lot.
         # so restricting it to gains/pays
