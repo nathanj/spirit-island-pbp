@@ -299,8 +299,7 @@ async def on_message(message):
             # thereby automatically following a game linked in the topic
             # (if present and the channel doesn't match NON_UPDATE_CHANNEL_PATTERN),
             # without needing to explicitly call link_channel_to_game here.
-            await message.channel.edit(topic=" ".join(parts[1:]), reason=f"{message.author.display_name} ({message.author.name}) requested")
-            await report_success(message, 'set as topic')
+            await edit_channel(message, 'set as topic', topic=" ".join(parts[1:]))
         except discord.Forbidden:
             await message.channel.send("I don't have permission to set the channel topic")
     elif message.content.startswith('$rename'):
@@ -335,10 +334,29 @@ async def on_message(message):
             new_name = existing_prefix if new_suffix == existing_prefix else f"{existing_prefix}-{new_suffix}"
 
         try:
-            await message.channel.edit(name=new_name, reason=f"{message.author.display_name} ({message.author.name}) requested")
-            await report_success(message, 'set as channel name')
+            await edit_channel(message, 'set as channel name', name=new_name)
         except discord.Forbidden:
             await message.channel.send("I don't have permission to rename the channel")
+
+async def edit_channel(message, success_msg, **changes):
+    edit_task = asyncio.create_task(message.channel.edit(**changes, reason=f"{message.author.display_name} ({message.author.name}) requested"))
+
+    async def check_task_completion():
+        await asyncio.sleep(3)
+        # Didn't find a way to introspect the channel edit task to see its status (time left to wait)
+        # so best we can do is check whether it's done.
+        if edit_task.done():
+            return
+        try:
+            await message.reply(msg := "Got rate-limited by Discord (Discord limits the bot to 2 changes to the same channel within 10 minutes), automatically retrying when possible. Thanks for your patience.")
+        except discord.Forbidden:
+            # may arise from being unable to reply to the message (can't view message log), so try just sending a message, not a reply
+            await message.channel.send(msg)
+
+    check_task = asyncio.create_task(check_task_completion())
+    await edit_task
+    await report_success(message, success_msg)
+    await check_task
 
 async def referenced_message(message, command):
     if message.reference:
