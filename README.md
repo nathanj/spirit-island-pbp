@@ -13,9 +13,11 @@ In rough order of importance (most important files first):
 * `pbf/views.py` - implementation of all of the HTTP endpoints
 * `pbf/models.py` - logic for objects like games, players, cards, and spirits
 * `pbf/templates/*.html` - HTML for the player-facing UI.
-  * `game.html` - page for a game, including screnshots, player tabs, and host actions
+  * `game.html` - page for a game, including screenshots, player tabs, and host actions
   * `player.html` - each individual player's tab, containing their spirit panel, energy, hand, etc.
   * `setup.html` - game setup page (add a spirit, change player name, change scenario, etc.)
+  * `index.html` - landing page (create a new game, import a game)
+  * `base.html` - base template extended by others; includes the CSS and JS libraries used
 * `island/urls.py` - definition of HTTP endpoints and the functions in `pbf/views.py` they correspond to
 * `pbf/tests.py` - tests that can be run locally (see below for instructions) or automatically when submitting a pull request
 * `pbf/api.py` - implementation of JSON API, such as the game data endpoint
