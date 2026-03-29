@@ -6,6 +6,25 @@ A website to assist playing Spirit Island over discord in the play by post secti
 
 Ensure that you've installed [Python](https://www.python.org/downloads/) and [uv](https://docs.astral.sh/uv/getting-started/installation/) before starting.
 
+## Important files
+
+In rough order of importance (most important files first):
+
+* `pbf/views.py` - implementation of all of the HTTP endpoints
+* `pbf/models.py` - logic for objects like games, players, cards, and spirits
+* `pbf/templates/*.html` - HTML for the player-facing UI.
+  * `game.html` - page for a game, including screnshots, player tabs, and host actions
+  * `player.html` - each individual player's tab, containing their spirit panel, energy, hand, etc.
+  * `setup.html` - game setup page (add a spirit, change player name, change scenario, etc.)
+* `island/urls.py` - definition of HTTP endpoints and the functions in `pbf/views.py` they correspond to
+* `pbf/tests.py` - tests that can be run locally (see below for instructions) or automatically when submitting a pull request
+* `pbf/api.py` - implementation of JSON API, such as the game data endpoint
+* `pbf/admin.py` - configuration of the [Django admin site](https://docs.djangoproject.com/en/6.0/ref/contrib/admin/)
+* `island/settings.py` - this project's [Django settings file](https://docs.djangoproject.com/en/6.0/topics/settings/)
+* `pbf/static/pbf` - static assets such as images of power cards and spirit panels
+* `bot.py` - Discord bot that posts game updates
+* `pyproject.toml` - declares the project's dependencies, used by this project's package manager [uv](https://docs.astral.sh/uv/)
+
 ## Running the site locally
 
 Copy `.env.template` to `.env` and fill in the variables
