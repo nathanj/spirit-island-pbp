@@ -155,7 +155,7 @@ A full treatment of this topic is beyond the scope of this document, but here ar
 * You will also need to configure your web server to serve uploaded files out of the `screenshots/` directory.
 * You should use the `--no-dev` flag to `uv` to exclude development dependencies.
 * This repo already contains all the necessary configuration to be run by [Gunicorn](https://gunicorn.org/).
-* [Gunicorn deployment docs](https://docs.gunicorn.org/en/latest/deploy.html) recommend deploying Gunicorn behind a proxy server.
+* [Gunicorn deployment docs](https://gunicorn.org/deploy/) recommend deploying Gunicorn behind a proxy server.
   They themselves recommend [nginx](https://nginx.org/).
   [Caddy](https://caddyserver.com/) is also known to work well; see the Caddyfile provided in this repo for a usable config.
 * If you'd prefer to use Docker, consider a [community-contributed Docker configuration](https://github.com/nathanj/spirit-island-pbp/pull/152).
