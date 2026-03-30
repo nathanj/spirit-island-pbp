@@ -329,7 +329,12 @@ async def on_message(message):
             existing_prefix = existing_name[:existing_name.index('-')] if '-' in existing_name else existing_name
             new_suffix = parts[1]
             if '-' in new_suffix and new_suffix[:new_suffix.index('-')] == existing_prefix:
-                await reply(message, f"You don't need to include the {existing_prefix}- prefix; it's automatically added")
+                try:
+                    await reply(message, f"You don't need to include the {existing_prefix}- prefix; it's automatically added")
+                except discord.Forbidden:
+                    # even if we don't have permission to send the message,
+                    # we might still have permission to set the channel name, so still try that.
+                    pass
                 new_suffix = new_suffix[new_suffix.index('-') + 1:]
             new_name = existing_prefix if new_suffix == existing_prefix else f"{existing_prefix}-{new_suffix}"
 
