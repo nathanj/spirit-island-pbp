@@ -19,7 +19,7 @@ In rough order of importance (most important files first):
   * `index.html` - landing page (create a new game, import a game)
   * `base.html` - base template extended by others; includes the CSS and JS libraries used
 * `island/urls.py` - definition of HTTP endpoints and the functions in `pbf/views.py` they correspond to
-* `pbf/tests.py` - tests that can be run locally (see below for instructions) or automatically when submitting a pull request
+* `pbf/tests.py` - tests that can be run locally (see below [Test](#test) section for instructions) or automatically when submitting a pull request
 * `pbf/api.py` - implementation of JSON API, such as the game data endpoint
 * `pbf/admin.py` - configuration of the [Django admin site](https://docs.djangoproject.com/en/6.0/ref/contrib/admin/)
 * `island/settings.py` - this project's [Django settings file](https://docs.djangoproject.com/en/6.0/topics/settings/)
@@ -78,7 +78,7 @@ If no images are showing up when running locally, consider setting [`DEBUG`](htt
 In this project, this is done by setting the `DEBUG` environment variable to `yes` (the value that `island/settings.py` is checking for), typically using the `.env` file.
 Doing so makes Django serve [static files](https://docs.djangoproject.com/en/stable/howto/static-files/) such as images.
 
-If no images are showing up when running in production, check that you've configured your chosen web server to serve the static files (exact configuration depends on the web server).
+If no images are showing up when running in production, check that you've configured your chosen web server to serve the static files (exact configuration depends on the web server; see below in the [Running the site in production](#running-the-site-in-production) section).
 
 ### `uv run` / `uv sync` file not found on Windows
 
@@ -155,7 +155,7 @@ A full treatment of this topic is beyond the scope of this document, but here ar
 * You will also need to configure your web server to serve uploaded files out of the `screenshots/` directory.
 * You should use the `--no-dev` flag to `uv` to exclude development dependencies.
 * This repo already contains all the necessary configuration to be run by [Gunicorn](https://gunicorn.org/).
-* [Gunicorn deployment docs](https://docs.gunicorn.org/en/latest/deploy.html) recommend deploying Gunicorn behind a proxy server.
+* [Gunicorn deployment docs](https://gunicorn.org/deploy/) recommend deploying Gunicorn behind a proxy server.
   They themselves recommend [nginx](https://nginx.org/).
   [Caddy](https://caddyserver.com/) is also known to work well; see the Caddyfile provided in this repo for a usable config.
 * If you'd prefer to use Docker, consider a [community-contributed Docker configuration](https://github.com/nathanj/spirit-island-pbp/pull/152).
