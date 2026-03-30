@@ -1274,8 +1274,8 @@ spirit_thresholds: dict[str, list[tuple[int, int, str | list[str]]]] = {
             (360, 475, '3P'),
             (360, 510, '4F2A'),
             (360, 570, '7F'),
-            (640, 495, '4F1P'),
-            (640, 525, '3F1E2P'),
+            (640, 445, '4F1P'),
+            (640, 500, '3F1E2P'),
             (640, 560, '1S3F1N'),
             ],
         'Wildfire': [
