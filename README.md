@@ -78,7 +78,7 @@ If no images are showing up when running locally, consider setting [`DEBUG`](htt
 In this project, this is done by setting the `DEBUG` environment variable to `yes` (the value that `island/settings.py` is checking for), typically using the `.env` file.
 Doing so makes Django serve [static files](https://docs.djangoproject.com/en/stable/howto/static-files/) such as images.
 
-If no images are showing up when running in production, check that you've configured your chosen web server to serve the static files (exact configuration depends on the web server).
+If no images are showing up when running in production, check that you've configured your chosen web server to serve the static files (exact configuration depends on the web server; see below in the [Running the site in production](#running-the-site-in-production) section).
 
 ### `uv run` / `uv sync` file not found on Windows
 
