@@ -1225,8 +1225,8 @@ spirit_thresholds: dict[str, list[tuple[int, int, str | list[str]]]] = {
         'WarriorThunderspeaker': [
             (370, 425, '4A'),
             (370, 455, '1N'),
-            (630, 518, '1S2F'),
-            (630, 555, '3S3F'),
+            (630, 450, '1S2F'),
+            (630, 492, '3S3F'),
             ],
         'TacticianThunderspeaker': [
             (370, 425, '4A'),
