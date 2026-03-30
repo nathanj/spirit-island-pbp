@@ -19,7 +19,7 @@ In rough order of importance (most important files first):
   * `index.html` - landing page (create a new game, import a game)
   * `base.html` - base template extended by others; includes the CSS and JS libraries used
 * `island/urls.py` - definition of HTTP endpoints and the functions in `pbf/views.py` they correspond to
-* `pbf/tests.py` - tests that can be run locally (see below for instructions) or automatically when submitting a pull request
+* `pbf/tests.py` - tests that can be run locally (see below [Test](#test) section for instructions) or automatically when submitting a pull request
 * `pbf/api.py` - implementation of JSON API, such as the game data endpoint
 * `pbf/admin.py` - configuration of the [Django admin site](https://docs.djangoproject.com/en/6.0/ref/contrib/admin/)
 * `island/settings.py` - this project's [Django settings file](https://docs.djangoproject.com/en/6.0/topics/settings/)
