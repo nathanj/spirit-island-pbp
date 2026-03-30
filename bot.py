@@ -261,7 +261,7 @@ async def on_message(message):
         # OK not to check if the message is already pinned, since pinning is idempotent.
         if message_to_pin and await act_on_message(message, message_to_pin, 'pin'):
             await report_success(message, 'pinned')
-        await message.reply('The $pin command is deprecated and may be removed in the future. Hosts should pin messages themselves instead of using this command.')
+        await reply(message, 'The $pin command is deprecated and may be removed in the future. Hosts should pin messages themselves instead of using this command.')
     elif message.content.startswith('$unpin'):
         # Automatically unpinning a number of messages may be more convenient than manually unpinning each.
         # So, even after $pin is removed, we would still want to keep this $unpin N command.
@@ -279,7 +279,7 @@ async def on_message(message):
             else:
                 await message.channel.send("There were no pinned messages to unpin")
         else:
-            await message.reply('You need to tell me how many messages to unpin, like $unpin 1 or $unpin 99')
+            await reply(message, 'You need to tell me how many messages to unpin, like $unpin 1 or $unpin 99')
     elif message.content.startswith('$delete'):
         message_to_delete = await referenced_message(message, 'delete')
         if not message_to_delete:
@@ -329,7 +329,12 @@ async def on_message(message):
             existing_prefix = existing_name[:existing_name.index('-')] if '-' in existing_name else existing_name
             new_suffix = parts[1]
             if '-' in new_suffix and new_suffix[:new_suffix.index('-')] == existing_prefix:
-                await message.reply(f"You don't need to include the {existing_prefix}- prefix; it's automatically added")
+                try:
+                    await reply(message, f"You don't need to include the {existing_prefix}- prefix; it's automatically added")
+                except discord.Forbidden:
+                    # even if we don't have permission to send the message,
+                    # we might still have permission to set the channel name, so still try that.
+                    pass
                 new_suffix = new_suffix[new_suffix.index('-') + 1:]
             new_name = existing_prefix if new_suffix == existing_prefix else f"{existing_prefix}-{new_suffix}"
 
@@ -347,11 +352,7 @@ async def edit_channel(message, success_msg, **changes):
         # so best we can do is check whether it's done.
         if edit_task.done():
             return
-        try:
-            await message.reply(msg := "Got rate-limited by Discord (Discord limits the bot to 2 changes to the same channel within 10 minutes), automatically retrying when possible. Thanks for your patience.")
-        except discord.Forbidden:
-            # may arise from being unable to reply to the message (can't view message log), so try just sending a message, not a reply
-            await message.channel.send(msg)
+        await reply(message, "Got rate-limited by Discord (Discord limits the bot to 2 changes to the same channel within 10 minutes), automatically retrying when possible. Thanks for your patience.")
 
     check_task = asyncio.create_task(check_task_completion())
     await edit_task
@@ -366,6 +367,16 @@ async def referenced_message(message, command):
             await message.channel.send("I don't have permission to read previous messages")
             return
     await message.channel.send(f"You need to reply to a message to use ${command}")
+
+async def reply(message, response):
+    try:
+        await message.reply(response)
+    except discord.Forbidden:
+        # reply requires View Message Log, which this bot may not have permission to.
+        # Try to send a message to the channel, as we may have permission to do that instead.
+        await message.channel.send(response)
+        # That may in turn raise discord.Forbidden if we're not allowed to send a message either,
+        # but if this is the case, there's not much that can be done.
 
 async def act_on_message(command_message, message_to_modify, verb, reason=True):
     try:
