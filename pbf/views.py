@@ -256,31 +256,30 @@ def deck_mods(request: HttpRequest, game_id: str) -> HttpResponse:
 def toggle_deck_mod(request: HttpRequest, game_id: str, mod: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
 
-    def replace_card(cls: type, ids: list[int] | None, attr: str, old: Card, new: Card) -> None:
-        import pbf.models
-        match cls:
-            case pbf.models.Game:
+    def replace_card(loc: Card.Location, old: Card, new: Card) -> None:
+        match loc:
+            case Card.LocGame(attr):
                 getattr(old, attr).remove(game)
                 getattr(new, attr).add(game)
-            case pbf.models.GamePlayer:
+            case Card.LocPlayer(ids, attr):
                 getattr(old, attr).remove(*ids)
                 getattr(new, attr).add(*ids)
-            case pbf.models.GamePlayerImpendingWithEnergy:
+            case Card.LocImpending(ids):
                 # id__in should be the only condition necessary, but OK to make sure.
                 GamePlayerImpendingWithEnergy.objects.filter(id__in=ids, gameplayer__game=game, card=old).update(card=new)
             case _:
-                raise TypeError(f'unknown card location class {cls}')
+                raise TypeError(f'unknown card location {loc}')
 
     match mod:
         case 'vengeance_of_the_dead':
             original = Card.objects.get(name='Vengeance of the Dead')
             exploratory = Card.objects.get(name='Vengeance of the Dead exploratory')
             if (locs := exploratory.location_in_game(game)):
-                for (cls, ids, attr, _) in locs:
-                    replace_card(cls, ids, attr, exploratory, original)
+                for (loc, _) in locs:
+                    replace_card(loc, exploratory, original)
             else:
-                for (cls, ids, attr, _) in original.location_in_game(game):
-                    replace_card(cls, ids, attr, original, exploratory)
+                for (loc, _) in original.location_in_game(game):
+                    replace_card(loc, original, exploratory)
         case _:
             raise ValueError('unknown deck mod')
 
