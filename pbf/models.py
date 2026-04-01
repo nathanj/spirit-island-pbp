@@ -4,7 +4,8 @@ import uuid
 from enum import Enum
 from collections import Counter, defaultdict
 from collections.abc import Iterable
-from typing import Any, NamedTuple, Type
+from dataclasses import dataclass
+from typing import Any, NamedTuple
 
 from django.core import checks
 from django.db import models
@@ -243,28 +244,40 @@ class Card(models.Model):
                 Threshold(2, y + 8, num_healing_cards == 0),
             ]
 
-    type CardLocation = tuple[Type[Game], None, str, str] | tuple[Type[GamePlayer], list[int], str, str] | tuple[Type[GamePlayerImpendingWithEnergy], list[int], str, str]
+    @dataclass
+    class LocGame:
+        attr: str
 
-    # Returns array of tuples: (class, IDs if applicable, attribute name, human-friendly name)
-    def location_in_game(self, game: 'Game') -> Iterable[CardLocation]:
-        locs: list[Card.CardLocation] = []
+    @dataclass
+    class LocPlayer:
+        ids: list[int]
+        attr: str
+
+    @dataclass
+    class LocImpending:
+        ids: list[int]
+
+    type Location = LocGame | LocPlayer | LocImpending
+
+    # Returns array of tuples: (location, human-friendly name)
+    def location_in_game(self, game: 'Game') -> Iterable[tuple[Location, str]]:
+        locs: list[tuple[Card.Location, str]] = []
 
         # Game-wide locations
         for loc in ('minor_deck', 'major_deck', 'discard_pile'):
             if getattr(self, loc).filter(id=game.id).exists():
-                locs.append((Game, None, loc, loc.replace('_', ' ')))
+                locs.append((Card.LocGame(loc), loc.replace('_', ' ')))
 
         # Player-specific locations, minus impending
         # Not healing since nothing that uses this cares to know
         for loc in ('hand', 'discard', 'play', 'selection', 'days', 'scenario'):
             if (players := getattr(self, loc).filter(game=game).values_list('id', 'spirit__name', named=True)):
                 names = " and ".join(player.spirit__name for player in players)
-                locs.append((GamePlayer, [player.id for player in players], loc, f"{names}'s {loc}"))
+                locs.append((Card.LocPlayer([player.id for player in players], loc), f"{names}'s {loc}"))
 
         # Impending
         if (impends := self.gameplayerimpendingwithenergy_set.filter(gameplayer__game=game)):
-            # Currently 'card' is unused (replace_card in views has 'card' hard-coded).
-            locs.append((GamePlayerImpendingWithEnergy, [impend.id for impend in impends], 'card', 'impending'))
+            locs.append((Card.LocImpending([impend.id for impend in impends]), 'impending'))
 
         return locs
 
@@ -325,7 +338,7 @@ class Game(models.Model):
 
     def exploratory_vengeance_location(self) -> Iterable[str]:
         # Template only uses the name, so just give them that
-        return [locname for (_, _, _, locname) in Card.objects.get(name='Vengeance of the Dead exploratory').location_in_game(self)]
+        return [locname for (_, locname) in Card.objects.get(name='Vengeance of the Dead exploratory').location_in_game(self)]
 
     def scenario_setup_from_deck(self) -> bool:
         scenarios = {
