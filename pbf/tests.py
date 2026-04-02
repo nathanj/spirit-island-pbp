@@ -2286,6 +2286,17 @@ class TestLog(TestCase):
         self.assertIn(player.selection.first().url(), game.gamelog_set.last().images)
         self.assertIn(player.selection.first().name, game.gamelog_set.last().spoiler_text)
 
+    def test_choose_power(self):
+        client = Client()
+        client.post('/new')
+        game = Game.objects.last()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name='River'), color='red')
+        card = Card.objects.get(name='Teeming Rivers')
+        player.selection.set([card])
+        client.get(f"/game/{player.id}/choose/{card.id}")
+        self.assertIn('River gains Teeming Rivers', game.gamelog_set.last().text)
+        self.assertEqual('', game.gamelog_set.last().spoiler_text)
+
     def test_take_power(self):
         client = Client()
         client.post('/new')
