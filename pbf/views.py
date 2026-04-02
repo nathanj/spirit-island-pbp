@@ -913,7 +913,7 @@ def gain_power(request: HttpRequest, player_id: int, type: str, num: int) -> Htt
     # TODO: Should we set a flag on the player, such that when they actually select the card, it is also spoilered?
     add_log_msg(player.game, player=player, text=f'gains a {type} power. Choices', cards=selection, spoiler=spoiler)
 
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'spoiler_power_gain': spoiler}))
 
 def minor_deck(request: HttpRequest, game_id: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)

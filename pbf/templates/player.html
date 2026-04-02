@@ -153,7 +153,7 @@
   <button class="btn" hx-get="{% url 'undo_gain_card' player.id %}" hx-confirm="Undoing the card gain will put the cards back where they came from. Are you sure?">Oops! Undo gain card</button>
 
   <p>
-    <input type="checkbox" id="spoiler_power_gain" name="spoiler_power_gain" />
+    <input type="checkbox" id="spoiler_power_gain" name="spoiler_power_gain" {% if spoiler_power_gain %}checked {% endif %}/>
     <label for="spoiler_power_gain"><span title="Useful for gaining a power in the Fast Power or Slow Power Phase while another player hasn't locked decisions from an earlier phase (Spirit or Invader respectively)">Spoiler power gain (?)</span></label>
   </p>
   </div>
