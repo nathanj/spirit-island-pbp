@@ -388,11 +388,11 @@ async def act_on_message(command_message, message_to_modify, verb, reason=True):
     except discord.HTTPException:
         await command_message.channel.send(f"Failed to {verb} the message due to an HTTP error.")
 
-async def report_success(command_message, verb):
+async def report_success(command_message, verb, noun='Message'):
     try:
         await command_message.add_reaction('✅')
     except discord.Forbidden:
-        await command_message.channel.send(f"Message {verb}!")
+        await command_message.channel.send(f"{noun} {verb}!" if noun else f"{verb}!")
 
 def load_emojis(emojis):
     for e in emojis:
