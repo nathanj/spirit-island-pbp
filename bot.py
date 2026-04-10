@@ -361,6 +361,8 @@ async def edit_channel(message, success_msg, **changes):
 
 async def referenced_message(message, command):
     if message.reference:
+        if message.reference.resolved:
+            return message.reference.resolved
         try:
             return await message.channel.fetch_message(message.reference.message_id)
         except discord.Forbidden:
