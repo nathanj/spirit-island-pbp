@@ -133,6 +133,7 @@ NON_UPDATE_CHANNEL_PATTERN = re.compile(os.getenv('DISCORD_NON_UPDATE_CHANNEL_PA
 ROLE_CHANNEL = int(os.getenv('DISCORD_ROLE_CHANNEL', 846584074943725599))
 ROLE_PATTERN = re.compile(os.getenv('DISCORD_ROLE_PATTERN', r'\A\d+-pbp\Z'))
 ROLE_ASSIGNER_ROLE = int(os.getenv('DISCORD_ROLE_ASSIGNER_ROLE', 1195873293622857789))
+ROLE_CREATOR_ROLE = int(os.getenv('DISCORD_ROLE_CREATOR_ROLE', 925206661528948736))
 GAME_URL = os.getenv('GAME_URL', 'si.bitcrafter.net')
 GUILD_ID = int(os.getenv('DISCORD_GUILD_ID', 846580409050857493))
 
@@ -272,6 +273,12 @@ async def on_message(message: discord.Message) -> None:
             ))
             await message.channel.send(text)
             return
+        elif 'admin' in message.content:
+            text = "\n".join((
+                "`$createrole N` to create the role N-pbp",
+            ))
+            await message.channel.send(text)
+            return
         text = "\n".join((
             "[Github link](<https://github.com/nathanj/spirit-island-pbp>)",
             "",
@@ -283,6 +290,7 @@ async def on_message(message: discord.Message) -> None:
             "Use `$role/$unrole` to add/remove players to/from a role (specify role and players by either @mentioning them or replying to a message that does)",
             "(aliases $addrole, $addplayer, $derole, $rmrole, $rmplayer, $removeplayer)",
             "`$help role` for more detailed help on roles",
+            "`$help admin` to show admin-only commands",
         ))
         await message.channel.send(text)
     if message.content.startswith('$pin'):
@@ -400,6 +408,36 @@ async def on_message(message: discord.Message) -> None:
         # message 2 (reply to 1) $role @1-pbp
         # message 3 (reply to 2) $unrole
         await mod_players_and_roles(message, "remove", "from", max_depth=2)
+    elif message.content.startswith('$createrole'):
+        if len(parts) >= 2 and parts[1].isnumeric() and (rolenum := int(parts[1])) > 0:
+            new_role_name = f"{rolenum}-pbp"
+            if not isinstance(message.author, discord.Member) or not any(role.id == ROLE_CREATOR_ROLE for role in message.author.roles):
+                await reply(message, "You aren't allowed to create roles")
+                return
+            if not message.guild:
+                await message.channel.send("Can't create a role without a server")
+                return
+            if any(role.name == new_role_name for role in message.guild.roles):
+                # Discord's API and UI do allow multiple roles with the same name.
+                # So we are choosing to add this additional limitation to avoid confusion.
+                await message.channel.send("A role with that name already exists")
+                return
+
+            if message.channel.id != ROLE_CHANNEL and not (isinstance(message.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, message.channel.name)):
+                await message.channel.send("For auditability reasons, please keep role commands to PBP game channels or the bot channel, thanks!")
+                return
+
+            try:
+                await message.guild.create_role(name=new_role_name, mentionable=True, reason=f"{message.author.display_name} ({message.author.name}) requested")
+            except discord.Forbidden:
+                await message.channel.send("I don't have permission to create roles")
+                return
+            except discord.HTTPException:
+                await message.channel.send("Creating the role failed for some reason")
+                return
+            await message.channel.send(f"<@{message.author.id}> created role {new_role_name}")
+        else:
+            await reply(message, 'You need to tell me just the number of the role to create, no suffixes or any characters other than numbers')
 
 async def mod_players_and_roles(message: discord.Message, verb: str, direction: str, max_depth: int = 1) -> None:
     if message.channel.id != ROLE_CHANNEL and not (isinstance(message.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, message.channel.name)):
