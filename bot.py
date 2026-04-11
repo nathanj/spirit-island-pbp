@@ -299,7 +299,7 @@ async def on_message(message):
             # thereby automatically following a game linked in the topic
             # (if present and the channel doesn't match NON_UPDATE_CHANNEL_PATTERN),
             # without needing to explicitly call link_channel_to_game here.
-            await edit_channel(message, 'set as topic', topic=" ".join(parts[1:]))
+            await edit_channel(message, 'Topic set', topic=" ".join(parts[1:]))
         except discord.Forbidden:
             await message.channel.send("I don't have permission to set the channel topic")
     elif message.content.startswith('$rename'):
@@ -339,7 +339,7 @@ async def on_message(message):
             new_name = existing_prefix if new_suffix == existing_prefix else f"{existing_prefix}-{new_suffix}"
 
         try:
-            await edit_channel(message, 'set as channel name', name=new_name)
+            await edit_channel(message, 'Channel renamed', name=new_name)
         except discord.Forbidden:
             await message.channel.send("I don't have permission to rename the channel")
 
@@ -356,7 +356,7 @@ async def edit_channel(message, success_msg, **changes):
 
     check_task = asyncio.create_task(check_task_completion())
     await edit_task
-    await report_success(message, success_msg)
+    await report_success(message, success_msg, noun=None)
     await check_task
 
 async def referenced_message(message, command):
@@ -388,11 +388,11 @@ async def act_on_message(command_message, message_to_modify, verb, reason=True):
     except discord.HTTPException:
         await command_message.channel.send(f"Failed to {verb} the message due to an HTTP error.")
 
-async def report_success(command_message, verb):
+async def report_success(command_message, verb, noun='Message'):
     try:
         await command_message.add_reaction('✅')
     except discord.Forbidden:
-        await command_message.channel.send(f"Message {verb}!")
+        await command_message.channel.send(f"{noun} {verb}!" if noun else f"{verb}!")
 
 def load_emojis(emojis):
     for e in emojis:
