@@ -568,7 +568,8 @@ def assert_allowed_role_manager(message: discord.Message, role: discord.Role) ->
     if not isinstance(message.author, discord.Member):
         # author can be User or Member; User has no roles (left the guild, or message isn't in a guild)
         raise NotRoleAssigner()
-    if not any(role.id == ROLE_ASSIGNER_ROLE for role in message.author.roles):
+    if not any(role.id == ROLE_ASSIGNER_ROLE or role.id == ROLE_ASSIGNER_ADMIN_ROLE for role in message.author.roles):
+        # assigner admin is okay too because they can assign themselves assigner
         raise NotRoleAssigner()
     if not re.search(ROLE_PATTERN, role.name):
         raise DisallowedRole()
