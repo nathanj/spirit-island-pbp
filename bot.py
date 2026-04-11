@@ -290,6 +290,9 @@ async def on_message(message: discord.Message) -> None:
         if message_to_delete.author != client.user:
             await message.channel.send("I only delete my own messages")
             return
+        if message_to_delete.mentions:
+            await message.channel.send("This message seems to mention some users, which means it may be an audit message. Deleting it may be unsafe.")
+            return
         # delete doesn't accept a reason argument
         # doesn't matter anyway since we're deleting our own message,
         # which doesn't create an audit log entry
@@ -399,6 +402,16 @@ async def referenced_message(message: discord.Message, command: str) -> discord.
     await message.channel.send(f"You need to reply to a message to use ${command}")
     return None
 
+# note that since the bot refuses to delete its own messages that mention a user
+# (as they may be audit messages),
+# and a reply mentions the user,
+# using reply will prevent the bot from deleting this message.
+# Thus, generally we prefer to use it only in situations where:
+# * the user did something they're not allowed to
+#   (the record of this should not be deleted)
+# * they did something but it's important to notify them they can do it a better way
+#   (it'd be okay to delete these,
+#   but the worth of notifying them exceeds the cost of making them undeletable)
 async def reply(message: discord.Message, response: str) -> None:
     try:
         await message.reply(response)
