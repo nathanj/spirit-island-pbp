@@ -133,6 +133,7 @@ NON_UPDATE_CHANNEL_PATTERN = re.compile(os.getenv('DISCORD_NON_UPDATE_CHANNEL_PA
 ROLE_CHANNEL = int(os.getenv('DISCORD_ROLE_CHANNEL', 846584074943725599))
 ROLE_PATTERN = re.compile(os.getenv('DISCORD_ROLE_PATTERN', r'\A\d+-pbp\Z'))
 ROLE_ASSIGNER_ROLE = int(os.getenv('DISCORD_ROLE_ASSIGNER_ROLE', 1195873293622857789))
+ROLE_ASSIGNER_ADMIN_ROLE = int(os.getenv('DISCORD_ROLE_ASSIGNER_ADMIN_ROLE', 925206661528948736))
 ROLE_CREATOR_ROLE = int(os.getenv('DISCORD_ROLE_CREATOR_ROLE', 925206661528948736))
 GAME_URL = os.getenv('GAME_URL', 'si.bitcrafter.net')
 GUILD_ID = int(os.getenv('DISCORD_GUILD_ID', 846580409050857493))
@@ -276,6 +277,8 @@ async def on_message(message: discord.Message) -> None:
         elif 'admin' in message.content:
             text = "\n".join((
                 "`$createrole N` to create the role N-pbp",
+                "`$host/$unhost` to add/remove hosts (hosts can can add/remove players to/from PBP roles)",
+                "(aliases $addhost, $dehost, $rmhost, $removehost)",
             ))
             await message.channel.send(text)
             return
@@ -438,6 +441,10 @@ async def on_message(message: discord.Message) -> None:
             await message.channel.send(f"<@{message.author.id}> created role {new_role_name}")
         else:
             await reply(message, 'You need to tell me just the number of the role to create, no suffixes or any characters other than numbers')
+    elif message.content.startswith('$host') or message.content.startswith('$addhost'):
+        await mod_hosts(message, 'add', 'to')
+    elif message.content.startswith('$unhost') or message.content.startswith('$dehost') or message.content.startswith('$rmhost') or message.content.startswith('$removehost'):
+        await mod_hosts(message, 'remove', 'from')
 
 async def mod_players_and_roles(message: discord.Message, verb: str, direction: str, max_depth: int = 1) -> None:
     if message.channel.id != ROLE_CHANNEL and not (isinstance(message.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, message.channel.name)):
@@ -565,6 +572,40 @@ def assert_allowed_role_manager(message: discord.Message, role: discord.Role) ->
         raise NotRoleAssigner()
     if not re.search(ROLE_PATTERN, role.name):
         raise DisallowedRole()
+
+async def mod_hosts(message: discord.Message, verb: str, direction: str) -> None:
+    if not isinstance(message.author, discord.Member) or not any(role.id == ROLE_ASSIGNER_ADMIN_ROLE for role in message.author.roles):
+        await reply(message, f"You aren't allowed to {verb} players {direction} the host role")
+        return
+    if message.channel.id != ROLE_CHANNEL and not (isinstance(message.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, message.channel.name)):
+        await message.channel.send("For auditability reasons, please keep role commands to PBP game channels or the bot channel, thanks!")
+        return
+    if not message.guild:
+        await message.channel.send("Assigning roles doesn't work outside of a server")
+        return
+    if not (role := message.guild.get_role(ROLE_ASSIGNER_ROLE)):
+        await message.channel.send("Couldn't find the host role. Is the bot configured correctly?")
+        return
+    if not message.mentions:
+        await message.channel.send(f"You need to @mention the players to {verb}")
+        return
+
+    suffix = "d" if verb[-1] == "e" else "ed"
+
+    for member in message.mentions:
+        try:
+            await getattr(member, f"{verb}_roles")(role, reason=f"{message.author.display_name} ({message.author.name}) requested {verb}")
+        except discord.Forbidden:
+            if role.is_assignable():
+                await reply(message, "I don't have permission to manage roles on this server")
+            else:
+                await reply(message, "I don't have permission to manage that role (it outranks me)")
+            return
+        except discord.HTTPException:
+            await message.channel.send(f"Something went wrong when trying to {verb} {direction} the role")
+            return
+        # sends multiple messages if they add multiple hosts, hopefully that's okay
+        await message.channel.send(f"<@{message.author.id}> {verb}{suffix} <@{member.id}> {direction} {role.name}")
 
 class ChannelChanges(TypedDict):
     name: NotRequired[str]
