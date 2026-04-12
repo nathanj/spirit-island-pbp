@@ -500,8 +500,10 @@ class GameLogEntry(TypedDict):
     spoiler: bool
 
 async def relay_game(channel_id: int, log: Iterable[GameLogEntry]) -> None:
-    # There's nothing we can do if the channel doesn't a send method anyway
-    channel: discord.abc.Messageable = client.get_channel(channel_id) #type: ignore[assignment]
+    channel = client.get_channel(channel_id)
+    if not isinstance(channel, discord.abc.Messageable):
+        LOG.warn(f"channel {channel_id} is {type(channel).__name__}, not sendable")
+        return
 
     combined_text: list[str] = []
     for entry in log:
