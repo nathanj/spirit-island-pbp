@@ -298,7 +298,12 @@ async def on_message(message: discord.Message) -> None:
             await report_success(message, 'deleted')
     elif message.content.startswith('$topic'):
         if not isinstance(message.channel, discord.TextChannel):
-            await message.channel.send(f"This bot only supports setting the topic of text channels, not {type(message.channel).__name__}s")
+            if isinstance(message.channel, discord.StageChannel):
+                await message.channel.send(f"This bot only supports setting the topic of text channels, not {type(message.channel).__name__}s")
+            else:
+                # ForumChannel have a topic in the API, but they are guidelines in the UI
+                # Everything else doesn't have a topic at all.
+                await message.channel.send(f"{type(message.channel).__name__}s don't have a topic")
             return
         try:
             # Expected (and so far observed) behaviour:
