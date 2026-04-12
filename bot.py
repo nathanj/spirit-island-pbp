@@ -297,27 +297,29 @@ async def on_message(message: discord.Message) -> None:
         if await act_on_message(message, message_to_delete, 'delete', reason=False):
             await report_success(message, 'deleted')
     elif message.content.startswith('$topic'):
+        if not isinstance(message.channel, discord.TextChannel):
+            if isinstance(message.channel, discord.StageChannel):
+                await message.channel.send(f"This bot only supports setting the topic of text channels, not {type(message.channel).__name__}s")
+            else:
+                # ForumChannel have a topic in the API, but they are guidelines in the UI
+                # Everything else doesn't have a topic at all.
+                await message.channel.send(f"{type(message.channel).__name__}s don't have a topic")
+            return
         try:
             # Expected (and so far observed) behaviour:
             # the bot will get an on_guild_channel_update for its own update,
             # thereby automatically following a game linked in the topic
             # (if present and the channel doesn't match NON_UPDATE_CHANNEL_PATTERN),
             # without needing to explicitly call link_channel_to_game here.
-            await edit_channel(message, 'Topic set', topic=" ".join(parts[1:]))
+            await edit_channel(message, message.channel, 'Topic set', topic=" ".join(parts[1:]))
         except discord.Forbidden:
             await message.channel.send("I don't have permission to set the channel topic")
     elif message.content.startswith('$rename'):
-        if isinstance(message.channel, discord.DMChannel):
-            await message.channel.send("Can't rename a DM channel")
-            return
-        if isinstance(message.channel, discord.PartialMessageable):
-            await message.channel.send("Only have the ID of the channel and can't rename it")
+        if not isinstance(message.channel, discord.TextChannel):
+            await message.channel.send(f"This bot only supports renaming text channels, not {type(message.channel).__name__}s")
             return
 
         existing_name = message.channel.name
-        if not existing_name:
-            await message.channel.send("Channel doesn't seem to currently have a name")
-            return
 
         if len(parts) == 1:
             # no argument given: try to clear the channel name.
@@ -354,7 +356,7 @@ async def on_message(message: discord.Message) -> None:
             new_name = existing_prefix if new_suffix == existing_prefix else f"{existing_prefix}-{new_suffix}"
 
         try:
-            await edit_channel(message, 'Channel renamed', name=new_name)
+            await edit_channel(message, message.channel, 'Channel renamed', name=new_name)
         except discord.Forbidden:
             await message.channel.send("I don't have permission to rename the channel")
 
@@ -362,32 +364,14 @@ class ChannelChanges(TypedDict):
     name: NotRequired[str]
     topic: NotRequired[str]
 
-async def edit_channel(message: discord.Message, success_msg: str, **changes: Unpack[ChannelChanges]) -> None:
-    if isinstance(message.channel, discord.DMChannel):
-        await message.channel.send("Can't edit a DM channel")
-        return
-    if isinstance(message.channel, discord.GroupChannel):
-        await message.channel.send("Can't edit a group channel")
-        return
-    if isinstance(message.channel, discord.VoiceChannel):
-        await message.channel.send("Can't edit a voice channel")
-        return
-    if isinstance(message.channel, discord.StageChannel):
-        await message.channel.send("Can't edit a stage channel")
-        return
-    if isinstance(message.channel, discord.PartialMessageable):
-        await message.channel.send("Only have the ID of the channel and can't edit it")
-        return
-
+async def edit_channel(message: discord.Message, channel: discord.TextChannel, success_msg: str, **changes: Unpack[ChannelChanges]) -> None:
     # Ideally the guild uses permissions to restrict what the bot can do,
     # but defence in depth is desirable for such sensitive operations.
-    if not re.search(MANAGED_CHANNEL_PATTERN, message.channel.name):
+    if not re.search(MANAGED_CHANNEL_PATTERN, channel.name):
         await reply(message, "I only manage PBP channels, which this channel doesn't appear to be")
         return
 
-    # Threads don't have topics
-    # TODO: maybe give a friendly error to the caller if they try to change a thread topic
-    edit_task = asyncio.create_task(message.channel.edit(**changes, reason=f"{message.author.display_name} ({message.author.name}) requested")) #type: ignore[misc]
+    edit_task = asyncio.create_task(channel.edit(**changes, reason=f"{message.author.display_name} ({message.author.name}) requested"))
 
     async def check_task_completion() -> None:
         await asyncio.sleep(3)
