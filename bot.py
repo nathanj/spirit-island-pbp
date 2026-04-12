@@ -311,7 +311,7 @@ async def on_message(message: discord.Message) -> None:
             # thereby automatically following a game linked in the topic
             # (if present and the channel doesn't match NON_UPDATE_CHANNEL_PATTERN),
             # without needing to explicitly call link_channel_to_game here.
-            await edit_channel(message, 'Topic set', topic=" ".join(parts[1:]))
+            await edit_channel(message, message.channel, 'Topic set', topic=" ".join(parts[1:]))
         except discord.Forbidden:
             await message.channel.send("I don't have permission to set the channel topic")
     elif message.content.startswith('$rename'):
@@ -356,7 +356,7 @@ async def on_message(message: discord.Message) -> None:
             new_name = existing_prefix if new_suffix == existing_prefix else f"{existing_prefix}-{new_suffix}"
 
         try:
-            await edit_channel(message, 'Channel renamed', name=new_name)
+            await edit_channel(message, message.channel, 'Channel renamed', name=new_name)
         except discord.Forbidden:
             await message.channel.send("I don't have permission to rename the channel")
 
@@ -364,16 +364,14 @@ class ChannelChanges(TypedDict):
     name: NotRequired[str]
     topic: NotRequired[str]
 
-async def edit_channel(message: discord.Message, success_msg: str, **changes: Unpack[ChannelChanges]) -> None:
-    assert isinstance(message.channel, discord.TextChannel)
-
+async def edit_channel(message: discord.Message, channel: discord.TextChannel, success_msg: str, **changes: Unpack[ChannelChanges]) -> None:
     # Ideally the guild uses permissions to restrict what the bot can do,
     # but defence in depth is desirable for such sensitive operations.
-    if not re.search(MANAGED_CHANNEL_PATTERN, message.channel.name):
+    if not re.search(MANAGED_CHANNEL_PATTERN, channel.name):
         await reply(message, "I only manage PBP channels, which this channel doesn't appear to be")
         return
 
-    edit_task = asyncio.create_task(message.channel.edit(**changes, reason=f"{message.author.display_name} ({message.author.name}) requested"))
+    edit_task = asyncio.create_task(channel.edit(**changes, reason=f"{message.author.display_name} ({message.author.name}) requested"))
 
     async def check_task_completion() -> None:
         await asyncio.sleep(3)
