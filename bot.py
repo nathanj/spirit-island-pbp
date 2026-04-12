@@ -91,13 +91,13 @@ if '--fake-discord' in sys.argv:
         def event(self, f):
             return f
 
-        def run(self, guild):
+        def run(self, key):
             async def fakebot():
                 await setup_hook()
                 await on_ready()
                 while True:
                     await asyncio.sleep(60)
-            print(f"fake client for {guild}")
+            print(f"fake client (key has {len(key)} characters)")
             asyncio.run(fakebot())
 
         async def wait_until_ready(self):
