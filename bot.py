@@ -297,6 +297,9 @@ async def on_message(message: discord.Message) -> None:
         if await act_on_message(message, message_to_delete, 'delete', reason=False):
             await report_success(message, 'deleted')
     elif message.content.startswith('$topic'):
+        if not isinstance(message.channel, discord.TextChannel):
+            await message.channel.send(f"This bot only supports setting the topic of text channels, not {type(message.channel).__name__}s")
+            return
         try:
             # Expected (and so far observed) behaviour:
             # the bot will get an on_guild_channel_update for its own update,
@@ -307,17 +310,11 @@ async def on_message(message: discord.Message) -> None:
         except discord.Forbidden:
             await message.channel.send("I don't have permission to set the channel topic")
     elif message.content.startswith('$rename'):
-        if isinstance(message.channel, discord.DMChannel):
-            await message.channel.send("Can't rename a DM channel")
-            return
-        if isinstance(message.channel, discord.PartialMessageable):
-            await message.channel.send("Only have the ID of the channel and can't rename it")
+        if not isinstance(message.channel, discord.TextChannel):
+            await message.channel.send(f"This bot only supports renaming text channels, not {type(message.channel).__name__}s")
             return
 
         existing_name = message.channel.name
-        if not existing_name:
-            await message.channel.send("Channel doesn't seem to currently have a name")
-            return
 
         if len(parts) == 1:
             # no argument given: try to clear the channel name.
@@ -363,21 +360,7 @@ class ChannelChanges(TypedDict):
     topic: NotRequired[str]
 
 async def edit_channel(message: discord.Message, success_msg: str, **changes: Unpack[ChannelChanges]) -> None:
-    if isinstance(message.channel, discord.DMChannel):
-        await message.channel.send("Can't edit a DM channel")
-        return
-    if isinstance(message.channel, discord.GroupChannel):
-        await message.channel.send("Can't edit a group channel")
-        return
-    if isinstance(message.channel, discord.VoiceChannel):
-        await message.channel.send("Can't edit a voice channel")
-        return
-    if isinstance(message.channel, discord.StageChannel):
-        await message.channel.send("Can't edit a stage channel")
-        return
-    if isinstance(message.channel, discord.PartialMessageable):
-        await message.channel.send("Only have the ID of the channel and can't edit it")
-        return
+    assert isinstance(message.channel, discord.TextChannel)
 
     # Ideally the guild uses permissions to restrict what the bot can do,
     # but defence in depth is desirable for such sensitive operations.
@@ -385,9 +368,7 @@ async def edit_channel(message: discord.Message, success_msg: str, **changes: Un
         await reply(message, "I only manage PBP channels, which this channel doesn't appear to be")
         return
 
-    # Threads don't have topics
-    # TODO: maybe give a friendly error to the caller if they try to change a thread topic
-    edit_task = asyncio.create_task(message.channel.edit(**changes, reason=f"{message.author.display_name} ({message.author.name}) requested")) #type: ignore[misc]
+    edit_task = asyncio.create_task(message.channel.edit(**changes, reason=f"{message.author.display_name} ({message.author.name}) requested"))
 
     async def check_task_completion() -> None:
         await asyncio.sleep(3)
