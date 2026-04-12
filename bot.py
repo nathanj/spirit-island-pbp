@@ -210,8 +210,7 @@ async def link_channel_to_game(after: AnyDiscordChannel, guid: str) -> bool:
 @client.event
 async def on_guild_channel_update(before: discord.abc.GuildChannel, after: discord.abc.GuildChannel) -> None:
     LOG.msg(f'channel update #{after.name}')
-    if (isinstance(before, discord.TextChannel) and isinstance(after, discord.TextChannel)) or \
-    (isinstance(before, discord.Thread) and isinstance(after, discord.Thread)):
+    if (isinstance(before, discord.TextChannel) and isinstance(after, discord.TextChannel)):
         LOG.msg(f'id: {after.id}')
         LOG.msg(f'before topic: {before.topic}')
         LOG.msg(f'after  topic: {after.topic}')
