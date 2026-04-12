@@ -123,6 +123,8 @@ If you need an actual Discord connection:
     * check Settings → Installation for the format of the invite link if you need a reminder of what one should look like.
     * You can use the `--list-guilds` flag to `bot.py` to check whether the guild is visible to the bot.
 
+### Discord permissions
+
 The bot does not require any server-wide permissions, only permissions specific to channels where game updates will be posted.
 
 * Required: View Channel
