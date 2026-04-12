@@ -121,6 +121,7 @@ LOG = structlog.get_logger()
 DISCORD_KEY = os.getenv('DISCORD_KEY', '')
 DJANGO_HOST = os.getenv('DJANGO_HOST', 'localhost')
 DJANGO_PORT = int(os.getenv('DJANGO_PORT', 8000))
+MANAGED_CHANNEL_PATTERN = re.compile(os.getenv('DISCORD_MANAGED_CHANNEL_PATTERN', r'\A\d+-?(up|dc)'))
 NON_UPDATE_CHANNEL_PATTERN = re.compile(os.getenv('DISCORD_NON_UPDATE_CHANNEL_PATTERN', r'\A\d+-?dc'))
 GAME_URL = os.getenv('GAME_URL', 'si.bitcrafter.net')
 GUILD_ID = int(os.getenv('DISCORD_GUILD_ID', 846580409050857493))
@@ -378,6 +379,13 @@ async def edit_channel(message: discord.Message, success_msg: str, **changes: Un
     if isinstance(message.channel, discord.PartialMessageable):
         await message.channel.send("Only have the ID of the channel and can't edit it")
         return
+
+    # Ideally the guild uses permissions to restrict what the bot can do,
+    # but defence in depth is desirable for such sensitive operations.
+    if not re.search(MANAGED_CHANNEL_PATTERN, message.channel.name):
+        await reply(message, "I only manage PBP channels, which this channel doesn't appear to be")
+        return
+
     # Threads don't have topics
     # TODO: maybe give a friendly error to the caller if they try to change a thread topic
     edit_task = asyncio.create_task(message.channel.edit(**changes, reason=f"{message.author.display_name} ({message.author.name}) requested")) #type: ignore[misc]
