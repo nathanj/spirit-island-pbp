@@ -210,8 +210,7 @@ async def link_channel_to_game(after: AnyDiscordChannel, guid: str) -> bool:
 @client.event
 async def on_guild_channel_update(before: discord.abc.GuildChannel, after: discord.abc.GuildChannel) -> None:
     LOG.msg(f'channel update #{after.name}')
-    if (isinstance(before, discord.TextChannel) and isinstance(after, discord.TextChannel)) or \
-    (isinstance(before, discord.Thread) and isinstance(after, discord.Thread)):
+    if (isinstance(before, discord.TextChannel) and isinstance(after, discord.TextChannel)):
         LOG.msg(f'id: {after.id}')
         LOG.msg(f'before topic: {before.topic}')
         LOG.msg(f'after  topic: {after.topic}')
@@ -500,8 +499,10 @@ class GameLogEntry(TypedDict):
     spoiler: bool
 
 async def relay_game(channel_id: int, log: Iterable[GameLogEntry]) -> None:
-    # There's nothing we can do if the channel doesn't a send method anyway
-    channel: discord.abc.Messageable = client.get_channel(channel_id) #type: ignore[assignment]
+    channel = client.get_channel(channel_id)
+    if not isinstance(channel, discord.abc.Messageable):
+        LOG.warn(f"channel {channel_id} is {type(channel).__name__}, not sendable")
+        return
 
     combined_text: list[str] = []
     for entry in log:
