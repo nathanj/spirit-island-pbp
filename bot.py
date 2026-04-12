@@ -7,9 +7,9 @@ import datetime
 import json
 import structlog
 import re
-import typing
 from dotenv import load_dotenv
 from PIL import Image
+from typing import Any, Callable, Iterable, NotRequired, TypeVar, TypedDict, Unpack
 
 spirit_names = (
 'Behemoth',
@@ -65,45 +65,46 @@ load_dotenv()
 if '--fake-discord' in sys.argv:
     class Client:
         class User:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.name = 'fake discord bot'
 
         class Guild:
-            def __init__(self, id=0):
+            def __init__(self, id: int = 0) -> None:
                 self.id = id
                 self.name = 'fake discord guild'
-                self.emojis = {}
+                self.emojis: tuple[discord.Emoji, ...] = ()
 
         class Channel:
-            def __init__(self, id):
+            def __init__(self, id: int) -> None:
                 self.id = id
 
-            async def send(self, msg, file=None):
+            async def send(self, msg: str, file: discord.File | None = None) -> None:
                 if file:
                     print(f"send {self.id}: {msg} file: {file.filename}")
                 else:
                     print(f"send {self.id}: {msg}")
 
-        def __init__(self):
+        def __init__(self) -> None:
             self.user = self.User()
             self.guilds = [self.Guild()]
 
-        def event(self, f):
+        T = TypeVar('T')
+        def event(self, f: T) -> T:
             return f
 
-        def run(self, guild):
-            async def fakebot():
+        def run(self, key: str) -> None:
+            async def fakebot() -> None:
                 await setup_hook()
                 await on_ready()
                 while True:
                     await asyncio.sleep(60)
-            print(f"fake client for {guild}")
+            print(f"fake client (key has {len(key)} characters)")
             asyncio.run(fakebot())
 
-        async def wait_until_ready(self):
+        async def wait_until_ready(self) -> None:
             pass
 
-        def get_channel(self, id):
+        def get_channel(self, id: int) -> Channel:
             return self.Channel(id)
 
     client: discord.client.Client = Client() #type: ignore[assignment]
@@ -142,7 +143,7 @@ match os.getenv('IPC_METHOD', 'redis'):
 
 relay_task = None
 
-def combine_images(filenames):
+def combine_images(filenames: Iterable[str]) -> None:
     images = []
 
     for infile in filenames:
@@ -156,9 +157,9 @@ def combine_images(filenames):
     out.save('out.jpg')
 
 @client.event
-async def setup_hook():
+async def setup_hook() -> None:
     global relay_task
-    LOG.msg(f'We have logged in as {client.user.name}')
+    LOG.msg(f'We have logged in as {client.user.name if client.user else 'nobody???'}')
     # Important that we create this task in setup_hook, not on_ready.
     # setup_hook is guaranteed to be called only once,
     # while on_ready may be called multiple times if the bot reconnects.
@@ -172,11 +173,11 @@ async def setup_hook():
     relay_task = asyncio.create_task(logger())
 
 @client.event
-async def on_ready():
-    LOG.msg(f'We have logged in as {client.user.name}, a member of {len(client.guilds)} guilds')
+async def on_ready() -> None:
+    LOG.msg(f'We have logged in as {client.user.name if client.user else 'nobody???'}, a member of {len(client.guilds)} guilds')
     #await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, status="a movie"))
 
-def match_game_url(s):
+def match_game_url(s: str) -> str | None:
     """
     Match a game url returning the guid on a match.
 
@@ -189,7 +190,9 @@ def match_game_url(s):
         return match[1]
     return None
 
-async def link_channel_to_game(after, guid):
+type AnyDiscordChannel = discord.TextChannel | discord.StageChannel | discord.VoiceChannel | discord.Thread | discord.DMChannel | discord.GroupChannel | discord.PartialMessageable
+
+async def link_channel_to_game(after: AnyDiscordChannel, guid: str) -> bool:
     LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
     try:
         r = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}')
@@ -201,9 +204,10 @@ async def link_channel_to_game(after, guid):
         await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
         return True
     await after.send(f"Couldn't link the channel to the game ({r.status_code}). The bot owner needs to check the logs for the site API and/or bot")
+    return False
 
 @client.event
-async def on_guild_channel_update(before, after):
+async def on_guild_channel_update(before: discord.abc.GuildChannel, after: discord.abc.GuildChannel) -> None:
     LOG.msg(f'channel update #{after.name}')
     if (isinstance(before, discord.TextChannel) and isinstance(after, discord.TextChannel)) or \
     (isinstance(before, discord.Thread) and isinstance(after, discord.Thread)):
@@ -212,7 +216,7 @@ async def on_guild_channel_update(before, after):
         LOG.msg(f'after  topic: {after.topic}')
         if before.topic == after.topic:
             return
-        guid = match_game_url(after.topic)
+        guid = after.topic and match_game_url(after.topic)
         if not guid:
             return
         if re.search(NON_UPDATE_CHANNEL_PATTERN, after.name):
@@ -221,7 +225,7 @@ async def on_guild_channel_update(before, after):
         await link_channel_to_game(after, guid)
 
 @client.event
-async def on_message(message):
+async def on_message(message: discord.Message) -> None:
     if message.author == client.user:
         return
     parts = message.content.split()
@@ -303,7 +307,18 @@ async def on_message(message):
         except discord.Forbidden:
             await message.channel.send("I don't have permission to set the channel topic")
     elif message.content.startswith('$rename'):
+        if isinstance(message.channel, discord.DMChannel):
+            await message.channel.send("Can't rename a DM channel")
+            return
+        if isinstance(message.channel, discord.PartialMessageable):
+            await message.channel.send("Only have the ID of the channel and can't rename it")
+            return
+
         existing_name = message.channel.name
+        if not existing_name:
+            await message.channel.send("Channel doesn't seem to currently have a name")
+            return
+
         if len(parts) == 1:
             # no argument given: try to clear the channel name.
             if '-' in existing_name:
@@ -343,10 +358,31 @@ async def on_message(message):
         except discord.Forbidden:
             await message.channel.send("I don't have permission to rename the channel")
 
-async def edit_channel(message, success_msg, **changes):
-    edit_task = asyncio.create_task(message.channel.edit(**changes, reason=f"{message.author.display_name} ({message.author.name}) requested"))
+class ChannelChanges(TypedDict):
+    name: NotRequired[str]
+    topic: NotRequired[str]
 
-    async def check_task_completion():
+async def edit_channel(message: discord.Message, success_msg: str, **changes: Unpack[ChannelChanges]) -> None:
+    if isinstance(message.channel, discord.DMChannel):
+        await message.channel.send("Can't edit a DM channel")
+        return
+    if isinstance(message.channel, discord.GroupChannel):
+        await message.channel.send("Can't edit a group channel")
+        return
+    if isinstance(message.channel, discord.VoiceChannel):
+        await message.channel.send("Can't edit a voice channel")
+        return
+    if isinstance(message.channel, discord.StageChannel):
+        await message.channel.send("Can't edit a stage channel")
+        return
+    if isinstance(message.channel, discord.PartialMessageable):
+        await message.channel.send("Only have the ID of the channel and can't edit it")
+        return
+    # Threads don't have topics
+    # TODO: maybe give a friendly error to the caller if they try to change a thread topic
+    edit_task = asyncio.create_task(message.channel.edit(**changes, reason=f"{message.author.display_name} ({message.author.name}) requested")) #type: ignore[misc]
+
+    async def check_task_completion() -> None:
         await asyncio.sleep(3)
         # Didn't find a way to introspect the channel edit task to see its status (time left to wait)
         # so best we can do is check whether it's done.
@@ -359,16 +395,21 @@ async def edit_channel(message, success_msg, **changes):
     await report_success(message, success_msg, noun=None)
     await check_task
 
-async def referenced_message(message, command):
+async def referenced_message(message: discord.Message, command: str) -> discord.Message | None:
     if message.reference:
         try:
+            if not message.reference.message_id:
+                # https://discordpy.readthedocs.io/en/latest/api.html#discord.MessageReference.message_id
+                await message.channel.send(f"Can't {command} that kind of message")
+                return None
             return await message.channel.fetch_message(message.reference.message_id)
         except discord.Forbidden:
             await message.channel.send("I don't have permission to read previous messages")
-            return
+            return None
     await message.channel.send(f"You need to reply to a message to use ${command}")
+    return None
 
-async def reply(message, response):
+async def reply(message: discord.Message, response: str) -> None:
     try:
         await message.reply(response)
     except discord.Forbidden:
@@ -378,7 +419,7 @@ async def reply(message, response):
         # That may in turn raise discord.Forbidden if we're not allowed to send a message either,
         # but if this is the case, there's not much that can be done.
 
-async def act_on_message(command_message, message_to_modify, verb, reason=True):
+async def act_on_message(command_message: discord.Message, message_to_modify: discord.Message, verb: str, reason: bool = True) -> bool:
     try:
         kwargs = {'reason': f"{command_message.author.display_name} ({command_message.author.name}) requested"} if reason else {}
         await getattr(message_to_modify, verb)(**kwargs)
@@ -387,14 +428,15 @@ async def act_on_message(command_message, message_to_modify, verb, reason=True):
         await command_message.channel.send(f"I don't have permission to {verb} messages.")
     except discord.HTTPException:
         await command_message.channel.send(f"Failed to {verb} the message due to an HTTP error.")
+    return False
 
-async def report_success(command_message, verb, noun='Message'):
+async def report_success(command_message: discord.Message, verb: str, noun: str | None = 'Message') -> None:
     try:
         await command_message.add_reaction('✅')
     except discord.Forbidden:
         await command_message.channel.send(f"{noun} {verb}!" if noun else f"{verb}!")
 
-def load_emojis(emojis):
+def load_emojis(emojis: Iterable[discord.Emoji]) -> None:
     for e in emojis:
         if e.name in ('Energy1', 'Energy2', 'Energy3'):
             energy_to_discord_map[e.name] = str(e)
@@ -410,7 +452,7 @@ def load_emojis(emojis):
         else:
             LOG.warn(f'missing emoji for {spirit}')
 
-def adjust_msg(msg):
+def adjust_msg(msg: str) -> str:
     if len(words := msg.split()) > 1:
         spirit_name = words[1]
         # we check that the first word is a heart because of potential message like:
@@ -444,9 +486,16 @@ def adjust_msg(msg):
         pass
     return msg
 
-async def relay_game(channel_id, log):
-    channel = client.get_channel(channel_id)
-    combined_text = []
+class GameLogEntry(TypedDict):
+    text: str
+    images: str
+    spoiler: bool
+
+async def relay_game(channel_id: int, log: Iterable[GameLogEntry]) -> None:
+    # There's nothing we can do if the channel doesn't a send method anyway
+    channel: discord.abc.Messageable = client.get_channel(channel_id) #type: ignore[assignment]
+
+    combined_text: list[str] = []
     for entry in log:
         msg = adjust_msg(entry['text'])
         if 'images' in entry:
@@ -455,15 +504,16 @@ async def relay_game(channel_id, log):
                 combined_text = []
             images = entry['images']
             filenames = images.split(',')
-            file_kwargs = {}
-            if 'spoiler' in entry.keys():
-                file_kwargs = {'spoiler': entry['spoiler']}
             try:
                 if len(filenames) > 1:
                     combine_images(filenames)
-                    await channel.send(msg, file=discord.File('out.jpg', **file_kwargs))
+                    file_to_send = 'out.jpg'
                 else:
-                    await channel.send(msg, file=discord.File(filenames[0], **file_kwargs))
+                    file_to_send = filenames[0]
+                if 'spoiler' in entry.keys():
+                    await channel.send(msg, file=discord.File(file_to_send, spoiler=entry['spoiler']))
+                else:
+                    await channel.send(msg, file=discord.File(file_to_send))
             except discord.Forbidden:
                 await channel.send(msg + "\nCouldn't send the image. Make sure I have permission to attach files.")
             except FileNotFoundError:
@@ -481,9 +531,9 @@ async def relay_game(channel_id, log):
         await channel.send('\n'.join(combined_text))
         combined_text = []
 
-class GameLogBufferEntry(typing.TypedDict):
+class GameLogBufferEntry(TypedDict):
     timestamp: datetime.datetime
-    logs: list[dict[str, typing.Any]]
+    logs: list[GameLogEntry]
 
 # Buffer up the log so we can send a group of related log messages together.
 game_log_buffer: dict[int, GameLogBufferEntry] = {}
@@ -492,17 +542,17 @@ game_log_buffer: dict[int, GameLogBufferEntry] = {}
 # which helped us drop duplicate messages when the bot had a bug that would send them.
 # This shouldn't be necessary now that we make sure to only create one relay_task,
 # but we'll keep it in case there are other causes of duplicate messages.
-last_message: dict[int, str] = {}
+last_message: dict[int, Any] = {}
 
 class SIDatagramProtocol(asyncio.DatagramProtocol):
-    def __init__(self, enqueue):
+    def __init__(self, enqueue: Callable[[int, str, Callable[[str], GameLogEntry]], None]):
         self.msgbuflock = threading.Lock()
         self.enqueue = enqueue
 
-    def connection_made(self, transport):
+    def connection_made(self, transport: asyncio.BaseTransport) -> None:
         self.transport = transport
 
-    def datagram_received(self, data, addr):
+    def datagram_received(self, data: bytes, _addr: tuple[Any, int]) -> None:
         message = data.decode()
         LOG.msg("got message (socket)", message=message)
         j = json.loads(message)
@@ -510,7 +560,7 @@ class SIDatagramProtocol(asyncio.DatagramProtocol):
         with self.msgbuflock:
             self.enqueue(channel_id, message, lambda _: j)
 
-async def logger():
+async def logger() -> None:
     await client.wait_until_ready()
 
     correct_guild = False
@@ -523,7 +573,8 @@ async def logger():
     if not correct_guild:
         LOG.warn("Not in the correct guild! Won't be able to use any spirit emojis!")
 
-    def enqueue(channel_id, raw, parse):
+    T = TypeVar('T')
+    def enqueue(channel_id: int, raw: T, parse: Callable[[T], GameLogEntry]) -> None:
         if channel_id in game_log_buffer:
             game_log_buffer[channel_id]['timestamp'] = datetime.datetime.now()
         else:
@@ -535,7 +586,7 @@ async def logger():
             game_log_buffer[channel_id]['logs'].append(parse(raw))
             last_message[channel_id] = raw
 
-    async def dequeue():
+    async def dequeue() -> None:
         keys = list(game_log_buffer.keys())
         for channel_id in keys:
             if game_log_buffer[channel_id]['timestamp'] + datetime.timedelta(seconds=20) < datetime.datetime.now():
