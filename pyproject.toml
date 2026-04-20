@@ -13,6 +13,7 @@ dependencies = [
     "gunicorn>=25.0.0,<26",
     "python-dotenv>=1.0.0,<2",
     "django-prometheus>=2.2.0,<3",
+    "django-cors-headers>=4.9.0",
 ]
 
 [dependency-groups]
