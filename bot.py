@@ -346,7 +346,8 @@ async def on_message(message: discord.Message) -> None:
             # hello-world    | 1up-hello-world
             # (a request to rename 1up-aaa to 1up-1up will behave oddly, but this shouldn't normally happen)
             existing_prefix = existing_name[:existing_name.index('-')] if '-' in existing_name else existing_name
-            new_suffix = parts[1]
+            # rename a b c becomes a-b-c
+            new_suffix = '-'.join(parts[1:])
             if '-' in new_suffix and new_suffix[:new_suffix.index('-')] == existing_prefix:
                 try:
                     await reply(message, f"You don't need to include the {existing_prefix}- prefix; it's automatically added")
