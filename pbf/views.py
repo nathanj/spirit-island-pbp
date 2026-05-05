@@ -9,7 +9,7 @@ from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
-from typing import Any, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING, overload
 
 from .models import Card, Elements, Game, GameLog, GamePlayer, GamePlayerImpendingWithEnergy, Presence, Spirit
 
@@ -74,6 +74,10 @@ match os.getenv('IPC_METHOD'):
 #
 # It's an error to set both cards and images.
 # images may be set by itself if there are images not associated with a card (example: screenshot)
+@overload
+def add_log_msg(game: Game, *, text: str, player: GamePlayer | None = None, images: str | None = None, spoiler: bool = False) -> None: ...
+@overload
+def add_log_msg(game: Game, *, text: str, player: GamePlayer | None = None, cards: list[Card] | None = None, spoiler: bool = False) -> None: ...
 def add_log_msg(game: Game, *, text: str, player: GamePlayer | None = None, cards: list[Card] | None = None, images: str | None = None, spoiler: bool = False) -> None:
     if player:
         text = f'{player.circle_emoji} {player.spirit.name} {text}'
