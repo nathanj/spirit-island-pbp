@@ -32,7 +32,7 @@ bot = [
     "structlog>=25.1.0",
 ]
 typecheck = [
-    "mypy>=1.18.0,<2",
+    "mypy>=2.0.0,<3",
     "django-stubs>=6.0.0,<7",
     "types-requests>=2.32.4,<3",
 ]
