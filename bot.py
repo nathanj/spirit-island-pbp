@@ -11,6 +11,13 @@ from dotenv import load_dotenv
 from PIL import Image
 from typing import Any, Callable, Iterable, NotRequired, TypeVar, TypedDict, Unpack
 
+# Someone not in the role assigner role tried to assign/unassign a role
+class NotRoleAssigner(Exception):
+    pass
+# Tried to manage a role that doesn't match the bot's ROLE_PATTERN below
+class DisallowedRole(Exception):
+    pass
+
 spirit_names = (
 'Behemoth',
 'Breath',
@@ -123,6 +130,11 @@ DJANGO_HOST = os.getenv('DJANGO_HOST', 'localhost')
 DJANGO_PORT = int(os.getenv('DJANGO_PORT', 8000))
 MANAGED_CHANNEL_PATTERN = re.compile(os.getenv('DISCORD_MANAGED_CHANNEL_PATTERN', r'\A\d+-?(up|dc)'))
 NON_UPDATE_CHANNEL_PATTERN = re.compile(os.getenv('DISCORD_NON_UPDATE_CHANNEL_PATTERN', r'\A\d+-?dc'))
+ROLE_CHANNEL = int(os.getenv('DISCORD_ROLE_CHANNEL', 846584074943725599))
+ROLE_PATTERN = re.compile(os.getenv('DISCORD_ROLE_PATTERN', r'\A\d+-pbp\Z'))
+ROLE_ASSIGNER_ROLE = int(os.getenv('DISCORD_ROLE_ASSIGNER_ROLE', 1195873293622857789))
+ROLE_ASSIGNER_ADMIN_ROLE = int(os.getenv('DISCORD_ROLE_ASSIGNER_ADMIN_ROLE', 925206661528948736))
+ROLE_CREATOR_ROLE = int(os.getenv('DISCORD_ROLE_CREATOR_ROLE', 925206661528948736))
 GAME_URL = os.getenv('GAME_URL', 'si.bitcrafter.net')
 GUILD_ID = int(os.getenv('DISCORD_GUILD_ID', 846580409050857493))
 
@@ -245,6 +257,31 @@ async def on_message(message: discord.Message) -> None:
             await message.channel.send("Failed to pin the message due to an HTTP error, so you'll have to pin the link yourself, but I'll still relay game logs.")
     if message.content.startswith('$help'):
         LOG.msg('$help called')
+        if 'role' in message.content:
+            text = "\n".join((
+                "Roles and players can be specified by either @mentioning them or replying to a message that does.",
+                "### Example 1",
+                "message 1: $role @99-pbp @player1 @player2 @player3 @player4 you were randomly selected as the players for my game",
+                "message 2 (reply to message 1): $unrole",
+                "### Example 2 (specifying the role separately from the players by replying to the message)",
+                "message 1: @player1 @player2 @player3 @player4 you were randomly selected as the players for my game",
+                "message 2 (reply to message 1, the list of players): $role @99-pbp",
+                "message 3 (reply to message 1, the list of players): $unrole @99-pbp",
+                "### Example 3 (using $unrole as a reply to a reply so that you don't have to specify the role a second time)",
+                "message 1: @player1 @player2 @player3 @player4 you were randomly selected as the players for my game",
+                "message 2 (reply to message 1, the list of players): $role @99-pbp",
+                "message 3 (reply to message 2, the $role message): $unrole",
+            ))
+            await message.channel.send(text)
+            return
+        elif 'admin' in message.content:
+            text = "\n".join((
+                "`$createrole N` to create the role N-pbp",
+                "`$host/$unhost` to add/remove hosts (hosts can can add/remove players to/from PBP roles)",
+                "(aliases $addhost, $dehost, $rmhost, $removehost)",
+            ))
+            await message.channel.send(text)
+            return
         text = "\n".join((
             "[Github link](<https://github.com/nathanj/spirit-island-pbp>)",
             "",
@@ -253,6 +290,10 @@ async def on_message(message: discord.Message) -> None:
             "Use `$unpin N` to unpin the last N messages",
             "Use `$delete` (reply to message) to delete a message (only messages posted by the bot)",
             "Use `$rename (new name)` to set the channel name",
+            "Use `$role/$unrole` to add/remove players to/from a role (specify role and players by either @mentioning them or replying to a message that does)",
+            "(aliases $addrole, $addplayer, $derole, $rmrole, $rmplayer, $removeplayer)",
+            "`$help role` for more detailed help on roles",
+            "`$help admin` to show admin-only commands",
         ))
         await message.channel.send(text)
     if message.content.startswith('$pin'):
@@ -362,6 +403,210 @@ async def on_message(message: discord.Message) -> None:
             await edit_channel(message, message.channel, 'Channel renamed', name=new_name)
         except discord.Forbidden:
             await message.channel.send("I don't have permission to rename the channel")
+    elif message.content.startswith('$role') or message.content.startswith('$addrole') or message.content.startswith('$addplayer'):
+        await mod_players_and_roles(message, "add", "to", max_depth=1)
+    elif message.content.startswith('$unrole') or message.content.startswith('$derole') or message.content.startswith('$rmrole') or message.content.startswith('$rmplayer') or message.content.startswith('$removeplayer'):
+        # max depth 2 to allow this pattern:
+        # message 1: @player1 @player2 @player3 are the players for this game
+        # message 2 (reply to 1) $role @1-pbp
+        # message 3 (reply to 2) $unrole
+        await mod_players_and_roles(message, "remove", "from", max_depth=2)
+    elif message.content.startswith('$createrole'):
+        if len(parts) >= 2 and parts[1].isnumeric() and (rolenum := int(parts[1])) > 0:
+            new_role_name = f"{rolenum}-pbp"
+            if not isinstance(message.author, discord.Member) or not any(role.id == ROLE_CREATOR_ROLE for role in message.author.roles):
+                await reply(message, "You aren't allowed to create roles")
+                return
+            if not message.guild:
+                await message.channel.send("Can't create a role without a server")
+                return
+            if any(role.name == new_role_name for role in message.guild.roles):
+                # Discord's API and UI do allow multiple roles with the same name.
+                # So we are choosing to add this additional limitation to avoid confusion.
+                await message.channel.send("A role with that name already exists")
+                return
+
+            if message.channel.id != ROLE_CHANNEL and not (isinstance(message.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, message.channel.name)):
+                await message.channel.send("For auditability reasons, please keep role commands to PBP game channels or the bot channel, thanks!")
+                return
+
+            try:
+                await message.guild.create_role(name=new_role_name, mentionable=True, reason=f"{message.author.display_name} ({message.author.name}) requested")
+            except discord.Forbidden:
+                await message.channel.send("I don't have permission to create roles")
+                return
+            except discord.HTTPException:
+                await message.channel.send("Creating the role failed for some reason")
+                return
+            await message.channel.send(f"<@{message.author.id}> created role {new_role_name}")
+        else:
+            await reply(message, 'You need to tell me just the number of the role to create, no suffixes or any characters other than numbers')
+    elif message.content.startswith('$host') or message.content.startswith('$addhost'):
+        await mod_hosts(message, 'add', 'to')
+    elif message.content.startswith('$unhost') or message.content.startswith('$dehost') or message.content.startswith('$rmhost') or message.content.startswith('$removehost'):
+        await mod_hosts(message, 'remove', 'from')
+
+async def mod_players_and_roles(message: discord.Message, verb: str, direction: str, max_depth: int = 1) -> None:
+    if message.channel.id != ROLE_CHANNEL and not (isinstance(message.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, message.channel.name)):
+        await message.channel.send("For auditability reasons, please keep role commands to PBP game channels or the bot channel, thanks!")
+        return
+
+    # players: take the union of all them
+    # role: message shallower in the chain wins
+    players = set()
+    role = None
+    for (user_mentions, maybe_role_mention) in await chain_mentioned_users_and_roles(message, max_depth=max_depth):
+        players.update(user_mentions)
+        if not role and maybe_role_mention:
+            role = maybe_role_mention
+
+    if not players:
+        if message.reference:
+            await message.channel.send(f"The message you replied to didn't @mention any players to {verb}")
+        else:
+            await message.channel.send(f"You need to @mention the player(s) to {verb}, OR reply to a message that @mentions the players")
+        return
+
+    if not role:
+        if not message.role_mentions:
+            await message.channel.send(f"You need to @mention a role to {verb} players {direction}, OR reply to a message that @mentions the role")
+        else:
+            # This message is only shown if the command message has > 1 role,
+            # which means it will miss any replies with > 1 role.
+            # This is probably fine.
+            await message.channel.send(f"You need to specify only one role to {verb} players {direction}, not multiple")
+        return
+
+    try:
+        assert_allowed_role_manager(message, role)
+    except NotRoleAssigner:
+        await reply(message, "You aren't allowed to manage roles (ask a PBP admin to give you the role that allows it)")
+        return
+    except DisallowedRole:
+        await reply(message, "I only manage roles related to PBP, which that role doesn't appear to be")
+        return
+
+    if not message.guild:
+        await message.channel.send("Assigning roles doesn't work outside of a server")
+        return
+
+    try:
+        # For referenced messages, there may be Users instead of Members, so we need to convert them all to Members,
+        # as only Member has add_role / remove_role
+        members = await resolve_members(message.guild, players)
+    except discord.Forbidden:
+        await message.channel.send("I don't have permission to determine the players in that message (if this error happens, try @mentioning the players directly in the message rather than replying to a message)")
+        return
+    except (discord.HTTPException, TypeError):
+        await message.channel.send("Something went wrong when determining the players in that message (if this error happens, try @mentioning the players directly in the message rather than replying to a message)")
+        return
+
+    try:
+        # role.members is always empty unless we have the members intent
+        # previously_in_role = len(role.members)
+        for member in members:
+            # This should have been asserted above for a friendlier message,
+            # but intentionally asserting it a second time in case a refactor accidentally removes the above assert or makes it no longer exit.
+            assert_allowed_role_manager(message, role)
+            await getattr(member, f"{verb}_roles")(role, reason=f"{message.author.display_name} ({message.author.name}) requested {verb}")
+    except discord.Forbidden:
+        if role.is_assignable():
+            await reply(message, "I don't have permission to manage roles on this server")
+        else:
+            await reply(message, "I don't have permission to manage that role (it outranks me)")
+        return
+
+    suffix = "d" if verb[-1] == "e" else "ed"
+    name_list = ', '.join(member.display_name for member in members)
+    await message.channel.send(f"<@{message.author.id}> {verb}{suffix} {len(members)}/{len(players)} player{'' if len(players) == 1 else 's'} {direction} {role.name}: {name_list}")
+
+# players and roles referenced in a potential message chain, up to the maximum depth (number of references to follow from the original)
+# 0 means just the message passed, 1 means the message passed and its reference, etc.
+# No error if the chain has fewer references than the max.
+async def chain_mentioned_users_and_roles(message: discord.Message, max_depth: int = 1) -> list[tuple[list[discord.User | discord.Member], discord.Role | None]]:
+    result = [(message.mentions, message.role_mentions[0] if len(message.role_mentions) == 1 else None)] if max_depth >= 0 else []
+    if max_depth <= 0:
+        return result
+
+    if message.reference and max_depth >= 1:
+        if isinstance(message.reference.resolved, discord.Message):
+            refmsg = message.reference.resolved
+        elif isinstance(message.reference.resolved, discord.DeletedReferencedMessage):
+            # Silently ignore because it's okay to reply to a reply to a deleted message.
+            return result
+        else:
+            try:
+                if not message.reference.message_id:
+                    # see docs for when this can be None:
+                    # https://discordpy.readthedocs.io/en/latest/api.html#discord.MessageReference.message_id
+                    return result
+                refmsg = await message.channel.fetch_message(message.reference.message_id)
+            except discord.Forbidden:
+                await message.channel.send("I don't have permission to read previous messages")
+                return result
+        # TODO: O(N^2) because each level extends itself with all the info from the lower ones.
+        # okay for now because of small N, but consider deque for larger N
+        result.extend(await chain_mentioned_users_and_roles(refmsg, max_depth - 1))
+    return result
+
+async def resolve_members(guild: discord.Guild, players: Iterable[discord.User | discord.Member]) -> list[discord.Member]:
+    resolved = []
+    for player in players:
+        if isinstance(player, discord.Member):
+            resolved.append(player)
+        elif isinstance(player, discord.User):
+            try:
+                resolved.append(await guild.fetch_member(player.id))
+            except discord.NotFound:
+                # e.g. if the member has left the guild since they were mentioned in the message.
+                pass
+        else:
+            raise TypeError(f"{player} neither a member nor a user")
+    return resolved
+
+def assert_allowed_role_manager(message: discord.Message, role: discord.Role) -> None:
+    if not isinstance(message.author, discord.Member):
+        # author can be User or Member; User has no roles (left the guild, or message isn't in a guild)
+        raise NotRoleAssigner()
+    if not any(role.id == ROLE_ASSIGNER_ROLE or role.id == ROLE_ASSIGNER_ADMIN_ROLE for role in message.author.roles):
+        # assigner admin is okay too because they can assign themselves assigner
+        raise NotRoleAssigner()
+    if not re.search(ROLE_PATTERN, role.name):
+        raise DisallowedRole()
+
+async def mod_hosts(message: discord.Message, verb: str, direction: str) -> None:
+    if not isinstance(message.author, discord.Member) or not any(role.id == ROLE_ASSIGNER_ADMIN_ROLE for role in message.author.roles):
+        await reply(message, f"You aren't allowed to {verb} players {direction} the host role")
+        return
+    if message.channel.id != ROLE_CHANNEL and not (isinstance(message.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, message.channel.name)):
+        await message.channel.send("For auditability reasons, please keep role commands to PBP game channels or the bot channel, thanks!")
+        return
+    if not message.guild:
+        await message.channel.send("Assigning roles doesn't work outside of a server")
+        return
+    if not (role := message.guild.get_role(ROLE_ASSIGNER_ROLE)):
+        await message.channel.send("Couldn't find the host role. Is the bot configured correctly?")
+        return
+    if not message.mentions:
+        await message.channel.send(f"You need to @mention the players to {verb}")
+        return
+
+    suffix = "d" if verb[-1] == "e" else "ed"
+
+    for member in message.mentions:
+        try:
+            await getattr(member, f"{verb}_roles")(role, reason=f"{message.author.display_name} ({message.author.name}) requested {verb}")
+        except discord.Forbidden:
+            if role.is_assignable():
+                await reply(message, "I don't have permission to manage roles on this server")
+            else:
+                await reply(message, "I don't have permission to manage that role (it outranks me)")
+            return
+        except discord.HTTPException:
+            await message.channel.send(f"Something went wrong when trying to {verb} {direction} the role")
+            return
+        # sends multiple messages if they add multiple hosts, hopefully that's okay
+        await message.channel.send(f"<@{message.author.id}> {verb}{suffix} <@{member.id}> {direction} {role.name}")
 
 class ChannelChanges(TypedDict):
     name: NotRequired[str]

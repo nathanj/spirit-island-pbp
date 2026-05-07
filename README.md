@@ -138,6 +138,10 @@ The bot does not require any server-wide permissions, only permissions specific 
   * unpin a number of messages in response to an `$unpin` message
 * Optional: Manage Channel (If you are comfortable allowing the bot to set the topic using the `$topic` command and rename the channel using the `$rename` command. **WARNING**: This permission also allows deleting the channel. While this bot will never do so, an attacker who acquires the bot's token will be able to use it to delete channels if given this permission.)
 
+You may also optionally grant the bot the following server-wide permissions if you understand and accept the risks in doing so:
+
+* Optional: Manage Roles (If you are comfortable allowing the bot to add players to and remove players from PBP-related roles. **WARNING**: This permission also allows assigning and deleting any role below the bot's highest role. While this bot will never do so, an attacker who acquires the bot's token will be able to use it to assign such roles if given this permission. If any privileged roles are below the bot, this risks privilege escalation, potentially including server compromise. You **MUST** carefully review the bot's roles and their position in the role order before granting this permission)
+
 Once you have the bot added to the server,
 the permissions set up for the bot on the game update channels,
 and configured the bot's `DISCORD_KEY` and other settings,
