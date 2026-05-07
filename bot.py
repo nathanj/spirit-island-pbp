@@ -57,8 +57,8 @@ spirit_disambig = {
     'Stone': 'Stones?(Unyielding|.*Defiance)', # just "Stone" is ambiguous (Rising Heat of Stone and Sand)
 }
 
-resolved_spirit_emoji = {}
-energy_to_discord_map = {}
+resolved_spirit_emoji: dict[str, discord.Emoji] = {}
+energy_to_discord_map: dict[str, str] = {}
 
 load_dotenv()
 
