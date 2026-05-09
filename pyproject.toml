@@ -10,7 +10,7 @@ dependencies = [
     # Although the site never imports Pillow, ImageField requires it.
     "Pillow>=12.0.0,<13",
     "django-ninja>=1.0.0,<2",
-    "gunicorn>=25.0.0,<26",
+    "gunicorn>=26.0.0,<27",
     "python-dotenv>=1.0.0,<2",
     "django-prometheus>=2.2.0,<3",
 ]
