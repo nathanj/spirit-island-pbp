@@ -8,6 +8,7 @@ import json
 import structlog
 import re
 from dotenv import load_dotenv
+from itertools import takewhile
 from PIL import Image
 from typing import Any, Callable, Iterable, NotRequired, TypeVar, TypedDict, Unpack
 
@@ -259,7 +260,8 @@ async def on_message(message: discord.Message) -> None:
         LOG.msg('$help called')
         if 'role' in message.content:
             text = "\n".join((
-                "Roles and players can be specified by either @mentioning them or replying to a message that does.",
+                "Players can be specified by either @mentioning them or replying to a message that does.",
+                "The role is auto-detected from the PBP channel, or you can explicitly @mention a role if using the commands outside of a PBP channel",
                 "### Example 1",
                 "message 1: $role @99-pbp @player1 @player2 @player3 @player4 you were randomly selected as the players for my game",
                 "message 2 (reply to message 1): $unrole",
@@ -290,7 +292,7 @@ async def on_message(message: discord.Message) -> None:
             "Use `$unpin N` to unpin the last N messages",
             "Use `$delete` (reply to message) to delete a message (only messages posted by the bot)",
             "Use `$rename (new name)` to set the channel name",
-            "Use `$role/$unrole` to add/remove players to/from a role (specify role and players by either @mentioning them or replying to a message that does)",
+            "Use `$role/$unrole` to add/remove players to/from a role (specify players by either @mentioning them or replying to a message that does; role auto-detected from channel, or specified in the same way as player)",
             "(aliases $addrole, $addplayer, $derole, $rmrole, $rmplayer, $removeplayer)",
             "`$help role` for more detailed help on roles",
             "`$help admin` to show admin-only commands",
@@ -472,14 +474,26 @@ async def mod_players_and_roles(message: discord.Message, verb: str, direction: 
         return
 
     if not role:
-        if not message.role_mentions:
-            await message.channel.send(f"You need to @mention a role to {verb} players {direction}, OR reply to a message that @mentions the role")
+        # Role auto-detected from channel name if possible
+        if isinstance(message.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, message.channel.name):
+            channelnum = int(''.join(takewhile(lambda x: x.isnumeric(), message.channel.name)))
+            candidates = (role for role in message.guild.roles if role.name == f"{channelnum}-pbp")
+            role = next(candidates, None)
+            if not role:
+                await message.channel.send(f"There doesn't seem to be any role matching the number of this PBP channel ({channelnum}). Check with a PBP admin to get one created")
+                return
+            if excess := sum(1 for _ in candidates):
+                await message.channel.send(f"There seem to be multiple ({1 + excess}) roles matching the number of this PBP channel ({channelnum}). Check with a server admin to fix this. In the meantime, you can @mention the specific role you want")
+                return
+        elif not message.role_mentions:
+            await message.channel.send(f"You need to use this command in a numbered PBP-channel to auto-detect a role, OR explicitly @mention a role to {verb} players {direction}, OR reply to a message that @mentions the role")
+            return
         else:
             # This message is only shown if the command message has > 1 role,
             # which means it will miss any replies with > 1 role.
             # This is probably fine.
             await message.channel.send(f"You need to specify only one role to {verb} players {direction}, not multiple")
-        return
+            return
 
     try:
         assert_allowed_role_manager(message, role)
