@@ -119,7 +119,7 @@
 
   {% with selection=player.selection_with_thresholds %}
   {% if selection %}
-  <p>
+  <div hx-include="[name='spoiler_power_gain']">
   <h4>Selection:</h4>
   <ul>
     <div class="container-fluid">
@@ -151,6 +151,12 @@
     </div>
   </ul>
   <button class="btn" hx-get="{% url 'undo_gain_card' player.id %}" hx-confirm="Undoing the card gain will put the cards back where they came from. Are you sure?">Oops! Undo gain card</button>
+
+  <p>
+    <input type="checkbox" id="spoiler_power_gain" name="spoiler_power_gain" {% if spoiler_power_gain %}checked {% endif %}/>
+    <label for="spoiler_power_gain"><span title="Useful for gaining a power in the Fast Power or Slow Power Phase while another player hasn't locked decisions from an earlier phase (Spirit or Invader respectively)">Spoiler power gain (?)</span></label>
+  </p>
+  </div>
 
   <p>Minor powers ({{ player.game.minor_deck.count }} in deck):
   <button class="btn" hx-get="{% url 'minor_deck' player.game.id %}" hx-target="#Minor-deck" hx-swap="innerHTML">Show deck</button>

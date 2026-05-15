@@ -71,6 +71,8 @@ match os.getenv('IPC_METHOD'):
 # * The images will automatically be set to the images of the cards.
 #
 # Setting spoiler to True will hide the card names (if any) and the image.
+# Alternatively, spoiler_text may be used to manually set hidden text.
+# It's an error to mix the two modes by setting all three of spoiler, cards, and spoiler_text.
 #
 # It's an error to set both cards and images.
 # images may be set by itself if there are images not associated with a card (example: screenshot)
@@ -78,7 +80,11 @@ match os.getenv('IPC_METHOD'):
 def add_log_msg(game: Game, *, text: str, player: GamePlayer | None = None, images: str | None = None, spoiler: bool = False) -> None: ...
 @overload
 def add_log_msg(game: Game, *, text: str, player: GamePlayer | None = None, cards: list[Card] | None = None, spoiler: bool = False) -> None: ...
-def add_log_msg(game: Game, *, text: str, player: GamePlayer | None = None, cards: list[Card] | None = None, images: str | None = None, spoiler: bool = False) -> None:
+@overload
+def add_log_msg(game: Game, *, text: str, spoiler_text: str | None = None, player: GamePlayer | None = None, images: str | None = None) -> None: ...
+@overload
+def add_log_msg(game: Game, *, text: str, spoiler_text: str | None = None, player: GamePlayer | None = None, cards: list[Card] | None = None) -> None: ...
+def add_log_msg(game: Game, *, text: str, spoiler_text: str | None = None, player: GamePlayer | None = None, cards: list[Card] | None = None, images: str | None = None, spoiler: bool = False) -> None:
     if player:
         text = f'{player.circle_emoji} {player.spirit.name} {text}'
     if cards and images:
@@ -87,6 +93,8 @@ def add_log_msg(game: Game, *, text: str, player: GamePlayer | None = None, card
     if cards:
         images = ','.join('./pbf/static/' + card.url() for card in cards)
     if spoiler and cards:
+        if spoiler_text:
+            raise TypeError("specified both cards and spoiler_text, but cards would overwrite spoiler_text")
         # We only need to spoiler certain information.
         # For the things we're spoilering (gain power, take power),
         # that's just the card names (it's okay not to spoiler who gains the card).
@@ -94,7 +102,7 @@ def add_log_msg(game: Game, *, text: str, player: GamePlayer | None = None, card
     else:
         if cards:
             text += ': ' + card_names
-        log = game.gamelog_set.create(text=text, images=images)
+        log = game.gamelog_set.create(text=text, spoiler_text=spoiler_text or '', images=images)
     send_log(log)
 
 def send_log(log: GameLog) -> None:
@@ -905,7 +913,7 @@ def gain_power(request: HttpRequest, player_id: int, type: str, num: int) -> Htt
     # TODO: Should we set a flag on the player, such that when they actually select the card, it is also spoilered?
     add_log_msg(player.game, player=player, text=f'gains a {type} power. Choices', cards=selection, spoiler=spoiler)
 
-    return with_log_trigger(render(request, 'player.html', {'player': player}))
+    return with_log_trigger(render(request, 'player.html', {'player': player, 'spoiler_power_gain': spoiler}))
 
 def minor_deck(request: HttpRequest, game_id: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
@@ -981,8 +989,11 @@ def send_days(request: HttpRequest, player_id: int, card_id: int) -> HttpRespons
 def choose_card(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     card = get_object_or_404(player.selection, pk=card_id)
+    # most compliant browsers should send 'on', but we'll allow 'true' as well
+    spoiler = request.GET.get('spoiler_power_gain', '') in ('on', 'true')
 
     if card.type == Card.HEALING:
+        # passing spoiler to this not implemented because of no demand
         return choose_healing_card(request, player, card)
 
     player.hand.add(card)
@@ -1012,7 +1023,10 @@ def choose_card(request: HttpRequest, player_id: int, card_id: int) -> HttpRespo
         player.game.discard_pile.add(*player.selection.all())
         player.selection.clear()
 
-    add_log_msg(player.game, player=player, text=f'gains {card.name}')
+    if spoiler:
+        add_log_msg(player.game, player=player, text='gains', spoiler_text=card.name)
+    else:
+        add_log_msg(player.game, player=player, text=f'gains {card.name}')
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
