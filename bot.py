@@ -462,13 +462,6 @@ async def mod_players_and_roles(message: discord.Message, verb: str, direction: 
         if not role and maybe_role_mention:
             role = maybe_role_mention
 
-    if not players:
-        if message.reference:
-            await message.channel.send(f"The message you replied to didn't @mention any players to {verb}")
-        else:
-            await message.channel.send(f"You need to @mention the player(s) to {verb}, OR reply to a message that @mentions the players")
-        return
-
     if not message.guild:
         await message.channel.send("Assigning roles doesn't work outside of a server")
         return
@@ -494,6 +487,13 @@ async def mod_players_and_roles(message: discord.Message, verb: str, direction: 
             # This is probably fine.
             await message.channel.send(f"You need to specify only one role to {verb} players {direction}, not multiple")
             return
+
+    if not players:
+        if message.reference:
+            await message.channel.send(f"The message you replied to didn't @mention any players to {verb}")
+        else:
+            await message.channel.send(f"You need to @mention the player(s) to {verb}, OR reply to a message that @mentions the players")
+        return
 
     try:
         assert_allowed_role_manager(message, role)
