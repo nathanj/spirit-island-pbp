@@ -115,10 +115,11 @@ If you need an actual Discord connection:
 
 1. Create an application in the Discord Developer Portal.
 1. Under Settings → Bot, create a bot for this application, and also do the following:
-    * Enable the Message Content Intent, as the bot examines messages for commands like `$follow`.
-    * Create a token for the bot.
+    * Required: Enable the Message Content Intent, as the bot examines messages for commands like `$follow`.
+    * Required: Create a token for the bot.
       This token must be provided to `bot.py` as environment variable `DISCORD_KEY`.
       Recall that `.env` can be used to provide the environment variable.
+    * Optional: Enable the Server Members Intent if you want to enable the `all` mode of the `unrole` command. Without this intent, you'll have to manually specify members to `unrole`.
 1. Invite the bot to your server if you have the Manage Server permission, or ask someone who does to invite it.
     * check Settings → Installation for the format of the invite link if you need a reminder of what one should look like.
     * You can use the `--list-guilds` flag to `bot.py` to check whether the guild is visible to the bot.

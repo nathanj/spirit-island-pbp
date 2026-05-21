@@ -119,6 +119,7 @@ if '--fake-discord' in sys.argv:
 else:
     intents = discord.Intents.default()
     intents.message_content = True
+    intents.members = True
 
     client = discord.Client(intents=intents)
 
@@ -294,6 +295,7 @@ async def on_message(message: discord.Message) -> None:
             "Use `$rename (new name)` to set the channel name",
             "Use `$role/$unrole` to add/remove players to/from a role (specify players by either @mentioning them or replying to a message that does; role auto-detected from channel, or specified in the same way as player)",
             "(aliases $addrole, $addplayer, $derole, $rmrole, $rmplayer, $removeplayer)",
+            "Use `$unrole all` to remove all players from a role",
             "`$help role` for more detailed help on roles",
             "`$help admin` to show admin-only commands",
         ))
@@ -462,13 +464,6 @@ async def mod_players_and_roles(message: discord.Message, verb: str, direction: 
         if not role and maybe_role_mention:
             role = maybe_role_mention
 
-    if not players:
-        if message.reference:
-            await message.channel.send(f"The message you replied to didn't @mention any players to {verb}")
-        else:
-            await message.channel.send(f"You need to @mention the player(s) to {verb}, OR reply to a message that @mentions the players")
-        return
-
     if not message.guild:
         await message.channel.send("Assigning roles doesn't work outside of a server")
         return
@@ -494,6 +489,18 @@ async def mod_players_and_roles(message: discord.Message, verb: str, direction: 
             # This is probably fine.
             await message.channel.send(f"You need to specify only one role to {verb} players {direction}, not multiple")
             return
+
+    if any(word == 'all' for word in message.content.split()):
+        if not client.intents.members:
+            await message.channel.send(f"The Server Members intent isn't enabled, so `unrole all` probably won't work. Check with the bot's owner to see if they are willing to enable it.")
+            # OK not to return and just try it; maybe a future change makes the Server Members intent not required.
+        players.update(role.members)
+    elif not players:
+        if message.reference:
+            await message.channel.send(f"The message you replied to didn't @mention any players to {verb}")
+        else:
+            await message.channel.send(f"You need to @mention the player(s) to {verb}, OR reply to a message that @mentions the players")
+        return
 
     try:
         assert_allowed_role_manager(message, role)
@@ -602,6 +609,9 @@ async def mod_hosts(message: discord.Message, verb: str, direction: str) -> None
         await message.channel.send("Couldn't find the host role. Is the bot configured correctly?")
         return
     if not message.mentions:
+        # Even if this ever gets refactored to share any code in common with mod_players_and_roles,
+        # this should probably NOT allow the `all` argument.
+        # There's no demand for removing all hosts at once.
         await message.channel.send(f"You need to @mention the players to {verb}")
         return
 
