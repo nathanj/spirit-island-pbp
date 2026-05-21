@@ -115,8 +115,8 @@ If you need an actual Discord connection:
 
 1. Create an application in the Discord Developer Portal.
 1. Under Settings → Bot, create a bot for this application, and also do the following:
-    * Enable the Message Content Intent, as the bot examines messages for commands like `$follow`.
-    * Create a token for the bot.
+    * Required: Enable the Message Content Intent, as the bot examines messages for commands like `$follow`.
+    * Required: Create a token for the bot.
       This token must be provided to `bot.py` as environment variable `DISCORD_KEY`.
       Recall that `.env` can be used to provide the environment variable.
 1. Invite the bot to your server if you have the Manage Server permission, or ask someone who does to invite it.
