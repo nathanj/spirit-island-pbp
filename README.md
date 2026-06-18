@@ -168,3 +168,7 @@ A full treatment of this topic is beyond the scope of this document, but here ar
 * If you'd prefer to use Docker, consider a [community-contributed Docker configuration](https://github.com/nathanj/spirit-island-pbp/pull/152).
 
 Further advice can be found in the [Django deployment docs](https://docs.djangoproject.com/en/stable/howto/deployment/).
+
+## Terms of Use and Privacy Policy
+
+The Terms of Use and Privacy Policy for this bot may be found [here](TOU-PrivacyPolicy.md).
