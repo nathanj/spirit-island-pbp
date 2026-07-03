@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["django-debug-toolbar>=6.0.0,<7"]
+dev = ["django-debug-toolbar>=7.0.0,<8"]
 # 6.0.0 and above only officially supports Redis 7.2, 7.4, and 8.0.
 # We've unofficially observed that it will still work for older versions,
 # but need more data before being able to rely on this.
