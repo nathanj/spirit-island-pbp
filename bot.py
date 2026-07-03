@@ -4,9 +4,9 @@ import json
 import os
 import re
 import sys
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Collection, Iterable
 from itertools import takewhile
-from typing import Any, NotRequired, TypedDict, TypeVar, Unpack
+from typing import Any, Literal, NotRequired, TypedDict, TypeVar, Unpack
 
 import aiohttp
 import discord
@@ -119,13 +119,26 @@ if '--fake-discord' in sys.argv:
         def get_channel(self, id: int) -> Channel:
             return self.Channel(id)
 
+    class Tree:
+        T = TypeVar('T')
+        def command(self, guild: discord.Object | None) -> Callable[[T], T]:
+            T = TypeVar('T')
+            def dc(f: T) -> T:
+                return f
+            return dc
+
+        async def sync(self, guild: discord.Object | None = None) -> None:
+            pass
+
     client: discord.client.Client = Client() #type: ignore[assignment]
+    tree: discord.app_commands.CommandTree = Tree() #type: ignore[assignment]
 else:
     intents = discord.Intents.default()
     intents.message_content = True
     intents.members = True
 
     client = discord.Client(intents=intents)
+    tree = discord.app_commands.CommandTree(client)
 
 list_guilds = '--list-guilds' in sys.argv
 
@@ -158,6 +171,11 @@ match os.getenv('IPC_METHOD', 'redis'):
         SOCKET_PATH = None #type: ignore[assignment]
     case _:
         raise ValueError('unknown IPC method')
+
+command_test_guild = discord.Object(id=GUILD_ID)
+command_scope = None
+# for testing, since guild-specific commands update immediately:
+# command_scope = command_test_guild
 
 relay_task = None
 
@@ -193,6 +211,25 @@ async def setup_hook() -> None:
 @client.event
 async def on_ready() -> None:
     LOG.msg(f'We have logged in as {client.user.name if client.user else 'nobody???'}, a member of {len(client.guilds)} guilds')
+
+    # while other instances of the bot are welcome,
+    # we also want to avoid duplicate commands on the main guild.
+    # The below user ID is NOT read from an environment variable because the main bot instance is not a configuration option.
+    main_bot = client.user and client.user.id == 932806700761743362
+
+    # similarly, the main guild's ID is NOT a configuration option, even if it is the default value of GUILD_ID
+    if main_bot or (command_test_guild and command_test_guild.id != 846580409050857493):
+        # main bot syncs guild-scoped commands to main guild to clear duplicates when transitioning from guild to global
+        # or, any bot can sync guild-scoped commands to their own guild as long as it's not the main guild
+        await tree.sync(guild=command_test_guild)
+        LOG.msg("guild tree synced")
+    else:
+        LOG.msg("not syncing commands to main guild, as this is not the main bot. to fix this, change the DISCORD_GUILD_ID environment variable.")
+
+    if main_bot:
+        await tree.sync()
+        LOG.msg("global tree synced")
+
     #await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, status="a movie"))
 
 def match_game_url(s: str) -> str | None:
@@ -245,483 +282,407 @@ async def on_guild_channel_update(before: discord.abc.GuildChannel, after: disco
             return
         await link_channel_to_game(after, guid)
 
-@client.event
-async def on_message(message: discord.Message) -> None:
-    if message.author == client.user:
-        return
-    parts = message.content.split()
-    if len(parts) >= 2 and parts[0] == '$follow':
-        argument = parts[1]
-        guid = match_game_url(argument)
-        if not guid:
-            await message.channel.send(f"That doesn't look like a game URL. Did you provide the full URL https://{GAME_URL}/game/abcd1234... ?")
-            return
-        if not await link_channel_to_game(message.channel, guid):
-            return
-        try:
-            await message.pin(reason=f"{message.author.display_name} ({message.author.name}) requested")
-        except discord.Forbidden:
-            await message.channel.send("I don't have permission to pin messages, so you'll have to pin the link yourself, but I'll still relay game logs.")
-        except discord.HTTPException:
-            await message.channel.send("Failed to pin the message due to an HTTP error, so you'll have to pin the link yourself, but I'll still relay game logs.")
-    if message.content.startswith('$help'):
-        LOG.msg('$help called')
-        if 'role' in message.content:
+@tree.command(guild=command_scope)
+@discord.app_commands.describe(topic="what you want help on")
+async def help(interaction: discord.Interaction, topic: Literal['general', 'admin', 'role'] | None = None) -> None:
+    """Help for PBP bot"""
+    match topic:
+        case "admin":
             text = "\n".join(( #noqa: FLY002
-                "Players can be specified by either @mentioning them or replying to a message that does.",
-                "The role is auto-detected from the PBP channel, or you can explicitly @mention a role if using the commands outside of a PBP channel",
-                "### Add players",
-                "in the commands channel: $role @99-pbp @your_discord_name",
-                "in the game channel: $role @player1 @player2 @player3",
+                "/createrole N to create the role N-pbp",
+                "$host/$unhost to add/remove hosts (hosts can can add/remove players to/from PBP roles)",
+            ))
+        case "role":
+            text = "\n".join(( #noqa: FLY002
+                "### Add yourself",
+                "in the commands channel: /roleme 99",
+                "### Add other players",
+                "in the game channel: /role @player1 @player2 @player3",
                 "### Remove a player",
-                "in the game channel: $unrole @player",
+                "in the game channel: /unrole @player",
                 "### Remove all players",
-                "in the game channel: $unrole all",
+                "in the game channel: /unroleall",
                 "",
             ))
-            await message.channel.send(text)
-            return
-        elif 'admin' in message.content:
+        case _:
             text = "\n".join(( #noqa: FLY002
-                "`$createrole N` to create the role N-pbp",
-                "`$host/$unhost` to add/remove hosts (hosts can can add/remove players to/from PBP roles)",
-                "(aliases $addhost, $dehost, $rmhost, $removehost)",
+                "[Github link](<https://github.com/nathanj/spirit-island-pbp>)",
+                "",
+                "`/topic new topic` to set the channel topic (set an update channel's topic to a game link to start sending updates to that channel)",
+                "`/follow gameurl` for forum posts (where it's not possible to set a topic)",
+                "`/delete messageID` to delete a message (only messages posted by the bot)",
+                "`/rename new name` to set the channel name",
+                "`/roleme rolenum` to add yourself to a role",
+                "`/role` and `/unrole` to add/remove other players to/from a role",
+                "`/unroleall` to remove all players from a role",
+                "`/help role` for more detailed help on roles",
+                "`/help admin` to show admin-only commands",
             ))
-            await message.channel.send(text)
-            return
-        text = "\n".join(( #noqa: FLY002
-            "[Github link](<https://github.com/nathanj/spirit-island-pbp>)",
-            "",
-            "Use `$topic (new topic)` to set the channel topic (set an update channel's topic to a game link to start sending updates to that channel)",
-            "Use `$follow (yourgameurl)` for forum posts (where it's not possible to set a topic)",
-            "Use `$unpin N` to unpin the last N messages",
-            "Use `$delete` (reply to message) to delete a message (only messages posted by the bot)",
-            "Use `$rename (new name)` to set the channel name",
-            "Use `$role/$unrole` to add/remove players to/from a role (specify players by either @mentioning them or replying to a message that does; role auto-detected from channel, or specified in the same way as player)",
-            "(aliases $addrole, $addplayer, $derole, $rmrole, $rmplayer, $removeplayer)",
-            "Use `$unrole all` to remove all players from a role",
-            "`$help role` for more detailed help on roles",
-            "`$help admin` to show admin-only commands",
-        ))
-        await message.channel.send(text)
-    if message.content.startswith('$pin'):
-        # Deprecated command, as hosts can now pin messages themselves.
-        # For an unspecified transitionary period, still pin the message,
-        # but educate hosts that they should do it themselves.
-        # TODO: Remove command
-        message_to_pin = await referenced_message(message, 'pin')
-        # OK not to check if the message is already pinned, since pinning is idempotent.
-        if message_to_pin and await act_on_message(message, message_to_pin, 'pin'):
-            await report_success(message, 'pinned')
-        await reply(message, 'The $pin command is deprecated and may be removed in the future. Hosts should pin messages themselves instead of using this command.')
-    elif message.content.startswith('$unpin'):
-        # Automatically unpinning a number of messages may be more convenient than manually unpinning each.
-        # So, even after $pin is removed, we would still want to keep this $unpin N command.
-        if len(parts) >= 2 and parts[1].isnumeric() and (num_to_unpin := int(parts[1])) > 0:
-            try:
-                pinned = await message.channel.pins()
-            except discord.Forbidden:
-                await message.channel.send("I don't have permission to get the pinned messages")
-                return
-            for to_unpin in pinned[:num_to_unpin]:
-                if not await act_on_message(message, to_unpin, 'unpin'):
-                    return
-            if pinned:
-                await report_success(message, 'unpinned')
-            else:
-                await message.channel.send("There were no pinned messages to unpin")
-        else:
-            await reply(message, 'You need to tell me how many messages to unpin, like $unpin 1 or $unpin 99')
-    elif message.content.startswith('$delete'):
-        message_to_delete = await referenced_message(message, 'delete')
-        if not message_to_delete:
-            return
-        if message_to_delete.author != client.user:
-            await message.channel.send("I only delete my own messages")
-            return
-        if message_to_delete.mentions:
-            await message.channel.send("This message seems to mention some users, which means it may be an audit message. Deleting it may be unsafe.")
-            return
-        # delete doesn't accept a reason argument
-        # doesn't matter anyway since we're deleting our own message,
-        # which doesn't create an audit log entry
-        if await act_on_message(message, message_to_delete, 'delete', reason=False):
-            await report_success(message, 'deleted')
-    elif message.content.startswith('$topic'):
-        if not isinstance(message.channel, discord.TextChannel):
-            if isinstance(message.channel, discord.StageChannel):
-                await message.channel.send(f"This bot only supports setting the topic of text channels, not {type(message.channel).__name__}s")
-            else:
-                # ForumChannel have a topic in the API, but they are guidelines in the UI
-                # Everything else doesn't have a topic at all.
-                await message.channel.send(f"{type(message.channel).__name__}s don't have a topic")
-            return
+    await interaction.response.send_message(text)
+
+@tree.command(guild=command_scope)
+@discord.app_commands.describe(game_url=f"game URL, looks like https://{GAME_URL}/game/abcd1234...")
+async def follow(interaction: discord.Interaction, game_url: str) -> None:
+    """manually follow a game (only use in forum threads, not regular channels)"""
+    guid = match_game_url(game_url)
+    if not guid:
+        await interaction.response.send_message(f"That doesn't look like a game URL. Did you provide the full URL https://{GAME_URL}/game/abcd1234... ?")
+        return
+
+    if not isinstance(interaction.channel, AnyDiscordChannel.__value__):
+        await interaction.response.send_message(f"I can't follow games in this kind of channel ({type(interaction.channel).__name__})")
+        return
+
+    if not await link_channel_to_game(interaction.channel, guid):
+        return
+
+    v = await interaction.response.send_message(f"https://{GAME_URL}/game/{guid}")
+    if isinstance(v.resource, discord.InteractionMessage):
         try:
-            # Expected (and so far observed) behaviour:
-            # the bot will get an on_guild_channel_update for its own update,
-            # thereby automatically following a game linked in the topic
-            # (if present and the channel doesn't match NON_UPDATE_CHANNEL_PATTERN),
-            # without needing to explicitly call link_channel_to_game here.
-            await edit_channel(message, message.channel, 'Topic set', topic=" ".join(parts[1:]))
+            await v.resource.pin(reason=f"{interaction.user.display_name} ({interaction.user.name}) requested")
         except discord.Forbidden:
-            await message.channel.send("I don't have permission to set the channel topic")
-    elif message.content.startswith('$rename'):
-        if not isinstance(message.channel, discord.TextChannel):
-            await message.channel.send(f"This bot only supports renaming text channels, not {type(message.channel).__name__}s")
-            return
-
-        existing_name = message.channel.name
-
-        if len(parts) == 1:
-            # no argument given: try to clear the channel name.
-            if '-' in existing_name:
-                new_name = existing_name[:existing_name.index('-')]
-            else:
-                # this would result in no change, so no need to try editing
-                return
-        else:
-            # TODO: Too specific to one guild's naming conventions?
-            # Consider the first dash-separated word of the channel name.
-            # Always keep this the same.
-            # But don't duplicate the prefix if the user specifies it again.
-            # Given a channel currently named either 1up or 1up-aaa,
-            # requesting the following names will have these results:
-            #
-            # Requested name | Resulting name
-            # ---------------|---------------
-            # 1up            | 1up
-            # bbb            | 1up-bbb
-            # 1up-bbb        | 1up-bbb (and tell them they don't need to include 1up)
-            # hello-world    | 1up-hello-world
-            # (a request to rename 1up-aaa to 1up-1up will behave oddly, but this shouldn't normally happen)
-            existing_prefix = existing_name[:existing_name.index('-')] if '-' in existing_name else existing_name
-            # rename a b c becomes a-b-c
-            new_suffix = '-'.join(parts[1:])
-            if '-' in new_suffix and new_suffix[:new_suffix.index('-')] == existing_prefix:
-                try:
-                    await reply(message, f"You don't need to include the {existing_prefix}- prefix; it's automatically added")
-                except discord.Forbidden:
-                    # even if we don't have permission to send the message,
-                    # we might still have permission to set the channel name, so still try that.
-                    pass
-                new_suffix = new_suffix[new_suffix.index('-') + 1:]
-            new_name = existing_prefix if new_suffix == existing_prefix else f"{existing_prefix}-{new_suffix}"
-
-        try:
-            await edit_channel(message, message.channel, 'Channel renamed', name=new_name)
-        except discord.Forbidden:
-            await message.channel.send("I don't have permission to rename the channel")
-    elif message.content.startswith('$role') or message.content.startswith('$addrole') or message.content.startswith('$addplayer'):
-        await mod_players_and_roles(message, "add", "to", max_depth=1)
-    elif message.content.startswith('$unrole') or message.content.startswith('$derole') or message.content.startswith('$rmrole') or message.content.startswith('$rmplayer') or message.content.startswith('$removeplayer'):
-        # max depth 2 to allow this pattern:
-        # message 1: @player1 @player2 @player3 are the players for this game
-        # message 2 (reply to 1) $role @1-pbp
-        # message 3 (reply to 2) $unrole
-        await mod_players_and_roles(message, "remove", "from", max_depth=2)
-    elif message.content.startswith('$createrole'):
-        if len(parts) >= 2 and parts[1].isnumeric() and (rolenum := int(parts[1])) > 0:
-            new_role_name = f"{rolenum}-pbp"
-            if not isinstance(message.author, discord.Member) or not any(role.id == ROLE_CREATOR_ROLE for role in message.author.roles):
-                await reply(message, "You aren't allowed to create roles")
-                return
-            if not message.guild:
-                await message.channel.send("Can't create a role without a server")
-                return
-            if any(role.name == new_role_name for role in message.guild.roles):
-                # Discord's API and UI do allow multiple roles with the same name.
-                # So we are choosing to add this additional limitation to avoid confusion.
-                await message.channel.send("A role with that name already exists")
-                return
-
-            if message.channel.id != ROLE_CHANNEL and not (isinstance(message.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, message.channel.name)):
-                await message.channel.send("For auditability reasons, please keep role commands to PBP game channels or the bot channel, thanks!")
-                return
-
-            try:
-                await message.guild.create_role(name=new_role_name, mentionable=True, reason=f"{message.author.display_name} ({message.author.name}) requested")
-            except discord.Forbidden:
-                await message.channel.send("I don't have permission to create roles")
-                return
-            except discord.HTTPException:
-                await message.channel.send("Creating the role failed for some reason")
-                return
-            await message.channel.send(f"<@{message.author.id}> created role {new_role_name}")
-        else:
-            await reply(message, 'You need to tell me just the number of the role to create, no suffixes or any characters other than numbers')
-    elif message.content.startswith('$host') or message.content.startswith('$addhost'):
-        await mod_hosts(message, 'add', 'to')
-    elif message.content.startswith('$unhost') or message.content.startswith('$dehost') or message.content.startswith('$rmhost') or message.content.startswith('$removehost'):
-        await mod_hosts(message, 'remove', 'from')
-
-async def mod_players_and_roles(message: discord.Message, verb: str, direction: str, max_depth: int = 1) -> None:
-    if message.channel.id != ROLE_CHANNEL and not (isinstance(message.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, message.channel.name)):
-        await message.channel.send("For auditability reasons, please keep role commands to PBP game channels or the bot channel, thanks!")
-        return
-
-    # players: take the union of all them
-    # role: message shallower in the chain wins
-    players = set()
-    role = None
-    for (user_mentions, maybe_role_mention) in await chain_mentioned_users_and_roles(message, max_depth=max_depth):
-        players.update(user_mentions)
-        if not role and maybe_role_mention:
-            role = maybe_role_mention
-
-    if not message.guild:
-        await message.channel.send("Assigning roles doesn't work outside of a server")
-        return
-
-    if not role:
-        # Role auto-detected from channel name if possible
-        if isinstance(message.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, message.channel.name):
-            channelnum = int(''.join(takewhile(lambda x: x.isnumeric(), message.channel.name)))
-            candidates = (role for role in message.guild.roles if role.name == f"{channelnum}-pbp")
-            role = next(candidates, None)
-            if not role:
-                await message.channel.send(f"There doesn't seem to be any role matching the number of this PBP channel ({channelnum}). Check with a PBP admin to get one created")
-                return
-            if excess := sum(1 for _ in candidates):
-                await message.channel.send(f"There seem to be multiple ({1 + excess}) roles matching the number of this PBP channel ({channelnum}). Check with a server admin to fix this. In the meantime, you can @mention the specific role you want")
-                return
-        elif not message.role_mentions:
-            await message.channel.send(f"You need to use this command in a numbered PBP-channel to auto-detect a role, OR explicitly @mention a role to {verb} players {direction}, OR reply to a message that @mentions the role")
-            return
-        else:
-            # This message is only shown if the command message has > 1 role,
-            # which means it will miss any replies with > 1 role.
-            # This is probably fine.
-            await message.channel.send(f"You need to specify only one role to {verb} players {direction}, not multiple")
-            return
-
-    if any(word.lower() == 'all' for word in message.content.split()):
-        if not client.intents.members:
-            await message.channel.send("The Server Members intent isn't enabled, so `unrole all` probably won't work. Check with the bot's owner to see if they are willing to enable it.")
-            # OK not to return and just try it; maybe a future change makes the Server Members intent not required.
-        players.update(role.members)
-    elif not players:
-        if message.reference:
-            await message.channel.send(f"The message you replied to didn't @mention any players to {verb}")
-        else:
-            await message.channel.send(f"You need to @mention the player(s) to {verb}, OR reply to a message that @mentions the players")
-        return
-
-    try:
-        assert_allowed_role_manager(message, role)
-    except NotRoleAssigner:
-        await reply(message, "You need to be a PBP host to assign roles")
-        return
-    except DisallowedRole:
-        await reply(message, "I only manage roles related to PBP, which that role doesn't appear to be")
-        return
-
-    # Bot ignores mentions of itself,
-    # because @mention is a valid way to give the bot a command,
-    # but it shouldn't be interpreted as a request to add the bot to a role.
-    players = {p for p in players if p != client.user}
-
-    try:
-        # For referenced messages, there may be Users instead of Members, so we need to convert them all to Members,
-        # as only Member has add_role / remove_role
-        members = await resolve_members(message.guild, players)
-    except discord.Forbidden:
-        await message.channel.send("I don't have permission to determine the players in that message (if this error happens, try @mentioning the players directly in the message rather than replying to a message)")
-        return
-    except (discord.HTTPException, TypeError):
-        await message.channel.send("Something went wrong when determining the players in that message (if this error happens, try @mentioning the players directly in the message rather than replying to a message)")
-        return
-
-    try:
-        # role.members is always empty unless we have the members intent
-        # previously_in_role = len(role.members)
-        for member in members:
-            # This should have been asserted above for a friendlier message,
-            # but intentionally asserting it a second time in case a refactor accidentally removes the above assert or makes it no longer exit.
-            assert_allowed_role_manager(message, role)
-            await getattr(member, f"{verb}_roles")(role, reason=f"{message.author.display_name} ({message.author.name}) requested {verb}")
-    except discord.Forbidden:
-        if role.is_assignable():
-            await reply(message, "I don't have permission to manage roles on this server")
-        else:
-            await reply(message, "I don't have permission to manage that role (it outranks me)")
-        return
-
-    suffix = "d" if verb[-1] == "e" else "ed"
-    name_list = ', '.join(member.display_name for member in members)
-    await message.channel.send(f"<@{message.author.id}> {verb}{suffix} {len(members)}/{len(players)} player{'' if len(players) == 1 else 's'} {direction} {role.name}: {name_list}")
-
-# players and roles referenced in a potential message chain, up to the maximum depth (number of references to follow from the original)
-# 0 means just the message passed, 1 means the message passed and its reference, etc.
-# No error if the chain has fewer references than the max.
-async def chain_mentioned_users_and_roles(message: discord.Message, max_depth: int = 1) -> list[tuple[list[discord.User | discord.Member], discord.Role | None]]:
-    result = [(message.mentions, message.role_mentions[0] if len(message.role_mentions) == 1 else None)] if max_depth >= 0 else []
-    if max_depth <= 0:
-        return result
-
-    if message.reference and max_depth >= 1:
-        if isinstance(message.reference.resolved, discord.Message):
-            refmsg = message.reference.resolved
-        elif isinstance(message.reference.resolved, discord.DeletedReferencedMessage):
-            # Silently ignore because it's okay to reply to a reply to a deleted message.
-            return result
-        else:
-            try:
-                if not message.reference.message_id:
-                    # see docs for when this can be None:
-                    # https://discordpy.readthedocs.io/en/latest/api.html#discord.MessageReference.message_id
-                    return result
-                refmsg = await message.channel.fetch_message(message.reference.message_id)
-            except discord.Forbidden:
-                await message.channel.send("I don't have permission to read previous messages")
-                return result
-        # TODO: O(N^2) because each level extends itself with all the info from the lower ones.
-        # okay for now because of small N, but consider deque for larger N
-        result.extend(await chain_mentioned_users_and_roles(refmsg, max_depth - 1))
-    return result
-
-async def resolve_members(guild: discord.Guild, players: Iterable[discord.User | discord.Member]) -> list[discord.Member]:
-    resolved = []
-    for player in players:
-        if isinstance(player, discord.Member):
-            resolved.append(player)
-        elif isinstance(player, discord.User):
-            try:
-                resolved.append(await guild.fetch_member(player.id))
-            except discord.NotFound:
-                # e.g. if the member has left the guild since they were mentioned in the message.
-                pass
-        else:
-            raise TypeError(f"{player} neither a member nor a user")
-    return resolved
-
-def assert_allowed_role_manager(message: discord.Message, role: discord.Role) -> None:
-    if not isinstance(message.author, discord.Member):
-        # author can be User or Member; User has no roles (left the guild, or message isn't in a guild)
-        raise NotRoleAssigner()
-    if not any(role.id == ROLE_ASSIGNER_ROLE or role.id == ROLE_ASSIGNER_ADMIN_ROLE for role in message.author.roles):
-        # assigner admin is okay too because they can assign themselves assigner
-        raise NotRoleAssigner()
-    if not re.search(ROLE_PATTERN, role.name):
-        raise DisallowedRole()
-
-async def mod_hosts(message: discord.Message, verb: str, direction: str) -> None:
-    if not isinstance(message.author, discord.Member) or not any(role.id == ROLE_ASSIGNER_ADMIN_ROLE for role in message.author.roles):
-        await reply(message, f"You aren't allowed to {verb} players {direction} the host role")
-        return
-    if message.channel.id != ROLE_CHANNEL and not (isinstance(message.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, message.channel.name)):
-        await message.channel.send("For auditability reasons, please keep role commands to PBP game channels or the bot channel, thanks!")
-        return
-    if not message.guild:
-        await message.channel.send("Assigning roles doesn't work outside of a server")
-        return
-    if not (role := message.guild.get_role(ROLE_ASSIGNER_ROLE)):
-        await message.channel.send("Couldn't find the host role. Is the bot configured correctly?")
-        return
-    if not message.mentions:
-        # Even if this ever gets refactored to share any code in common with mod_players_and_roles,
-        # this should probably NOT allow the `all` argument.
-        # There's no demand for removing all hosts at once.
-        await message.channel.send(f"You need to @mention the players to {verb}")
-        return
-
-    suffix = "d" if verb[-1] == "e" else "ed"
-
-    for member in message.mentions:
-        if member == client.user:
-            # Bot ignores mentions of itself,
-            # because @mention is a valid way to give the bot a command,
-            # but it shouldn't be interpreted as a request to add the bot to a role.
-            continue
-        try:
-            await getattr(member, f"{verb}_roles")(role, reason=f"{message.author.display_name} ({message.author.name}) requested {verb}")
-        except discord.Forbidden:
-            if role.is_assignable():
-                await reply(message, "I don't have permission to manage roles on this server")
-            else:
-                await reply(message, "I don't have permission to manage that role (it outranks me)")
-            return
+            await interaction.channel.send("I don't have permission to pin messages, so you'll have to pin the link yourself, but I'll still relay game logs.")
         except discord.HTTPException:
-            await message.channel.send(f"Something went wrong when trying to {verb} {direction} the role")
+            await interaction.channel.send("Failed to pin the message due to an HTTP error, so you'll have to pin the link yourself, but I'll still relay game logs.")
+
+@tree.command(guild=command_scope)
+async def unpinall(interaction: discord.Interaction) -> None:
+    """unpin all messages in this channel"""
+    if not interaction.channel or isinstance(interaction.channel, (discord.ForumChannel, discord.CategoryChannel)):
+        await interaction.response.send_message(f"this kind of channel ({type(interaction.channel).__name__}) doesn't have any pins")
+        return
+
+    num_unpinned = 0
+    try:
+        async for to_unpin in interaction.channel.pins():
+            if not await act_on_message(interaction, to_unpin, 'unpin'):
+                return
+            num_unpinned += 1
+    except discord.Forbidden:
+        await interaction.response.send_message("I don't have permission to get the pinned messages")
+        return
+    await interaction.response.send_message(f"{interaction.user.mention} unpinned {num_unpinned} messages")
+
+@tree.command(guild=command_scope)
+@discord.app_commands.describe(message_id="ID of the message to delete (17-20 digit number)")
+# can't use int, because int only supports int53, but message IDs can be up to 64 bits
+async def delete(interaction: discord.Interaction, message_id: str) -> None:
+    """delete the message with the specified ID (bot's messages only)"""
+    if not interaction.channel or isinstance(interaction.channel, (discord.ForumChannel, discord.CategoryChannel)):
+        await interaction.response.send_message("couldn't find a message with that ID in this channel (need to be in the same channel)")
+        return
+
+    try:
+        message_id_int = int(message_id)
+    except Exception: # noqa: BLE001
+        await interaction.response.send_message(f"invalid message ID (needs to be a number between 1 and {2 ** 64 - 1})")
+        return
+
+    try:
+        message_to_delete = await interaction.channel.fetch_message(message_id_int)
+    except discord.errors.NotFound:
+        await interaction.response.send_message("couldn't find a message with that ID in this channel (need to be in the same channel)")
+        return
+    except discord.errors.Forbidden:
+        await interaction.response.send_message("I don't have permission to get past messages")
+        return
+
+    if message_to_delete.author != client.user:
+        await interaction.response.send_message("I only delete my own messages")
+        return
+    if message_to_delete.mentions or message_to_delete.interaction_metadata:
+        await interaction.response.send_message("This message seems to mention some users, which means it may be an audit message. Deleting it may be unsafe.")
+        return
+
+    # delete doesn't accept a reason argument
+    # doesn't matter anyway since we're deleting our own message,
+    # which doesn't create an audit log entry
+    if await act_on_message(interaction, message_to_delete, 'delete', reason=False):
+        await interaction.response.send_message(f"{interaction.user.mention} deleted the message I sent at {message_to_delete.created_at}")
+
+async def act_on_message(interaction: discord.Interaction, message_to_modify: discord.Message, verb: str, reason: bool = True) -> bool:
+    try:
+        kwargs = {'reason': f"{interaction.user.display_name} ({interaction.user.name}) requested"} if reason else {}
+        await getattr(message_to_modify, verb)(**kwargs)
+        return True
+    except discord.Forbidden:
+        await interaction.response.send_message(f"I don't have permission to {verb} messages.")
+    except discord.HTTPException:
+        await interaction.response.send_message(f"Failed to {verb} the message due to an HTTP error.")
+    return False
+
+@tree.command(guild=command_scope)
+@discord.app_commands.describe(new_topic="new topic, or empty to clear the topic")
+async def topic(interaction: discord.Interaction, new_topic: str = "") -> None:
+    """change the topic of this channel (PBP channels only) automatically follow game for update channels"""
+    if not isinstance(interaction.channel, discord.TextChannel):
+        if isinstance(interaction.channel, discord.StageChannel):
+            await interaction.response.send_message(f"This bot only supports setting the topic of text channels, not {type(interaction.channel).__name__}s")
+        else:
+            # ForumChannel have a topic in the API, but they are guidelines in the UI
+            # Everything else doesn't have a topic at all.
+            await interaction.response.send_message(f"{type(interaction.channel).__name__}s don't have a topic")
+        return
+    try:
+        # Expected (and so far observed) behaviour:
+        # the bot will get an on_guild_channel_update for its own update,
+        # thereby automatically following a game linked in the topic
+        # (if present and the channel doesn't match NON_UPDATE_CHANNEL_PATTERN),
+        # without needing to explicitly call link_channel_to_game here.
+        await edit_channel(interaction, interaction.channel, 'changed the channel topic', topic=new_topic)
+    except discord.Forbidden:
+        await interaction.response.send_message("I don't have permission to set the channel topic")
+
+@tree.command(guild=command_scope)
+@discord.app_commands.describe(new_name="new channel name, or empty to clear the name. DO NOT include the NNup- or NNdc- prefix")
+async def rename(interaction: discord.Interaction, new_name: str = "") -> None:
+    """rename this channel (PBP channels only) DO NOT include the NNup- or NNdc- prefix"""
+    if not isinstance(interaction.channel, discord.TextChannel):
+        await interaction.response.send_message(f"This bot only supports renaming text channels, not {type(interaction.channel).__name__}s")
+        return
+
+    existing_name = interaction.channel.name
+    verb = 'renamed the channel'
+
+    if not new_name:
+        # no argument given: try to clear the channel name.
+        if '-' in existing_name:
+            new_name = existing_name[:existing_name.index('-')]
+        else:
+            await interaction.response.send_message("channel already had no name")
             return
-        # sends multiple messages if they add multiple hosts, hopefully that's okay
-        await message.channel.send(f"<@{message.author.id}> {verb}{suffix} <@{member.id}> {direction} {role.name}")
+    else:
+        # TODO: Too specific to one guild's naming conventions?
+        # Consider the first dash-separated word of the channel name.
+        # Always keep this the same.
+        # But don't duplicate the prefix if the user specifies it again.
+        # Given a channel currently named either 1up or 1up-aaa,
+        # requesting the following names will have these results:
+        #
+        # Requested name | Resulting name
+        # ---------------|---------------
+        # 1up            | 1up
+        # bbb            | 1up-bbb
+        # 1up-bbb        | 1up-bbb (and tell them they don't need to include 1up)
+        # hello-world    | 1up-hello-world
+        # (a request to rename 1up-aaa to 1up-1up will behave oddly, but this shouldn't normally happen)
+        existing_prefix = existing_name[:existing_name.index('-')] if '-' in existing_name else existing_name
+        new_suffix = new_name
+        if '-' in new_suffix and new_suffix[:new_suffix.index('-')] == existing_prefix:
+            verb = f"You don't need to include the {existing_prefix}- prefix; it's automatically added. {interaction.user.mention} {verb}"
+            new_suffix = new_suffix[new_suffix.index('-') + 1:]
+        new_name = existing_prefix if new_suffix == existing_prefix else f"{existing_prefix}-{new_suffix}"
+
+    try:
+        await edit_channel(interaction, interaction.channel, verb, name=new_name)
+    except discord.Forbidden:
+        await interaction.response.send_message("I don't have permission to rename the channel")
 
 class ChannelChanges(TypedDict):
     name: NotRequired[str]
     topic: NotRequired[str]
 
-async def edit_channel(message: discord.Message, channel: discord.TextChannel, success_msg: str, **changes: Unpack[ChannelChanges]) -> None:
+async def edit_channel(interaction: discord.Interaction, channel: discord.TextChannel, action: str, **changes: Unpack[ChannelChanges]) -> None:
     # Ideally the guild uses permissions to restrict what the bot can do,
     # but defence in depth is desirable for such sensitive operations.
     if not re.search(MANAGED_CHANNEL_PATTERN, channel.name):
-        await reply(message, "I only manage PBP channels, which this channel doesn't appear to be")
+        await interaction.response.send_message("I only manage PBP channels, which this channel doesn't appear to be")
         return
 
-    edit_task = asyncio.create_task(channel.edit(**changes, reason=f"{message.author.display_name} ({message.author.name}) requested"))
+    edit_task = asyncio.create_task(channel.edit(**changes, reason=f"{interaction.user.display_name} ({interaction.user.name}) requested"))
+    deferred = False
 
     async def check_task_completion() -> None:
+        nonlocal deferred
         await asyncio.sleep(3)
         # Didn't find a way to introspect the channel edit task to see its status (time left to wait)
         # so best we can do is check whether it's done.
         if edit_task.done():
             return
-        await reply(message, "Got rate-limited by Discord (Discord limits the bot to 2 changes to the same channel within 10 minutes), automatically retrying when possible. Thanks for your patience.")
+        await interaction.response.defer(thinking=True)
+        deferred = True
+        await channel.send("Got rate-limited by Discord (Discord limits the bot to 2 changes to the same channel within 10 minutes), automatically retrying when possible. Thanks for your patience.")
 
     check_task = asyncio.create_task(check_task_completion())
     await edit_task
-    await report_success(message, success_msg, noun=None)
+    msg = f"{interaction.user.mention} {action}"
+    if deferred:
+        await interaction.followup.send(msg)
+    else:
+        await interaction.response.send_message(msg)
     await check_task
 
-async def referenced_message(message: discord.Message, command: str) -> discord.Message | None:
-    if message.reference:
-        try:
-            if not message.reference.message_id:
-                # https://discordpy.readthedocs.io/en/latest/api.html#discord.MessageReference.message_id
-                await message.channel.send(f"Can't {command} that kind of message")
-                return None
-            return await message.channel.fetch_message(message.reference.message_id)
-        except discord.Forbidden:
-            await message.channel.send("I don't have permission to read previous messages")
+@tree.command(guild=command_scope)
+@discord.app_commands.describe(role="role to add yourself to")
+async def roleme(interaction: discord.Interaction, role: discord.Role) -> None:
+    """add yourself to a given PBP role"""
+    if not isinstance(interaction.user, discord.Member):
+        await interaction.response.send_message("you have to be a member to be given a role")
+        return
+    await mod_players_and_roles(interaction, (interaction.user, ), role, "add", "to")
+
+@tree.command(guild=command_scope)
+async def role(interaction: discord.Interaction, player1: discord.Member, player2: discord.Member | None = None, player3: discord.Member | None = None, player4: discord.Member | None = None, player5: discord.Member | None = None, player6: discord.Member | None = None) -> None:
+    """add players to this channel's PBP role"""
+    role = await role_from_channel(interaction)
+    if not role:
+        return
+    players = [p for p in [player1, player2, player3, player4, player5, player6] if p]
+    await mod_players_and_roles(interaction, players, role, "add", "to")
+
+@tree.command(guild=command_scope)
+async def unrole(interaction: discord.Interaction, player1: discord.Member, player2: discord.Member | None = None, player3: discord.Member | None = None, player4: discord.Member | None = None, player5: discord.Member | None = None, player6: discord.Member | None = None) -> None:
+    """remove players from this channel's PBP role"""
+    role = await role_from_channel(interaction)
+    if not role:
+        return
+    players = [p for p in [player1, player2, player3, player4, player5, player6] if p]
+    await mod_players_and_roles(interaction, players, role, "remove", "from")
+
+@tree.command(guild=command_scope)
+async def unroleall(interaction: discord.Interaction) -> None:
+    """remove all players from this channel's PBP role"""
+    role = await role_from_channel(interaction)
+    if not role:
+        return
+    if not client.intents.members and interaction.channel and not isinstance(interaction.channel, (discord.CategoryChannel, discord.ForumChannel)):
+        await interaction.channel.send("The Server Members intent isn't enabled, so `unroleall` probably won't work. Check with the bot's owner to see if they are willing to enable it.")
+        # OK not to return and just try it; maybe a future change makes the Server Members intent not required.
+    await mod_players_and_roles(interaction, role.members, role, "remove", "from")
+
+async def role_from_channel(interaction: discord.Interaction) -> discord.Role | None:
+    tip = "You have to use this command in a numbered PBP channel like #NNup- or #NNdc-, otherwise I don't know what role to use. Did you mean to use /roleme to add yourself to a specific role?"
+    if not interaction.channel or not interaction.guild or isinstance(interaction.channel, discord.DMChannel) or not interaction.channel.name:
+        await interaction.response.send_message(tip)
+        return None
+    if re.search(MANAGED_CHANNEL_PATTERN, interaction.channel.name):
+        channelnum = int(''.join(takewhile(lambda x: x.isnumeric(), interaction.channel.name)))
+        candidates = (role for role in interaction.guild.roles if role.name == f"{channelnum}-pbp")
+        role = next(candidates, None)
+        if not role:
+            await interaction.response.send_message(f"There doesn't seem to be any role matching the number of this PBP channel ({channelnum}). Check with a PBP admin to get one created")
             return None
-    await message.channel.send(f"You need to reply to a message to use ${command}")
+        if excess := sum(1 for _ in candidates):
+            await interaction.response.send_message(f"There seem to be multiple ({1 + excess}) roles matching the number of this PBP channel ({channelnum}). Check with a server admin to fix this.")
+            return None
+        return role
+    await interaction.response.send_message(tip)
     return None
 
-# note that since the bot refuses to delete its own messages that mention a user
-# (as they may be audit messages),
-# and a reply mentions the user,
-# using reply will prevent the bot from deleting this message.
-# Thus, generally we prefer to use it only in situations where:
-# * the user did something they're not allowed to
-#   (the record of this should not be deleted)
-# * they did something but it's important to notify them they can do it a better way
-#   (it'd be okay to delete these,
-#   but the worth of notifying them exceeds the cost of making them undeletable)
-async def reply(message: discord.Message, response: str) -> None:
-    try:
-        await message.reply(response)
-    except discord.Forbidden:
-        # reply requires View Message Log, which this bot may not have permission to.
-        # Try to send a message to the channel, as we may have permission to do that instead.
-        await message.channel.send(response)
-        # That may in turn raise discord.Forbidden if we're not allowed to send a message either,
-        # but if this is the case, there's not much that can be done.
+async def mod_players_and_roles(interaction: discord.Interaction, members: Collection[discord.Member], role: discord.Role, verb: str, direction: str) -> None:
+    if not (interaction.channel and interaction.channel.id == ROLE_CHANNEL) and not (isinstance(interaction.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, interaction.channel.name)):
+        await interaction.response.send_message("For auditability reasons, please keep role commands to PBP game channels or the bot channel, thanks!")
+        return
 
-async def act_on_message(command_message: discord.Message, message_to_modify: discord.Message, verb: str, reason: bool = True) -> bool:
     try:
-        kwargs = {'reason': f"{command_message.author.display_name} ({command_message.author.name}) requested"} if reason else {}
-        await getattr(message_to_modify, verb)(**kwargs)
-        return True
+        assert_allowed_role_manager(interaction.user, role)
+    except NotRoleAssigner:
+        await interaction.response.send_message("You need to be a PBP host to assign roles")
+        return
+    except DisallowedRole:
+        await interaction.response.send_message("I only manage roles related to PBP, which that role doesn't appear to be")
+        return
+
+    try:
+        for member in members:
+            # This should have been asserted above for a friendlier message,
+            # but intentionally asserting it a second time in case a refactor accidentally removes the above assert or makes it no longer exit.
+            assert_allowed_role_manager(interaction.user, role)
+            await getattr(member, f"{verb}_roles")(role, reason=f"{interaction.user.display_name} ({interaction.user.name}) requested {verb}")
     except discord.Forbidden:
-        await command_message.channel.send(f"I don't have permission to {verb} messages.")
+        if role.is_assignable():
+            await interaction.response.send_message("I don't have permission to manage roles on this server")
+        else:
+            await interaction.response.send_message("I don't have permission to manage that role (it outranks me)")
+        return
+
+    suffix = "d" if verb[-1] == "e" else "ed"
+    name_list = ', '.join(member.display_name for member in members)
+    await interaction.response.send_message(f"{interaction.user.mention} {verb}{suffix} {len(members)} player{'' if len(members) == 1 else 's'} {direction} {role.name}: {name_list}")
+
+def assert_allowed_role_manager(user_or_member: discord.User | discord.Member, role: discord.Role) -> None:
+    if not isinstance(user_or_member, discord.Member):
+        # User has no roles (left the guild, or message isn't in a guild)
+        raise NotRoleAssigner()
+    if not any(role.id == ROLE_ASSIGNER_ROLE or role.id == ROLE_ASSIGNER_ADMIN_ROLE for role in user_or_member.roles):
+        # assigner admin is okay too because they can assign themselves assigner
+        raise NotRoleAssigner()
+    if not re.search(ROLE_PATTERN, role.name):
+        raise DisallowedRole()
+
+@tree.command(guild=command_scope)
+# it's okay to raise the rolenum limit,
+# but keep in mind that there's a limit of 250 roles,
+# so allowing higher numbers implies having non-contiguous channel numbers.
+# OK if that's desired in the future, just not the case right now.
+# https://support.discord.com/hc/en-us/articles/33694251638295-Discord-Account-Caps-Server-Caps-and-More
+async def createrole(interaction: discord.Interaction, rolenum: discord.app_commands.Range[int, 1, 255]) -> None:
+    """create PBP role of the given number (PBP admin only)"""
+    new_role_name = f"{rolenum}-pbp"
+    if not isinstance(interaction.user, discord.Member) or not any(role.id == ROLE_CREATOR_ROLE for role in interaction.user.roles):
+        await interaction.response.send_message("You aren't allowed to create roles")
+        return
+    if not interaction.guild:
+        await interaction.response.send_message("Can't create a role without a server")
+        return
+    if any(role.name == new_role_name for role in interaction.guild.roles):
+        # Discord's API and UI do allow multiple roles with the same name.
+        # So we are choosing to add this additional limitation to avoid confusion.
+        await interaction.response.send_message("A role with that name already exists")
+        return
+
+    if not (interaction.channel and interaction.channel.id == ROLE_CHANNEL) and not (isinstance(interaction.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, interaction.channel.name)):
+        await interaction.response.send_message("For auditability reasons, please keep role commands to PBP game channels or the bot channel, thanks!")
+        return
+
+    try:
+        await interaction.guild.create_role(name=new_role_name, mentionable=True, reason=f"{interaction.user.display_name} ({interaction.user.name}) requested")
+    except discord.Forbidden:
+        await interaction.response.send_message("I don't have permission to create roles")
+        return
     except discord.HTTPException:
-        await command_message.channel.send(f"Failed to {verb} the message due to an HTTP error.")
-    return False
+        await interaction.response.send_message("Creating the role failed for some reason")
+        return
+    await interaction.response.send_message(f"{interaction.user.mention} created role {new_role_name}")
 
-async def report_success(command_message: discord.Message, verb: str, noun: str | None = 'Message') -> None:
+@tree.command(guild=command_scope)
+async def host(interaction: discord.Interaction, member: discord.Member) -> None:
+    """make the given member a PBP host (PBP admin only)"""
+    await mod_hosts(interaction, member, 'add', 'to')
+
+@tree.command(guild=command_scope)
+async def unhost(interaction: discord.Interaction, member: discord.Member) -> None:
+    """make the given member no longer a PBP host (PBP admin only)"""
+    await mod_hosts(interaction, member, 'remove', 'from')
+
+async def mod_hosts(interaction: discord.Interaction, member: discord.Member, verb: str, direction: str) -> None:
+    if not isinstance(interaction.user, discord.Member) or not any(role.id == ROLE_ASSIGNER_ADMIN_ROLE for role in interaction.user.roles):
+        await interaction.response.send_message(f"You aren't allowed to {verb} players {direction} the host role")
+        return
+    if not (interaction.channel and interaction.channel.id == ROLE_CHANNEL) and not (isinstance(interaction.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, interaction.channel.name)):
+        await interaction.response.send_message("For auditability reasons, please keep role commands to PBP game channels or the bot channel, thanks!")
+        return
+    if not interaction.guild:
+        await interaction.response.send_message("Assigning roles doesn't work outside of a server")
+        return
+    if not (role := interaction.guild.get_role(ROLE_ASSIGNER_ROLE)):
+        await interaction.response.send_message("Couldn't find the host role. Is the bot configured correctly?")
+        return
+
+    suffix = "d" if verb[-1] == "e" else "ed"
+
     try:
-        await command_message.add_reaction('✅')
+        await getattr(member, f"{verb}_roles")(role, reason=f"{interaction.user.display_name} ({interaction.user.name}) requested {verb}")
     except discord.Forbidden:
-        await command_message.channel.send(f"{noun} {verb}!" if noun else f"{verb}!")
+        if role.is_assignable():
+            await interaction.response.send_message("I don't have permission to manage roles on this server")
+        else:
+            await interaction.response.send_message("I don't have permission to manage that role (it outranks me)")
+        return
+    except discord.HTTPException:
+        await interaction.response.send_message(f"Something went wrong when trying to {verb} {direction} the role")
+        return
+    await interaction.response.send_message(f"{interaction.user.mention} {verb}{suffix} {member.mention} {direction} {role.name}")
 
 def load_emojis(emojis: Iterable[discord.Emoji]) -> None:
     for e in emojis:
