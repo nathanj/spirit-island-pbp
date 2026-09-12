@@ -879,7 +879,7 @@ async def logger() -> None:
         if os.path.exists(SOCKET_PATH):
             os.remove(SOCKET_PATH)
         LOG.msg("trying to create", socket_path=SOCKET_PATH)
-        transport, protocol = await loop.create_datagram_endpoint(
+        _transport, protocol = await loop.create_datagram_endpoint(
             lambda: SIDatagramProtocol(enqueue),
             local_addr=SOCKET_PATH,
             family=socket.AF_UNIX,
