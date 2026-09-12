@@ -39,13 +39,13 @@ class PresenceSchema(ModelSchema):
 
 class GamePlayerSchema(ModelSchema):
     spirit: SpiritSchema
-    hand: list[CardSchema] = []
-    discard: list[CardSchema] = []
-    play: list[CardSchema] = []
-    selection: list[CardSchema] = []
-    days: list[CardSchema] = []
-    scenario: list[CardSchema] = []
-    healing: list[CardSchema] = []
+    hand: list[CardSchema] = [] #noqa: RUF012
+    discard: list[CardSchema] = [] #noqa: RUF012
+    play: list[CardSchema] = [] #noqa: RUF012
+    selection: list[CardSchema] = [] #noqa: RUF012
+    days: list[CardSchema] = [] #noqa: RUF012
+    scenario: list[CardSchema] = [] #noqa: RUF012
+    healing: list[CardSchema] = [] #noqa: RUF012
     impending: list[ImpendingSchema] = Field([], alias="gameplayerimpendingwithenergy_set")
     presence: list[PresenceSchema] = Field([], alias="presence_set")
     class Meta:
@@ -67,9 +67,9 @@ class GameSchema(ModelSchema):
 
 class GameDetailSchema(ModelSchema):
     players: list[GamePlayerSchema] = Field([], alias="gameplayer_set")
-    minor_deck: list[CardSchema] = []
-    major_deck: list[CardSchema] = []
-    discard_pile: list[CardSchema] = []
+    minor_deck: list[CardSchema] = [] #noqa: RUF012
+    major_deck: list[CardSchema] = [] #noqa: RUF012
+    discard_pile: list[CardSchema] = [] #noqa: RUF012
     class Meta:
         model = Game
         # we've not exported the screenshots, because it's not obvious how we would do it.
