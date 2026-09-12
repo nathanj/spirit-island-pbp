@@ -854,9 +854,13 @@ async def logger() -> None:
     T = TypeVar('T')
     def enqueue(channel_id: int, raw: T, parse: Callable[[T], GameLogEntry]) -> None:
         if channel_id in game_log_buffer:
-            game_log_buffer[channel_id]['timestamp'] = datetime.datetime.now()
+            # ignoring DTZ005 because our usage is:
+            # * internal (entirely contained in bot.py)
+            # * relative (we don't care about absolute times, only that a certain amount of time has passed)
+            # therefore, we do not care to create timezone-aware datetime objects.
+            game_log_buffer[channel_id]['timestamp'] = datetime.datetime.now() #noqa: DTZ005
         else:
-            game_log_buffer[channel_id] = {'timestamp': datetime.datetime.now(), 'logs': []}
+            game_log_buffer[channel_id] = {'timestamp': datetime.datetime.now(), 'logs': []} #noqa: DTZ005
 
         if last_message.get(channel_id) == raw:
             LOG.msg('drop duplicate message')
@@ -867,7 +871,7 @@ async def logger() -> None:
     async def dequeue() -> None:
         keys = list(game_log_buffer.keys())
         for channel_id in keys:
-            if game_log_buffer[channel_id]['timestamp'] + datetime.timedelta(seconds=20) < datetime.datetime.now():
+            if game_log_buffer[channel_id]['timestamp'] + datetime.timedelta(seconds=20) < datetime.datetime.now(): #noqa: DTZ005
                 LOG.msg('sending', channel_id=channel_id)
                 logs = game_log_buffer[channel_id]['logs']
                 del game_log_buffer[channel_id]
