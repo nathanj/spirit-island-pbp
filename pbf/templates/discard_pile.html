@@ -1,11 +1,29 @@
 {% load static %}
 
-<p>
+<div id="spirit-discard-deck-{{player.id}}">
+
 <h4>Discard Pile:</h4>
+
+Filter:
+<div hx-target="#spirit-discard-deck-{{player.id}}" hx-swap="outerHTML">
+  {% if current_filter is None %}
+    All ✅
+  {% else %}
+    <button class="btn" hx-get="{% url 'discard_pile' player.id %}">All</button>
+  {% endif %}
+  {% for type in valid_filters %}
+    {% if current_filter == type %}
+    {{type.name.capitalize}} ✅
+    {% else %}
+    <button class="btn" hx-get="{% url 'discard_pile' player.id type.name %}">{{type.name.capitalize}}</button>
+    {% endif %}
+  {% endfor %}
+</div>
+
 <ul>
   <div class="container-fluid">
     <div class="row">
-      {% for card in player.game.discard_pile.all %}
+      {% for card in cards.all %}
       <div class="col-auto">
 	<div class="w-100 mw-full">
 	  <div class="card p-0 m-15">
@@ -29,3 +47,5 @@
   </div>
 
 </ul>
+
+</div>

@@ -921,9 +921,10 @@ def major_deck(request: HttpRequest, game_id: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     return render(request, 'power_deck.html', {'name': 'Major', 'cards': game.major_deck.all()})
 
-def discard_pile(request: HttpRequest, player_id: int) -> HttpResponse:
+def discard_pile(request: HttpRequest, player_id: int, type: Card.Type | None = None) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
-    return render(request, 'discard_pile.html', { 'player': player })
+    cards = player.game.discard_pile.filter(type=type) if type is not None else player.game.discard_pile
+    return render(request, 'discard_pile.html', { 'player': player, 'cards': cards, 'current_filter': type, 'valid_filters': (Card.Type.MINOR, Card.Type.MAJOR, Card.Type.UNIQUE) })
 
 def return_to_deck(request: HttpRequest, player_id: int, card_id: int) -> HttpResponse:
     # this doesn't actually manipulate the player in any way,
