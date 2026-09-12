@@ -4,8 +4,9 @@ import json
 import os
 import re
 import sys
+from collections.abc import Callable, Iterable
 from itertools import takewhile
-from typing import Any, Callable, Iterable, NotRequired, TypedDict, TypeVar, Unpack
+from typing import Any, NotRequired, TypedDict, TypeVar, Unpack
 
 import discord
 import requests
