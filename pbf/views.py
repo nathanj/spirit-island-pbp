@@ -129,12 +129,12 @@ def send_log(log: GameLog) -> None:
 class GameForm(ModelForm): #type: ignore[type-arg]
     class Meta:
         model = Game
-        fields = ['screenshot']
+        fields = ('screenshot', )
 
 class GameForm2(ModelForm): #type: ignore[type-arg]
     class Meta:
         model = Game
-        fields = ['screenshot2']
+        fields = ('screenshot2', )
 
 def with_log_trigger(response: HttpResponse) -> HttpResponse:
     response['HX-Trigger'] = 'newLog'
