@@ -516,6 +516,11 @@ async def mod_players_and_roles(message: discord.Message, verb: str, direction: 
         await reply(message, "I only manage roles related to PBP, which that role doesn't appear to be")
         return
 
+    # Bot ignores mentions of itself,
+    # because @mention is a valid way to give the bot a command,
+    # but it shouldn't be interpreted as a request to add the bot to a role.
+    players = {p for p in players if p != client.user}
+
     try:
         # For referenced messages, there may be Users instead of Members, so we need to convert them all to Members,
         # as only Member has add_role / remove_role
@@ -623,6 +628,11 @@ async def mod_hosts(message: discord.Message, verb: str, direction: str) -> None
     suffix = "d" if verb[-1] == "e" else "ed"
 
     for member in message.mentions:
+        if member == client.user:
+            # Bot ignores mentions of itself,
+            # because @mention is a valid way to give the bot a command,
+            # but it shouldn't be interpreted as a request to add the bot to a role.
+            continue
         try:
             await getattr(member, f"{verb}_roles")(role, reason=f"{message.author.display_name} ({message.author.name}) requested {verb}")
         except discord.Forbidden:
