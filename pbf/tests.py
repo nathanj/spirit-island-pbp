@@ -1873,7 +1873,7 @@ class TestUpload(TestCase):
 
     # https://evanhahn.com/worlds-smallest-png/
     PNG = b"".join([
-        bytes([0x89]), 'PNG'.encode(), bytes([0x0d, 0x0a, 0x1a, 0x0a]), # signature
+        bytes([0x89]), b'PNG', bytes([0x0d, 0x0a, 0x1a, 0x0a]), # signature
         png_chunk('IHDR', [
             0, 0, 0, 1, # width 1
             0, 0, 0, 1, # height 1
