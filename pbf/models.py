@@ -56,7 +56,7 @@ class Elements(Enum):
         if c == 'N': return Elements.Animal
         return None
 
-class Threshold():
+class Threshold:
     def __init__(self, x: int, y: int, achieved: bool) -> None:
         self.x = x
         self.y = y
