@@ -787,7 +787,7 @@ async def relay_game(channel_id: int, log: Iterable[GameLogEntry]) -> None:
                     file_to_send = 'out.jpg'
                 else:
                     file_to_send = filenames[0]
-                if 'spoiler' in entry.keys():
+                if 'spoiler' in entry:
                     await channel.send(msg, file=discord.File(file_to_send, spoiler=entry['spoiler']))
                 else:
                     await channel.send(msg, file=discord.File(file_to_send))
