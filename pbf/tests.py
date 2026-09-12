@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 import unittest
@@ -464,6 +465,50 @@ class TestMatchSpirit(TestCase):
         self.assertEqual(GamePlayer.objects.get(id=self.try_match_spirit(game, 'name')).name, 'name')
         (game, _) = self.setup_game([('River', None, 'name'), ('Lightning', None, 'name1')])
         self.assertEqual(GamePlayer.objects.get(id=self.try_match_spirit(game, 'name')).name, 'name')
+
+class TestReturnToDeck(TestCase):
+    def setup_game(self, cards_in_discard):
+        game = Game()
+        game.save()
+        spirit = Spirit.objects.first()
+        player = game.gameplayer_set.create(spirit=Spirit.objects.get(name=spirit), color='blue')
+        game.discard_pile.set(cards_in_discard)
+
+        return (game, player)
+
+    def test_return_minor(self):
+        card = Card.objects.get(name='Call to Isolation')
+        client = Client()
+        game, player = self.setup_game((card,))
+        client.post(f"/game/{player.id}/return_to_deck/{card.id}")
+        self.assertEqual(list(game.discard_pile.values_list('name', flat=True)), [])
+        self.assertEqual(list(game.minor_deck.values_list('name', flat=True)), ['Call to Isolation'])
+        self.assertEqual(list(game.major_deck.values_list('name', flat=True)), [])
+
+    def test_return_major(self):
+        card = Card.objects.get(name='Powerstorm')
+        client = Client()
+        game, player = self.setup_game((card,))
+        client.post(f"/game/{player.id}/return_to_deck/{card.id}")
+        self.assertEqual(list(game.discard_pile.values_list('name', flat=True)), [])
+        self.assertEqual(list(game.minor_deck.values_list('name', flat=True)), [])
+        self.assertEqual(list(game.major_deck.values_list('name', flat=True)), ['Powerstorm'])
+
+    def test_return_unique_does_nothing(self):
+        # We don't need the logging from the error
+        logger = logging.getLogger('django.request')
+        original_level = logger.getEffectiveLevel()
+        logger.setLevel(logging.CRITICAL)
+
+        card = Card.objects.get(name='Boon of Vigor')
+        client = Client(raise_request_exception=False)
+        game, player = self.setup_game((card,))
+        client.post(f"/game/{player.id}/return_to_deck/{card.id}")
+        self.assertEqual(list(game.discard_pile.values_list('name', flat=True)), ['Boon of Vigor'])
+        self.assertEqual(list(game.minor_deck.values_list('name', flat=True)), [])
+        self.assertEqual(list(game.major_deck.values_list('name', flat=True)), [])
+
+        logger.setLevel(original_level)
 
 class TestReshuffleOrNot(TestCase):
     def setup_game(self, cards_in_deck):

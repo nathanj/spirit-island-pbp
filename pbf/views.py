@@ -943,7 +943,6 @@ def return_to_deck(request: HttpRequest, player_id: int, card_id: int) -> HttpRe
     player = get_object_or_404(GamePlayer, pk=player_id)
     game = player.game
     card = get_object_or_404(game.discard_pile, pk=card_id)
-    game.discard_pile.remove(card)
 
     if card.type == card.MINOR:
         game.minor_deck.add(card)
@@ -951,6 +950,8 @@ def return_to_deck(request: HttpRequest, player_id: int, card_id: int) -> HttpRe
         game.major_deck.add(card)
     else:
         raise ValueError(f"Can't return {card}")
+
+    game.discard_pile.remove(card)
 
     add_log_msg(game, text=f'{card.name} returned to the deck')
 
