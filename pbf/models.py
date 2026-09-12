@@ -579,24 +579,23 @@ class GamePlayer(models.Model):
         return f'pbf/aspect-{self.aspect.replace(" ", "_").lower()}.jpg'
 
     def aspect_left(self) -> int:
-        if self.aspect == 'Immense':
-            return 650
-        elif self.aspect == 'Pandemonium':
-            return 370
-        elif self.aspect == 'Sunshine':
-            return 700
-        else:
-            return 0
+        match self.aspect:
+            case 'Immense':
+                return 650
+            case 'Pandemonium':
+                return 370
+            case 'Sunshine':
+                return 700
+            case _:
+                return 0
+
 
     def aspect_top(self) -> int:
-        if self.aspect == 'Immense':
-            return 360
-        elif self.aspect == 'Pandemonium':
-            return 360
-        elif self.aspect == 'Sunshine':
-            return 360
-        else:
-            return 400
+        match self.aspect:
+            case 'Immense' | 'Pandemonium' | 'Sunshine':
+                return 360
+            case _:
+                return 400
 
     def disk_url(self) -> str:
         return 'pbf/disk_' + self.color + '.png'
