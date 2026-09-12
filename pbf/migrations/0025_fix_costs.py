@@ -2,6 +2,7 @@
 
 from django.db import migrations
 
+
 def fix_cost(apps, schema_editor):
     Card = apps.get_model("pbf", "Card")
     card = Card.objects.get(name='Call to Vigilance')
@@ -22,10 +23,10 @@ def unfix_cost(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0024_gameplayer_impending'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(fix_cost, unfix_cost),
-    ]
+    )

@@ -13,6 +13,7 @@ dependencies = [
     "gunicorn>=26.0.0,<27",
     "python-dotenv>=1.0.0,<2",
     "django-prometheus>=2.2.0,<3",
+    "frozendict>=2.4.7",
 ]
 
 [dependency-groups]

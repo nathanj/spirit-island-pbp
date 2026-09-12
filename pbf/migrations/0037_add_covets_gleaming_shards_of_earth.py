@@ -1,5 +1,6 @@
 from django.db import migrations
 
+
 def load_covets_gleaming_shards(apps, schema_editor):
     Spirit = apps.get_model("pbf", "Spirit")
     Card = apps.get_model("pbf", "Card")
@@ -18,10 +19,10 @@ def delete_covets_gleaming_shards(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0036_gameplayer_spirit_specific_resource'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(load_covets_gleaming_shards, delete_covets_gleaming_shards),
-    ]
+    )

@@ -1,47 +1,56 @@
-from django.shortcuts import get_object_or_404
-from ninja import NinjaAPI
-from ninja import Field, ModelSchema
-import os
 import ipaddress
-from .models import Card, Game, GameLog, GamePlayer, GamePlayerImpendingWithEnergy, Presence, Spirit
+import os
+
+from django.shortcuts import get_object_or_404
+from ninja import Field, ModelSchema, NinjaAPI
+
+from .models import (
+    Card,
+    Game,
+    GameLog,
+    GamePlayer,
+    GamePlayerImpendingWithEnergy,
+    Presence,
+    Spirit,
+)
 
 api = NinjaAPI()
 
 class SpiritSchema(ModelSchema):
     class Meta:
         model = Spirit
-        fields = ['id', 'name']
+        fields = ('id', 'name')
 
 class CardSchema(ModelSchema):
     class Meta:
         model = Card
-        fields = ['id', 'name']
+        fields = ('id', 'name')
 
 class ImpendingSchema(ModelSchema):
     card: CardSchema
     class Meta:
         model = GamePlayerImpendingWithEnergy
-        fields = ['energy', 'in_play', 'this_turn']
+        fields = ('energy', 'in_play', 'this_turn')
 
 class PresenceSchema(ModelSchema):
     class Meta:
         model = Presence
-        fields = ['opacity', 'energy', 'elements']
+        fields = ('opacity', 'energy', 'elements')
 
 class GamePlayerSchema(ModelSchema):
     spirit: SpiritSchema
-    hand: list[CardSchema] = []
-    discard: list[CardSchema] = []
-    play: list[CardSchema] = []
-    selection: list[CardSchema] = []
-    days: list[CardSchema] = []
-    scenario: list[CardSchema] = []
-    healing: list[CardSchema] = []
+    hand: list[CardSchema] = [] #noqa: RUF012
+    discard: list[CardSchema] = [] #noqa: RUF012
+    play: list[CardSchema] = [] #noqa: RUF012
+    selection: list[CardSchema] = [] #noqa: RUF012
+    days: list[CardSchema] = [] #noqa: RUF012
+    scenario: list[CardSchema] = [] #noqa: RUF012
+    healing: list[CardSchema] = [] #noqa: RUF012
     impending: list[ImpendingSchema] = Field([], alias="gameplayerimpendingwithenergy_set")
     presence: list[PresenceSchema] = Field([], alias="presence_set")
     class Meta:
         model = GamePlayer
-        fields = [
+        fields = (
                 'name', 'color', 'aspect',
                 'ready', 'paid_this_turn', 'gained_this_turn',
                 'energy', 'last_unready_energy', 'last_ready_energy',
@@ -49,27 +58,27 @@ class GamePlayerSchema(ModelSchema):
                 'temporary_sun', 'temporary_moon', 'temporary_fire', 'temporary_air', 'temporary_water', 'temporary_earth', 'temporary_plant', 'temporary_animal',
                 'permanent_sun', 'permanent_moon', 'permanent_fire', 'permanent_air', 'permanent_water', 'permanent_earth', 'permanent_plant', 'permanent_animal',
                 'spirit_specific_resource', 'spirit_specific_per_turn_flags',
-                ]
+                )
 
 class GameSchema(ModelSchema):
     class Meta:
         model = Game
-        fields = ['id', 'name', 'discord_channel', 'scenario']
+        fields = ('id', 'name', 'discord_channel', 'scenario')
 
 class GameDetailSchema(ModelSchema):
     players: list[GamePlayerSchema] = Field([], alias="gameplayer_set")
-    minor_deck: list[CardSchema] = []
-    major_deck: list[CardSchema] = []
-    discard_pile: list[CardSchema] = []
+    minor_deck: list[CardSchema] = [] #noqa: RUF012
+    major_deck: list[CardSchema] = [] #noqa: RUF012
+    discard_pile: list[CardSchema] = [] #noqa: RUF012
     class Meta:
         model = Game
         # we've not exported the screenshots, because it's not obvious how we would do it.
-        fields = ['id', 'name', 'discord_channel', 'scenario', 'always_suffix_screenshot']
+        fields = ('id', 'name', 'discord_channel', 'scenario', 'always_suffix_screenshot')
 
 class GameLogSchema(ModelSchema):
     class Meta:
         model = GameLog
-        fields = ['id', 'date', 'text', 'spoiler_text', 'images']
+        fields = ('id', 'date', 'text', 'spoiler_text', 'images')
 
 class InvalidIP(Exception):
     pass

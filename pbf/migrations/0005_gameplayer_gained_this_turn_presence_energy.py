@@ -5,11 +5,11 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0004_alter_card_options_gameplayer_paid_this_turn_and_more'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='gameplayer',
             name='gained_this_turn',
@@ -20,4 +20,4 @@ class Migration(migrations.Migration):
             name='energy',
             field=models.CharField(blank=True, max_length=10),
         ),
-    ]
+    )

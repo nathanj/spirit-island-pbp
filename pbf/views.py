@@ -1,17 +1,27 @@
-import json
 import itertools
-import random
+import json
 import os
-
+import random
 from collections.abc import Iterable
+from typing import TYPE_CHECKING, Any, overload
+
 from django.conf import settings
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from typing import Any, TYPE_CHECKING, overload
+from frozendict import frozendict
 
-from .models import Card, Elements, Game, GameLog, GamePlayer, GamePlayerImpendingWithEnergy, Presence, Spirit
+from .models import (
+    Card,
+    Elements,
+    Game,
+    GameLog,
+    GamePlayer,
+    GamePlayerImpendingWithEnergy,
+    Presence,
+    Spirit,
+)
 
 if TYPE_CHECKING:
     from .models import Card_ManyRelatedManager
@@ -33,7 +43,7 @@ def set_ipc_method(method: str) -> None:
             try:
                 # for type-checking, this code path is statically checked regardless of IPC_METHOD,
                 # and we don't want to force type-checking to install redis
-                import redis #type: ignore[import-not-found]
+                import redis  #type: ignore[import-not-found]
             except ImportError as e:
                 e.add_note("If you want to use Redis to relay log messages to Discord, add `--group redis` to your `uv run` command.")
                 e.add_note("If you just want to develop the site (not running in production) and don't need to send messages to Discord, see .env.template for instructions on running in debug mode")
@@ -129,12 +139,12 @@ def send_log(log: GameLog) -> None:
 class GameForm(ModelForm): #type: ignore[type-arg]
     class Meta:
         model = Game
-        fields = ['screenshot']
+        fields = ('screenshot', )
 
 class GameForm2(ModelForm): #type: ignore[type-arg]
     class Meta:
         model = Game
-        fields = ['screenshot2']
+        fields = ('screenshot2', )
 
 def with_log_trigger(response: HttpResponse) -> HttpResponse:
     response['HX-Trigger'] = 'newLog'
@@ -299,15 +309,15 @@ def toggle_deck_mod(request: HttpRequest, game_id: str, mod: str) -> HttpRespons
 
 # Note that both spirit and aspect are used in this lookup,
 # so e.g. specifying "River" here will only affect base River.
-spirit_setup_energy = {
+spirit_setup_energy = frozendict({
         'River - Sunshine': 1,
         'Keeper - Spreading Hostility': 1,
         'Bringer - Violence': 1,
         'Vigil': 1,
         'Waters': 4,
-        }
+})
 
-spirit_presence = {
+spirit_presence = frozendict({
         'Bringer': ((452,155,1.0,'','Air'), (522,155,1.0,'3'), (592,155,1.0,'','Moon'), (662,155,1.0,'4'), (732,155,1.0), (802,155,1.0,'5'),
             (452,255,1.0), (522,255,1.0), (592,255,1.0), (662,255,1.0), (732,255,1.0)),
         'Downpour': ((434,205,1.0,'','Water'), (506,205,1.0,'','Plant'), (578,205,1.0,'','Water'), (650,205,1.0,'2','Air'), (720,205,1.0,'','Water'), (790,205,1.0,'','Earth'), (860,205,1.0,'','Water,Water'),
@@ -437,9 +447,9 @@ spirit_presence = {
                 # hoard treasure
                 (13,1146,1.0), (83,1146,1.0), (153,1146,1.0), (223,1146,1.0), (293,1146,1.0), (363,1146,1.0), (433,1146,1.0), (503,1146,1.0), (573,1146,1.0), (643,1146,1.0), (713,1146,1.0), (783,1146,1.0), (853,1146,1.0),
                 ),
-        }
+})
 
-spirit_additional_cards = {
+spirit_additional_cards = frozendict({
     'Dark FireShadows': ['Unquenchable Flames'],
     'NourishingEarth': ['Voracious Growth'],
     'SparkingLightning': ['Smite the Land with Fulmination'],
@@ -447,9 +457,9 @@ spirit_additional_cards = {
     'ViolenceBringer': ['Bats Scout for Raids by Darkness'],
     'WarriorThunderspeaker': ['Call to Bloodshed'],
     'LocusSerpent': ['Pull Beneath the Hungry Earth'],
-    }
+})
 
-spirit_remove_cards = {
+spirit_remove_cards = frozendict({
     'NourishingEarth': ['A Year of Perfect Stillness'],
     'SparkingLightning': ['Raging Storm'],
     'TanglesGreen': ['Gift of Proliferation'],
@@ -457,7 +467,7 @@ spirit_remove_cards = {
     'WarriorThunderspeaker': ['Manifestation of Power and Glory'],
     'LocusSerpent': ['Elemental Aegis'],
     'SunshineRiver': ['Boon of Vigor'],
-    }
+})
 
 def add_player(request: HttpRequest, game_id: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
@@ -532,7 +542,7 @@ def import_game(request: HttpRequest) -> HttpResponse:
     # but it doesn't seem to hurt to be permissive here.
 
     if isinstance(request.FILES['json'], list):
-        raise ValueError("multiple files unsupported")
+        raise TypeError("multiple files unsupported")
     to_import = json.load(request.FILES['json'])
     game = Game(
             name=to_import.get('name', 'Untitled Imported Game'),
@@ -617,7 +627,7 @@ def import_game(request: HttpRequest) -> HttpResponse:
             # opacity is respected if present, otherwise defaulted to the starting state
             if import_presence and 'opacity' in import_presence:
                 opacity = import_presence['opacity']
-            elif gp.aspect == 'Locus' and expected_elements == 'Fire':
+            elif gp.aspect == 'Locus' and expected_elements == 'Fire': #noqa: B023
                 opacity = 0.0
 
             if import_presence:
@@ -630,7 +640,7 @@ def import_game(request: HttpRequest) -> HttpResponse:
                 if import_presence.get('elements', '') != expected_elements:
                     raise ValueError(f"presence at {left}, {top} should have {expected_elements} elements but had {import_presence.get('elements')}")
 
-            return Presence(game_player=gp, left=left, top=top, opacity=opacity, energy=expected_energy, elements=expected_elements)
+            return Presence(game_player=gp, left=left, top=top, opacity=opacity, energy=expected_energy, elements=expected_elements) #noqa: B023
 
         gp.presence_set.bulk_create(presence_from_import_or_spec(import_presence, *spec) for (spec, import_presence) in zip(spirit_presence[spirit_name], itertools.chain(player.get('presence', []), itertools.repeat(None))))
 
@@ -690,7 +700,7 @@ def view_game(request: HttpRequest, game_id: str, spirit_spec: str | None = None
 
             file = request.FILES[key]
             if isinstance(file, list):
-                raise ValueError("multiple files in the same field unsupported")
+                raise TypeError("multiple files in the same field unsupported")
 
             # Some hosts always use the same filename for their uploads.
             # Django's behaviour is to try to use that filename,
@@ -783,7 +793,7 @@ def draw_cards(request: HttpRequest, game_id: str) -> HttpResponse:
 
 def cards_from_deck(game: Game, cards_needed: int, type: str) -> list[Card]:
     if type == 'minor':
-        deck: 'Card_ManyRelatedManager[Any]' = game.minor_deck
+        deck: Card_ManyRelatedManager[Any] = game.minor_deck
     elif type == 'major':
         deck = game.major_deck
     else:
@@ -1083,7 +1093,7 @@ def create_days(request: HttpRequest, player_id: int, num: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     game = player.game
 
-    decks: list[tuple['Card_ManyRelatedManager[Any]', str]] = [(game.minor_deck, 'minor'), (game.major_deck, 'major')]
+    decks: list[tuple[Card_ManyRelatedManager[Any], str]] = [(game.minor_deck, 'minor'), (game.major_deck, 'major')]
     for (deck, name) in decks:
         days = random.sample(list(deck.all()), num)
         deck.remove(*days)
@@ -1123,7 +1133,7 @@ def setup_discard_pile(request: HttpRequest, game_id: str, type: str) -> HttpRes
 def move_card_from_deck(card_id: int, game: Game, dst: 'Card_ManyRelatedManager[Any]') -> tuple[Card, 'Card_ManyRelatedManager[Any] | None']:
     card = get_object_or_404(Card, pk=card_id)
     if card.type == Card.MINOR:
-        deck: 'Card_ManyRelatedManager[Any]' = game.minor_deck
+        deck: Card_ManyRelatedManager[Any] = game.minor_deck
     elif card.type == Card.MAJOR:
         deck = game.major_deck
     else:

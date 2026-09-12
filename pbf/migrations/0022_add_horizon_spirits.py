@@ -2,6 +2,7 @@
 
 from django.db import migrations
 
+
 def load_horizon(apps, schema_editor):
     Spirit = apps.get_model("pbf", "Spirit")
     Card = apps.get_model("pbf", "Card")
@@ -52,11 +53,11 @@ def delete_horizon(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0021_alter_game_discord_channel'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(load_horizon, delete_horizon),
-    ]
+    )
 

@@ -5,11 +5,11 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0026_auto_20230707_1348'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='gameplayer',
             name='healing',
@@ -20,4 +20,4 @@ class Migration(migrations.Migration):
             name='type',
             field=models.IntegerField(choices=[(0, 'Minor'), (1, 'Major'), (2, 'Unique'), (3, 'Special')]),
         ),
-    ]
+    )

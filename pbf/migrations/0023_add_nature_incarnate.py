@@ -2,6 +2,7 @@
 
 from django.db import migrations
 
+
 def load_ni(apps, schema_editor):
     Spirit = apps.get_model("pbf", "Spirit")
     Card = apps.get_model("pbf", "Card")
@@ -105,10 +106,10 @@ def delete_ni(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0022_add_horizon_spirits'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(load_ni, delete_ni),
-    ]
+    )

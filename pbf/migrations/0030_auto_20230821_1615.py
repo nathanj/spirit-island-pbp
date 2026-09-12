@@ -2,6 +2,7 @@
 
 from django.db import migrations
 
+
 def fix_swalled(apps, schema_editor):
     Card = apps.get_model("pbf", "Card")
     card = Card.objects.get(name="Swalled by the Endless Dark")
@@ -13,10 +14,10 @@ def noop(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0029_auto_20230711_1545'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(fix_swalled, noop),
-    ]
+    )

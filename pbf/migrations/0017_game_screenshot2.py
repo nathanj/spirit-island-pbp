@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0016_game_created_at'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='game',
             name='screenshot2',
             field=models.ImageField(blank=True, upload_to='screenshot'),
         ),
-    ]
+    )

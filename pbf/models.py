@@ -1,14 +1,16 @@
 import functools
 import os
 import uuid
-from enum import Enum
 from collections import Counter, defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, NamedTuple
 
 from django.core import checks
 from django.db import models
+from frozendict import frozendict
+
 
 def chunk(str: str, n: int) -> Iterable[str]:
     return [str[i:i+n] for i in range(0, len(str), n)]
@@ -55,7 +57,7 @@ class Elements(Enum):
         if c == 'N': return Elements.Animal
         return None
 
-class Threshold():
+class Threshold:
     def __init__(self, x: int, y: int, achieved: bool) -> None:
         self.x = x
         self.y = y
@@ -80,7 +82,7 @@ class Spirit(models.Model):
     # If a future expansion adds an aspect that modifies an energy gain track,
     # the code that looks up from this dictionary needs to be modified,
     # so that it can include aspect in its lookup.
-    base_energy_per_turn = {
+    base_energy_per_turn = frozendict({
             'Bringer': 2,
             'Downpour': 1,
             'Earth': 2,
@@ -120,7 +122,7 @@ class Spirit(models.Model):
             'Waters': 0,
             'Rot': 2,
             'Covets': 0,
-            }
+    })
 
     def __str__(self) -> str:
         return self.name
@@ -578,24 +580,23 @@ class GamePlayer(models.Model):
         return f'pbf/aspect-{self.aspect.replace(" ", "_").lower()}.jpg'
 
     def aspect_left(self) -> int:
-        if self.aspect == 'Immense':
-            return 650
-        elif self.aspect == 'Pandemonium':
-            return 370
-        elif self.aspect == 'Sunshine':
-            return 700
-        else:
-            return 0
+        match self.aspect:
+            case 'Immense':
+                return 650
+            case 'Pandemonium':
+                return 370
+            case 'Sunshine':
+                return 700
+            case _:
+                return 0
+
 
     def aspect_top(self) -> int:
-        if self.aspect == 'Immense':
-            return 360
-        elif self.aspect == 'Pandemonium':
-            return 360
-        elif self.aspect == 'Sunshine':
-            return 360
-        else:
-            return 400
+        match self.aspect:
+            case 'Immense' | 'Pandemonium' | 'Sunshine':
+                return 360
+            case _:
+                return 400
 
     def disk_url(self) -> str:
         return 'pbf/disk_' + self.color + '.png'

@@ -1,11 +1,12 @@
 from django.db import migrations, models
 
-class Migration(migrations.Migration):
-    dependencies = [
-        ("pbf", "0041_card_speed"),
-    ]
 
-    operations = [
+class Migration(migrations.Migration):
+    dependencies = (
+        ("pbf", "0041_card_speed"),
+    )
+
+    operations = (
         migrations.AlterField(
             model_name="gameplayer",
             name="color",
@@ -26,4 +27,4 @@ class Migration(migrations.Migration):
                 max_length=255,
             ),
         ),
-    ]
+    )

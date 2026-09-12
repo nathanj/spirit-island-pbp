@@ -5,11 +5,11 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0017_game_screenshot2'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='gameplayer',
             name='permanent_air',
@@ -55,4 +55,4 @@ class Migration(migrations.Migration):
             name='discord_channel',
             field=models.CharField(blank=True, choices=[('957389286834057306', '#pbp1-updates'), ('883019769937268816', '#pbp2-updates'), ('1022258668428865586', '#pbp3-updates'), ('1010285070680072192', '#pbp-allspirit-updates'), ('703767917854195733', '#bot-testing')], default='', max_length=255),
         ),
-    ]
+    )

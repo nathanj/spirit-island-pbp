@@ -1,5 +1,6 @@
 from django.db import migrations
 
+
 def retroactively_label_covets_v11(apps, schema_editor):
     Spirit = apps.get_model('pbf', 'Spirit')
     Presence = apps.get_model('pbf', 'Presence')
@@ -61,13 +62,13 @@ def covets_rm_v13_uniques(apps, schema_editor):
         Card.objects.get(name=name).delete()
 
 class Migration(migrations.Migration):
-    dependencies = [
+    dependencies = (
         ('pbf', '0055_gameplayer_bargain_cost_and_paid'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(retroactively_label_covets_v11, migrations.RunPython.noop),
         migrations.RunPython(label_covets_v121, unlabel_covets_v121),
         migrations.RunPython(covets_uniques_v121_rename, covets_uniques_v121_unrename),
         migrations.RunPython(covets_add_v13_uniques, covets_rm_v13_uniques),
-    ]
+    )

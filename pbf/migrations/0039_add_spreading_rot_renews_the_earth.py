@@ -1,5 +1,6 @@
 from django.db import migrations
 
+
 def load_spreading_rot(apps, schema_editor):
     Spirit = apps.get_model("pbf", "Spirit")
     Card = apps.get_model("pbf", "Card")
@@ -18,10 +19,10 @@ def delete_spreading_rot(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0038_gameplayer_spirit_specific_per_turn_flag'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(load_spreading_rot, delete_spreading_rot),
-    ]
+    )

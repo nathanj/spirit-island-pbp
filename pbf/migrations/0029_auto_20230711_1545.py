@@ -2,6 +2,7 @@
 
 from django.db import migrations
 
+
 def load_ni(apps, schema_editor):
     Card = apps.get_model("pbf", "Card")
     Card(name="Belligerent and Aggressive Crops", cost=1, type=3, elements="Sun,Fire,Plant").save()
@@ -25,10 +26,10 @@ def delete_ni(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0028_auto_20230707_1440'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(load_ni, delete_ni),
-    ]
+    )

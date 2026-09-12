@@ -1,16 +1,20 @@
-import os
-import sys
-import discord
-import requests
 import asyncio
 import datetime
 import json
-import structlog
+import os
 import re
-from dotenv import load_dotenv
+import sys
+from collections.abc import Callable, Iterable
 from itertools import takewhile
+from typing import Any, NotRequired, TypedDict, TypeVar, Unpack
+
+import discord
+import requests
+import structlog
+from dotenv import load_dotenv
+from frozendict import frozendict
 from PIL import Image
-from typing import Any, Callable, Iterable, NotRequired, TypeVar, TypedDict, Unpack
+
 
 # Someone not in the role assigner role tried to assign/unassign a role
 class NotRoleAssigner(Exception):
@@ -60,10 +64,10 @@ spirit_names = (
 'Whirlwind',
 'Wildfire',
 )
-spirit_disambig = {
+spirit_disambig = frozendict({
     'Earth': 'Vital.*Earth', # just "Earth" is ambiguous (Earthquakes)
     'Stone': 'Stones?(Unyielding|.*Defiance)', # just "Stone" is ambiguous (Rising Heat of Stone and Sand)
-}
+})
 
 resolved_spirit_emoji: dict[str, discord.Emoji] = {}
 energy_to_discord_map: dict[str, str] = {}
@@ -148,7 +152,7 @@ match os.getenv('IPC_METHOD', 'redis'):
     case 'redis':
         # for type-checking, this code path is statically checked regardless of IPC_METHOD,
         # and we don't want to force type-checking to install redis
-        import redis.asyncio as redis #type: ignore[import-not-found]
+        import redis.asyncio as redis  #type: ignore[import-not-found]
 
         REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
         REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
@@ -210,7 +214,8 @@ type AnyDiscordChannel = discord.TextChannel | discord.StageChannel | discord.Vo
 async def link_channel_to_game(after: AnyDiscordChannel, guid: str) -> bool:
     LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
     try:
-        r = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}')
+        # TODO: this lint is a valid concern; should probably switch to an async http library to fix it
+        r = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}') #noqa: ASYNC210
     except Exception as e:
         await after.send(f"Couldn't link the channel to the game ({type(e).__name__}). The bot owner needs to check the logs for the site API and/or bot")
         raise
@@ -260,7 +265,7 @@ async def on_message(message: discord.Message) -> None:
     if message.content.startswith('$help'):
         LOG.msg('$help called')
         if 'role' in message.content:
-            text = "\n".join((
+            text = "\n".join(( #noqa: FLY002
                 "Players can be specified by either @mentioning them or replying to a message that does.",
                 "The role is auto-detected from the PBP channel, or you can explicitly @mention a role if using the commands outside of a PBP channel",
                 "### Example 1",
@@ -278,14 +283,14 @@ async def on_message(message: discord.Message) -> None:
             await message.channel.send(text)
             return
         elif 'admin' in message.content:
-            text = "\n".join((
+            text = "\n".join(( #noqa: FLY002
                 "`$createrole N` to create the role N-pbp",
                 "`$host/$unhost` to add/remove hosts (hosts can can add/remove players to/from PBP roles)",
                 "(aliases $addhost, $dehost, $rmhost, $removehost)",
             ))
             await message.channel.send(text)
             return
-        text = "\n".join((
+        text = "\n".join(( #noqa: FLY002
             "[Github link](<https://github.com/nathanj/spirit-island-pbp>)",
             "",
             "Use `$topic (new topic)` to set the channel topic (set an update channel's topic to a game link to start sending updates to that channel)",
@@ -721,9 +726,9 @@ def load_emojis(emojis: Iterable[discord.Emoji]) -> None:
         if len(possible_match) == 1:
             resolved_spirit_emoji[spirit] = possible_match[0]
         elif possible_match:
-            LOG.warn(f'too many possible emoji for {spirit}, please disambiguate between {possible_match}')
+            LOG.warning(f'too many possible emoji for {spirit}, please disambiguate between {possible_match}')
         else:
-            LOG.warn(f'missing emoji for {spirit}')
+            LOG.warning(f'missing emoji for {spirit}')
 
 def adjust_msg(msg: str) -> str:
     if len(words := msg.split()) > 1:
@@ -767,7 +772,7 @@ class GameLogEntry(TypedDict):
 async def relay_game(channel_id: int, log: Iterable[GameLogEntry]) -> None:
     channel = client.get_channel(channel_id)
     if not isinstance(channel, discord.abc.Messageable):
-        LOG.warn(f"channel {channel_id} is {type(channel).__name__}, not sendable")
+        LOG.warning(f"channel {channel_id} is {type(channel).__name__}, not sendable")
         return
 
     combined_text: list[str] = []
@@ -785,7 +790,7 @@ async def relay_game(channel_id: int, log: Iterable[GameLogEntry]) -> None:
                     file_to_send = 'out.jpg'
                 else:
                     file_to_send = filenames[0]
-                if 'spoiler' in entry.keys():
+                if 'spoiler' in entry:
                     await channel.send(msg, file=discord.File(file_to_send, spoiler=entry['spoiler']))
                 else:
                     await channel.send(msg, file=discord.File(file_to_send))
@@ -846,14 +851,18 @@ async def logger() -> None:
             load_emojis(guild.emojis)
             correct_guild = True
     if not correct_guild:
-        LOG.warn("Not in the correct guild! Won't be able to use any spirit emojis!")
+        LOG.warning("Not in the correct guild! Won't be able to use any spirit emojis!")
 
     T = TypeVar('T')
     def enqueue(channel_id: int, raw: T, parse: Callable[[T], GameLogEntry]) -> None:
         if channel_id in game_log_buffer:
-            game_log_buffer[channel_id]['timestamp'] = datetime.datetime.now()
+            # ignoring DTZ005 because our usage is:
+            # * internal (entirely contained in bot.py)
+            # * relative (we don't care about absolute times, only that a certain amount of time has passed)
+            # therefore, we do not care to create timezone-aware datetime objects.
+            game_log_buffer[channel_id]['timestamp'] = datetime.datetime.now() #noqa: DTZ005
         else:
-            game_log_buffer[channel_id] = {'timestamp': datetime.datetime.now(), 'logs': []}
+            game_log_buffer[channel_id] = {'timestamp': datetime.datetime.now(), 'logs': []} #noqa: DTZ005
 
         if last_message.get(channel_id) == raw:
             LOG.msg('drop duplicate message')
@@ -864,7 +873,7 @@ async def logger() -> None:
     async def dequeue() -> None:
         keys = list(game_log_buffer.keys())
         for channel_id in keys:
-            if game_log_buffer[channel_id]['timestamp'] + datetime.timedelta(seconds=20) < datetime.datetime.now():
+            if game_log_buffer[channel_id]['timestamp'] + datetime.timedelta(seconds=20) < datetime.datetime.now(): #noqa: DTZ005
                 LOG.msg('sending', channel_id=channel_id)
                 logs = game_log_buffer[channel_id]['logs']
                 del game_log_buffer[channel_id]
@@ -876,7 +885,7 @@ async def logger() -> None:
         if os.path.exists(SOCKET_PATH):
             os.remove(SOCKET_PATH)
         LOG.msg("trying to create", socket_path=SOCKET_PATH)
-        transport, protocol = await loop.create_datagram_endpoint(
+        _transport, protocol = await loop.create_datagram_endpoint(
             lambda: SIDatagramProtocol(enqueue),
             local_addr=SOCKET_PATH,
             family=socket.AF_UNIX,
@@ -888,8 +897,8 @@ async def logger() -> None:
                 with protocol.msgbuflock:
                     await dequeue()
                 await asyncio.sleep(1)
-            except Exception as ex:
-                LOG.exception(ex)
+            except Exception:
+                LOG.exception("exception while dequeueing (socket)")
 
     else:
         redis_obj = await redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}", decode_responses=True)
@@ -908,10 +917,10 @@ async def logger() -> None:
                     await dequeue()
 
                     await asyncio.sleep(1)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 LOG.msg('timeout')
-            except Exception as ex:
-                LOG.exception(ex)
+            except Exception:
+                LOG.exception("exception while dequeueing (Redis)")
 
 if __name__ == '__main__':
     #combine_images(["./pbf/static/pbf/settle_into_huntinggrounds.jpg","./pbf/static/pbf/flocking_redtalons.jpg","./pbf/static/pbf/vigor_of_the_breaking_dawn.jpg","./pbf/static/pbf/vengeance_of_the_dead.jpg"])

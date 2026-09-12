@@ -1,5 +1,7 @@
 from django.core.management.base import BaseCommand
+
 from pbf.models import GamePlayer
+
 
 class Command(BaseCommand):
     help = 'set Fractured Days spirit-specific resource to number of Time discs they have'

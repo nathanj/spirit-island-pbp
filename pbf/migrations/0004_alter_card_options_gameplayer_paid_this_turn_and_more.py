@@ -5,11 +5,11 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0003_gameplayer_aspect'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AlterModelOptions(
             name='card',
             options={'ordering': ('name',)},
@@ -24,4 +24,4 @@ class Migration(migrations.Migration):
             name='aspect',
             field=models.CharField(blank=True, default=None, max_length=255, null=True),
         ),
-    ]
+    )

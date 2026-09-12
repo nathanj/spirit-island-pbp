@@ -1,5 +1,6 @@
 from django.db import migrations
 
+
 def covets_uniques_v13_rename(apps, schema_editor):
     Card = apps.get_model('pbf', 'Card')
 
@@ -33,11 +34,11 @@ def covets_rm_v14_uniques(apps, schema_editor):
         Card.objects.get(name=name).delete()
 
 class Migration(migrations.Migration):
-    dependencies = [
+    dependencies = (
         ('pbf', '0060_remove_gameplayer_base_energy_per_turn'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(covets_uniques_v13_rename, covets_uniques_v13_unrename),
         migrations.RunPython(covets_add_v14_uniques, covets_rm_v14_uniques),
-    ]
+    )

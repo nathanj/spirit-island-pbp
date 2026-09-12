@@ -2,6 +2,7 @@
 
 from django.db import migrations
 
+
 def fix_boon(apps, schema_editor):
     Card = apps.get_model("pbf", "Card")
     card = Card.objects.get(name="Boon of Corrupted Blood")
@@ -13,10 +14,10 @@ def noop(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0027_gameplayer_healing_alter_card_type'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(fix_boon, noop),
-    ]
+    )

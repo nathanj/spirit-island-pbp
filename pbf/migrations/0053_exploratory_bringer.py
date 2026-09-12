@@ -1,5 +1,6 @@
 from django.db import migrations
 
+
 def convert_exploratory_bringer(apps, schema_editor):
     GamePlayer = apps.get_model('pbf', 'GamePlayer')
     Spirit = apps.get_model('pbf', 'Spirit')
@@ -18,9 +19,9 @@ def delete_exploratory_bringer(apps, schema_editor):
 
     if GamePlayer.objects.filter(spirit__name='Exploratory Bringer').exists():
         # this should not happen, because the migration runs convert_exploratory_bringer first.
-        raise Exception("Someone is using Exploratory Bringer")
+        raise AssertionError("Someone is using Exploratory Bringer")
     if cards := Card.objects.filter(spirit__name='Exploratory Bringer').values_list('name', flat=True):
-        raise Exception(f"Exploratory Bringer should not own any cards: {list(cards)}")
+        raise AssertionError(f"Exploratory Bringer should not own any cards: {list(cards)}")
 
     try:
         Spirit.objects.get(name='Exploratory Bringer').delete()
@@ -32,12 +33,12 @@ def add_exploratory_bringer(apps, schema_editor):
     Spirit(name='Exploratory Bringer').save()
 
 class Migration(migrations.Migration):
-    dependencies = [
+    dependencies = (
         ('pbf', '0052_alter_game_screenshot_upload_to_func'),
-    ]
+    )
 
-    operations = [
+    operations = (
             migrations.RunPython(convert_exploratory_bringer, migrations.RunPython.noop),
             #migrations.RunPython(delete_exploratory_bringer, add_exploratory_bringer),
             migrations.RunPython(delete_exploratory_bringer, migrations.RunPython.noop),
-    ]
+    )

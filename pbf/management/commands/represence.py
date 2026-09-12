@@ -1,6 +1,8 @@
 from django.core.management.base import BaseCommand
-from pbf.models import GamePlayer, Presence
+
 import pbf.views
+from pbf.models import GamePlayer, Presence
+
 
 class Command(BaseCommand):
     help = 'Recreates the presence for the player, based on their spirit. Intended only for use when testing changes to presence positions; not intended to be available via web'
@@ -36,9 +38,8 @@ class Command(BaseCommand):
                     if new_presences[k] != current_presences[k]:
                         print(f"change presence {k}: {current_presences[k]} -> {new_presences[k]}")
                         change += 1
-                    pass
                 else:
-                    raise Exception("impossible for it to be in neither")
+                    raise AssertionError("impossible for it to be in neither")
 
             print(f"{playerid}: add {add}, change {change}, delete {delete}")
 

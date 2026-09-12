@@ -5,11 +5,11 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0005_gameplayer_gained_this_turn_presence_energy'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='presence',
             name='elements',
@@ -20,4 +20,4 @@ class Migration(migrations.Migration):
             name='energy',
             field=models.CharField(blank=True, max_length=255),
         ),
-    ]
+    )

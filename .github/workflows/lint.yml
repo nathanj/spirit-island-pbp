@@ -25,4 +25,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install ruff
       # E701: multiple statements on one line
-      - run: ruff check --ignore E701
+      # PLW1508: Invalid type for environment variable default
+      #   we routinely have things like int(os.getenv('PORT', 1234))
+      #   and it's wasteful to use '1234' instead of 1234
+      - run: ruff check --ignore E701,PLW1508

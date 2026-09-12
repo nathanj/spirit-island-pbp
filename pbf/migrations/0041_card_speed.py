@@ -1,10 +1,11 @@
-from django.db import models, migrations
+from django.db import migrations, models
+
 
 def set_speeds(apps, schema_editor):
     Card = apps.get_model("pbf", "Card")
 
-    fast_lower = set(name.lower() for name in FAST_CARDS)
-    slow_lower = set(name.lower() for name in SLOW_CARDS)
+    fast_lower = {name.lower() for name in FAST_CARDS}
+    slow_lower = {name.lower() for name in SLOW_CARDS}
 
     for card in Card.objects.all():
         if card.name.lower() in fast_lower:
@@ -14,7 +15,7 @@ def set_speeds(apps, schema_editor):
             card.speed = 2
             card.save()
         elif card.name not in ('Roiling Waters', 'Serene Waters', 'Waters Renew', 'Waters Taste of Ruin'):
-            raise Exception(f"Don't know what speed to assign to {card.name}")
+            raise ValueError(f"Don't know what speed to assign to {card.name}")
 
 FAST_CARDS = (
     "A Dreadful Tide of Scurrying Flesh",
@@ -366,11 +367,11 @@ SLOW_CARDS = (
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0040_game_scenario'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='card',
             name='speed',
@@ -386,4 +387,4 @@ class Migration(migrations.Migration):
             # remove the temporary default
             field=models.IntegerField(choices=[(0, 'Unknown'), (1, 'Fast'), (2, 'Slow')]),
         ),
-    ]
+    )

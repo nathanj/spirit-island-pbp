@@ -2,6 +2,7 @@
 
 from django.db import migrations
 
+
 def add_waters_cards(apps, schema_editor):
     Card = apps.get_model("pbf", "Card")
     Card(name="Waters Renew", cost=0, type=3).save()
@@ -18,10 +19,10 @@ def delete_waters_cards(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0025_fix_costs'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(add_waters_cards, delete_waters_cards),
-    ]
+    )

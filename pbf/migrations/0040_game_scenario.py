@@ -1,15 +1,16 @@
-from django.db import models, migrations
+from django.db import migrations, models
+
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0039_add_spreading_rot_renews_the_earth'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='game',
             name='scenario',
             field=models.CharField(blank=True, max_length=255),
         ),
-    ]
+    )

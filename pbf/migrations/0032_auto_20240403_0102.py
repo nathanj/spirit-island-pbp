@@ -16,10 +16,10 @@ def delete_ni(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0031_auto_20230904_1351'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(load_ni, delete_ni),
-    ]
+    )

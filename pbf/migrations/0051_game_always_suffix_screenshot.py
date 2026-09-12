@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0050_gameplayer_last_ready_energy_and_last_unready_energy'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='game',
             name='always_suffix_screenshot',
             field=models.BooleanField(default=False),
         ),
-    ]
+    )

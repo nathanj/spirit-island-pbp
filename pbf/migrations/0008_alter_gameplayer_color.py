@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0007_gameplayer_starting_energy'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AlterField(
             model_name='gameplayer',
             name='color',
             field=models.CharField(blank=True, choices=[('blue', 'blue'), ('green', 'green'), ('orange', 'orange'), ('purple', 'purple'), ('red', 'red'), ('yellow', 'yellow')], max_length=255),
         ),
-    ]
+    )

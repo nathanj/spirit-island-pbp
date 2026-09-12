@@ -5,10 +5,10 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0032_auto_20240403_0102'),
         ('pbf', '0033_alter_gameplayer_color'),
-    ]
+    )
 
-    operations = [
-    ]
+    operations = (
+    )

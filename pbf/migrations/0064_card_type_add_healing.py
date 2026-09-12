@@ -21,15 +21,15 @@ def rev(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0063_reclassify_uniques'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AlterField(
             model_name='card',
             name='type',
             field=models.IntegerField(choices=[(0, 'Minor'), (1, 'Major'), (2, 'Unique'), (3, 'Special'), (4, 'Healing')]),
         ),
         migrations.RunPython(fwd, rev),
-    ]
+    )

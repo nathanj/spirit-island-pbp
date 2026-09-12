@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0002_gamelog_images'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='gameplayer',
             name='aspect',
             field=models.CharField(default=None, max_length=255, null=True),
         ),
-    ]
+    )

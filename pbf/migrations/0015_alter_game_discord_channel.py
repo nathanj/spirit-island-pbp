@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0014_alter_game_discord_channel'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AlterField(
             model_name='game',
             name='discord_channel',
             field=models.CharField(blank=True, choices=[('957389286834057306', '#pbp1-updates'), ('883019769937268816', '#pbp2-updates'), ('1010285070680072192', '#pbp-allspirit-updates'), ('703767917854195733', '#bot-testing')], default='', max_length=255),
         ),
-    ]
+    )
