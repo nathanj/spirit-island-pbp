@@ -134,21 +134,16 @@ class Card(models.Model):
     class Meta:
         ordering = ('name', )
 
-    MINOR = 0
-    MAJOR = 1
-    UNIQUE = 2
-    RETIRED = 3
-    HEALING = 4
-
     name = models.CharField(max_length=255, blank=False)
-    TYPES = (
-        (MINOR, 'Minor'),
-        (MAJOR, 'Major'),
-        (UNIQUE, 'Unique'),
-        (RETIRED, 'Retired'),
-        (HEALING, 'Healing'),
-    )
-    type = models.IntegerField(choices=TYPES)
+
+    class Type(IntEnum):
+        MINOR = 0
+        MAJOR = 1
+        UNIQUE = 2
+        RETIRED = 3
+        HEALING = 4
+    type = models.IntegerField(choices=((t.value, t.name.capitalize()) for t in Type))
+
     spirit = models.ForeignKey(Spirit, blank=True, null=True, on_delete=models.CASCADE)
     cost = models.IntegerField()
     elements = models.CharField(max_length=255, blank=False)
@@ -193,15 +188,15 @@ class Card(models.Model):
         if executor.migration_plan(executor.loader.graph.leaf_nodes()):
             return errors
 
-        not_healing = cls.objects.exclude(type=cls.HEALING)
+        not_healing = cls.objects.exclude(type=cls.Type.HEALING)
 
         unknown_speed = not_healing.exclude(speed__in=(cls.Speed.FAST, cls.Speed.SLOW))
         errors.extend(checks.Warning('unknown speed', obj=card) for card in unknown_speed)
 
-        non_uniques_with_spirit = cls.objects.filter(type__in=(cls.MAJOR, cls.MINOR)).exclude(spirit=None)
+        non_uniques_with_spirit = cls.objects.filter(type__in=(cls.Type.MAJOR, cls.Type.MINOR)).exclude(spirit=None)
         errors.extend(checks.Warning("has a spirit but shouldn't", obj=card) for card in non_uniques_with_spirit)
 
-        uniques_without_spirit = cls.objects.filter(type=cls.UNIQUE, spirit=None).exclude(name__in=('Belligerent and Aggressive Crops', 'Smite the Land with Fulmination'))
+        uniques_without_spirit = cls.objects.filter(type=cls.Type.UNIQUE, spirit=None).exclude(name__in=('Belligerent and Aggressive Crops', 'Smite the Land with Fulmination'))
         errors.extend(checks.Warning("doesn't have a spirit but should", obj=card) for card in uniques_without_spirit)
 
         no_elements = not_healing.filter(elements='').exclude(name__in=('Elemental Boon', "Gift of Nature's Connection", 'Draw Towards a Consuming Void'))
@@ -218,7 +213,7 @@ class Card(models.Model):
         return self.name
 
     def can_return_to_deck(self) -> bool:
-        return self.type in (self.MINOR, self.MAJOR)
+        return self.type in (self.Type.MINOR, self.Type.MAJOR)
 
     def url(self) -> str:
         return 'pbf/' + self.name.replace(",", '').replace("-", '').replace("'", '').replace(' ', '_').lower() + '.jpg'
@@ -796,7 +791,7 @@ class GamePlayer(models.Model):
         num_healing = None
         healing_markers = None
         for card in sel:
-            if card.type == Card.HEALING:
+            if card.type == Card.Type.HEALING:
                 if num_healing is None:
                     num_healing = self.healing.count()
                 if healing_markers is None:
