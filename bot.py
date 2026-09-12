@@ -723,9 +723,9 @@ def load_emojis(emojis: Iterable[discord.Emoji]) -> None:
         if len(possible_match) == 1:
             resolved_spirit_emoji[spirit] = possible_match[0]
         elif possible_match:
-            LOG.warn(f'too many possible emoji for {spirit}, please disambiguate between {possible_match}')
+            LOG.warning(f'too many possible emoji for {spirit}, please disambiguate between {possible_match}')
         else:
-            LOG.warn(f'missing emoji for {spirit}')
+            LOG.warning(f'missing emoji for {spirit}')
 
 def adjust_msg(msg: str) -> str:
     if len(words := msg.split()) > 1:
@@ -769,7 +769,7 @@ class GameLogEntry(TypedDict):
 async def relay_game(channel_id: int, log: Iterable[GameLogEntry]) -> None:
     channel = client.get_channel(channel_id)
     if not isinstance(channel, discord.abc.Messageable):
-        LOG.warn(f"channel {channel_id} is {type(channel).__name__}, not sendable")
+        LOG.warning(f"channel {channel_id} is {type(channel).__name__}, not sendable")
         return
 
     combined_text: list[str] = []
@@ -848,7 +848,7 @@ async def logger() -> None:
             load_emojis(guild.emojis)
             correct_guild = True
     if not correct_guild:
-        LOG.warn("Not in the correct guild! Won't be able to use any spirit emojis!")
+        LOG.warning("Not in the correct guild! Won't be able to use any spirit emojis!")
 
     T = TypeVar('T')
     def enqueue(channel_id: int, raw: T, parse: Callable[[T], GameLogEntry]) -> None:
