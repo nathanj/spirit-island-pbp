@@ -263,7 +263,7 @@ async def on_message(message: discord.Message) -> None:
     if message.content.startswith('$help'):
         LOG.msg('$help called')
         if 'role' in message.content:
-            text = "\n".join((
+            text = "\n".join(( #noqa: FLY002
                 "Players can be specified by either @mentioning them or replying to a message that does.",
                 "The role is auto-detected from the PBP channel, or you can explicitly @mention a role if using the commands outside of a PBP channel",
                 "### Example 1",
@@ -281,14 +281,14 @@ async def on_message(message: discord.Message) -> None:
             await message.channel.send(text)
             return
         elif 'admin' in message.content:
-            text = "\n".join((
+            text = "\n".join(( #noqa: FLY002
                 "`$createrole N` to create the role N-pbp",
                 "`$host/$unhost` to add/remove hosts (hosts can can add/remove players to/from PBP roles)",
                 "(aliases $addhost, $dehost, $rmhost, $removehost)",
             ))
             await message.channel.send(text)
             return
-        text = "\n".join((
+        text = "\n".join(( #noqa: FLY002
             "[Github link](<https://github.com/nathanj/spirit-island-pbp>)",
             "",
             "Use `$topic (new topic)` to set the channel topic (set an update channel's topic to a game link to start sending updates to that channel)",
