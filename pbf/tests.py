@@ -412,7 +412,7 @@ class TestMatchSpirit(TestCase):
         return (game, game.gameplayer_set.values_list('id', flat=True))
 
     def test_no_match(self):
-        (game, ids) = self.setup_game(['River'])
+        (game, _) = self.setup_game(['River'])
         self.assertEqual(self.try_match_spirit(game, 'hello'), None)
 
     def test_cardinal_1(self):
@@ -442,9 +442,9 @@ class TestMatchSpirit(TestCase):
         self.assertEqual(self.try_match_spirit(game, 'River'), ids[0])
 
     def test_base_is_preferred(self):
-        (game, ids) = self.setup_game([('River', 'Haven'), 'River'])
+        (game, _) = self.setup_game([('River', 'Haven'), 'River'])
         self.assertEqual(GamePlayer.objects.get(id=self.try_match_spirit(game, 'River')).aspect, None)
-        (game, ids) = self.setup_game(['River', ('River', 'Haven')])
+        (game, _) = self.setup_game(['River', ('River', 'Haven')])
         self.assertEqual(GamePlayer.objects.get(id=self.try_match_spirit(game, 'River')).aspect, None)
 
     def test_name(self):
@@ -452,7 +452,7 @@ class TestMatchSpirit(TestCase):
         self.assertEqual(self.try_match_spirit(game, 'myname'), ids[0])
 
     def test_spirit_beats_name(self):
-        (game, ids) = self.setup_game([('River', None), ('Lightning', None, 'River')])
+        (game, _) = self.setup_game([('River', None), ('Lightning', None, 'River')])
         self.assertEqual(GamePlayer.objects.get(id=self.try_match_spirit(game, 'River')).spirit.name, 'River')
 
     def test_partial_name(self):
@@ -460,9 +460,9 @@ class TestMatchSpirit(TestCase):
         self.assertEqual(self.try_match_spirit(game, 'name'), ids[0])
 
     def test_exact_name_beats_partial_name(self):
-        (game, ids) = self.setup_game([('River', None, 'name1'), ('Lightning', None, 'name')])
+        (game, _) = self.setup_game([('River', None, 'name1'), ('Lightning', None, 'name')])
         self.assertEqual(GamePlayer.objects.get(id=self.try_match_spirit(game, 'name')).name, 'name')
-        (game, ids) = self.setup_game([('River', None, 'name'), ('Lightning', None, 'name1')])
+        (game, _) = self.setup_game([('River', None, 'name'), ('Lightning', None, 'name1')])
         self.assertEqual(GamePlayer.objects.get(id=self.try_match_spirit(game, 'name')).name, 'name')
 
 class TestReshuffleOrNot(TestCase):
@@ -845,24 +845,24 @@ class TestHealing(TestCase):
         return (client, game, player)
 
     def test_gain(self):
-        client, game, player = self.setup_game()
+        client, _, player = self.setup_game()
         client.get(f"/game/{player.id}/gain_healing")
         self.assertEqual(['Roiling Waters', 'Serene Waters', 'Waters Renew', 'Waters Taste of Ruin'], list(player.selection.values_list('name', flat=True)))
 
     def test_choose_1(self):
-        client, game, player = self.setup_game(['Roiling Waters'])
+        _, _, player = self.setup_game(['Roiling Waters'])
         self.assertEqual(list(player.healing.values_list('name', flat=True)), ['Roiling Waters'])
 
     def test_choose_2(self):
-        client, game, player = self.setup_game(['Roiling Waters', 'Waters Taste of Ruin'])
+        _, _, player = self.setup_game(['Roiling Waters', 'Waters Taste of Ruin'])
         self.assertEqual(list(player.healing.values_list('name', flat=True)), ['Roiling Waters', 'Waters Taste of Ruin'])
 
     def test_change_1(self):
-        client, game, player = self.setup_game(['Roiling Waters', 'Serene Waters'])
+        _, _, player = self.setup_game(['Roiling Waters', 'Serene Waters'])
         self.assertEqual(list(player.healing.values_list('name', flat=True)), ['Serene Waters'])
 
     def test_change_2(self):
-        client, game, player = self.setup_game(['Serene Waters', 'Waters Taste of Ruin', 'Waters Renew'])
+        _, _, player = self.setup_game(['Serene Waters', 'Waters Taste of Ruin', 'Waters Renew'])
         self.assertEqual(list(player.healing.values_list('name', flat=True)), ['Serene Waters', 'Waters Renew'])
 
 class TestDoubleGain(TestCase):
@@ -1481,7 +1481,7 @@ class TestScenario(TestCase):
         self.assertEqual(majors_before, game.major_deck.count())
 
     def test_gain_scenario(self):
-        client, game, player = self.setup_game()
+        client, _, player = self.setup_game()
 
         card1 = Card.objects.get(name='Call to Isolation')
         card2 = Card.objects.get(name='Call to Ferocity')
@@ -1850,7 +1850,7 @@ class TestCovetsGleamingShardsPlantTreasure(TestCase):
             self.assertIn(card, player.hand.all())
 
     def test_take_idempotent(self):
-        client, game, player = self.setup_players()
+        client, _, player = self.setup_players()
         player.spirit_specific_per_turn_flags |= GamePlayer.PLANT_TREASURE_THIS_TURN
         player.save()
         client.post(f"/game/{player.id}/create_plant_treasure")
