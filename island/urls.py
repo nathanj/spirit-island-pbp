@@ -16,7 +16,30 @@ class NegativeIntConverter:
     def to_url(self, value):
         return str(value)
 
+class CardTypeConverter:
+    from pbf.models import Card
+
+    # subclasses override; this one matches nothing
+    regex = r'$^'
+
+    def to_python(self, value):
+        return self.Card.Type[value.upper()]
+
+    def to_url(self, value):
+        if isinstance(value, str):
+            return value.lower()
+        return value.name.lower()
+
+class PowerCardTypeConverter(CardTypeConverter):
+    regex = r'(minor|major|unique)'
+
+class PowerCardDeckConverter(CardTypeConverter):
+    # the two types of power cards that have a deck
+    regex = r'(minor|major)'
+
 register_converter(NegativeIntConverter, 'negint')
+register_converter(PowerCardDeckConverter, 'power_card_deck')
+register_converter(PowerCardTypeConverter, 'power_card_type')
 
 urlpatterns = [
     path('', include('django_prometheus.urls')),
@@ -40,17 +63,19 @@ urlpatterns = [
     path('game/<str:game_id>/edit_players', views.edit_players, name='edit_players'),
     path('game/<str:game_id>/deck_mods', views.deck_mods, name='deck_mods'),
     path('game/<str:game_id>/deck_mod/<str:mod>', views.toggle_deck_mod, name='toggle_deck_mod'),
-    path('game/<str:game_id>/setup_deck_to_discard/<str:type>', views.setup_deck_to_discard, name='setup_deck_to_discard'),
+    # thus far, no scenario discards uniques, so power_card_deck over power_card_type
+    path('game/<str:game_id>/setup_deck_to_discard/<power_card_deck:type>', views.setup_deck_to_discard, name='setup_deck_to_discard'),
     path('game/<str:game_id>/setup_discard_card_game/<int:card_id>', views.setup_discard_card_game, name='setup_discard_card_game'),
-    path('game/<int:player_id>/gain/<str:type>/<int:num>', views.gain_power, name='gain_power'),
+    path('game/<int:player_id>/gain/<power_card_deck:type>/<int:num>', views.gain_power, name='gain_power'),
     path('game/<int:player_id>/gain_healing', views.gain_healing, name='gain_healing'),
-    path('game/<int:player_id>/take/<str:type>/<int:num>', views.take_powers, name='take_powers'),
-    path('game/<int:player_id>/take_play/<str:type>/<int:num>', views.take_play_powers, name='take_play_powers'),
+    path('game/<int:player_id>/take/<power_card_deck:type>/<int:num>', views.take_powers, name='take_powers'),
+    path('game/<int:player_id>/take_play/<power_card_deck:type>/<int:num>', views.take_play_powers, name='take_play_powers'),
     path('game/<int:player_id>/choose/<int:card_id>', views.choose_card, name='choose_card'),
     path('game/<int:player_id>/send_days/<int:card_id>', views.send_days, name='send_days'),
     path('game/<int:player_id>/choose_days/<int:card_id>', views.choose_days, name='choose_days'),
     path('game/<int:player_id>/create_days/<int:num>', views.create_days, name='create_days'),
-    path('game/<int:player_id>/setup_deck_to_player/<str:type>', views.setup_deck_to_player, name='setup_deck_to_player'),
+    # Second Wave may add uniques to players' scenario cards, so power_card_type over power_card_deck
+    path('game/<int:player_id>/setup_deck_to_player/<power_card_type:type>', views.setup_deck_to_player, name='setup_deck_to_player'),
     path('game/<int:player_id>/setup_discard_card_player/<int:card_id>', views.setup_discard_card_player, name='setup_discard_card_player'),
     path('game/<int:player_id>/add_to_scenario/<int:card_id>', views.add_to_scenario, name='add_to_scenario'),
     path('game/<int:player_id>/gain_scenario/<int:card_id>', views.gain_scenario, name='gain_scenario'),
