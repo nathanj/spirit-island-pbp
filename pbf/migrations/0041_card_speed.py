@@ -4,8 +4,8 @@ from django.db import migrations, models
 def set_speeds(apps, schema_editor):
     Card = apps.get_model("pbf", "Card")
 
-    fast_lower = set(name.lower() for name in FAST_CARDS)
-    slow_lower = set(name.lower() for name in SLOW_CARDS)
+    fast_lower = {name.lower() for name in FAST_CARDS}
+    slow_lower = {name.lower() for name in SLOW_CARDS}
 
     for card in Card.objects.all():
         if card.name.lower() in fast_lower:
