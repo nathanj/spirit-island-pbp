@@ -1,9 +1,18 @@
-from django.shortcuts import get_object_or_404
-from ninja import NinjaAPI
-from ninja import Field, ModelSchema
-import os
 import ipaddress
-from .models import Card, Game, GameLog, GamePlayer, GamePlayerImpendingWithEnergy, Presence, Spirit
+import os
+
+from django.shortcuts import get_object_or_404
+from ninja import Field, ModelSchema, NinjaAPI
+
+from .models import (
+    Card,
+    Game,
+    GameLog,
+    GamePlayer,
+    GamePlayerImpendingWithEnergy,
+    Presence,
+    Spirit,
+)
 
 api = NinjaAPI()
 

@@ -1,14 +1,15 @@
 import functools
 import os
 import uuid
-from enum import Enum
 from collections import Counter, defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, NamedTuple
 
 from django.core import checks
 from django.db import models
+
 
 def chunk(str: str, n: int) -> Iterable[str]:
     return [str[i:i+n] for i in range(0, len(str), n)]

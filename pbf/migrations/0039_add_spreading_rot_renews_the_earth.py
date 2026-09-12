@@ -1,5 +1,6 @@
 from django.db import migrations
 
+
 def load_spreading_rot(apps, schema_editor):
     Spirit = apps.get_model("pbf", "Spirit")
     Card = apps.get_model("pbf", "Card")

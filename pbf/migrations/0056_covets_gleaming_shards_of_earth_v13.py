@@ -1,5 +1,6 @@
 from django.db import migrations
 
+
 def retroactively_label_covets_v11(apps, schema_editor):
     Spirit = apps.get_model('pbf', 'Spirit')
     Presence = apps.get_model('pbf', 'Presence')

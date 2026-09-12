@@ -1,5 +1,6 @@
 from django.db import migrations
 
+
 def covets_121_remove_earth(apps, schema_editor):
     Card = apps.get_model('pbf', 'Card')
     card = Card.objects.get(name='Petition for Smoldering Wrath')

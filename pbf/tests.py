@@ -1,10 +1,12 @@
 import os
-from collections import Counter
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase
-from .models import Card, Elements, Game, GamePlayer, Spirit
 import sys
 import unittest
+from collections import Counter
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client, TestCase
+
+from .models import Card, Elements, Game, GamePlayer, Spirit
 
 os.environ['IPC_METHOD'] = 'delay_setup_for_testing'
 
@@ -2359,6 +2361,7 @@ class TestSocket(TestCase):
     def setUp(self):
         import socket
         import tempfile
+
         from .views import set_ipc_method
 
         self.socket_path = os.path.join(tempfile.gettempdir(), 'si.sock')

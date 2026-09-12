@@ -2,6 +2,7 @@
 
 from django.db import migrations
 
+
 def load_ni(apps, schema_editor):
     Card = apps.get_model("pbf", "Card")
     Card(name="Belligerent and Aggressive Crops", cost=1, type=3, elements="Sun,Fire,Plant").save()

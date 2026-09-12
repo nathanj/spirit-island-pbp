@@ -1,5 +1,6 @@
 from django.db import migrations
 
+
 def covets_uniques_v13_rename(apps, schema_editor):
     Card = apps.get_model('pbf', 'Card')
 

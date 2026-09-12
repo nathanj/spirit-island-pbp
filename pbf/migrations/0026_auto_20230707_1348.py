@@ -2,6 +2,7 @@
 
 from django.db import migrations
 
+
 def add_waters_cards(apps, schema_editor):
     Card = apps.get_model("pbf", "Card")
     Card(name="Waters Renew", cost=0, type=3).save()

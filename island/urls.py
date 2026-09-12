@@ -1,9 +1,11 @@
-from django.contrib import admin
-from django.urls import include, path, register_converter
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path, register_converter
+
 from pbf import views
 from pbf.api import api
+
 
 class NegativeIntConverter:
     regex = r'-?\d+'

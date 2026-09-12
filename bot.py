@@ -1,16 +1,18 @@
-import os
-import sys
-import discord
-import requests
 import asyncio
 import datetime
 import json
-import structlog
+import os
 import re
-from dotenv import load_dotenv
+import sys
 from itertools import takewhile
+from typing import Any, Callable, Iterable, NotRequired, TypedDict, TypeVar, Unpack
+
+import discord
+import requests
+import structlog
+from dotenv import load_dotenv
 from PIL import Image
-from typing import Any, Callable, Iterable, NotRequired, TypeVar, TypedDict, Unpack
+
 
 # Someone not in the role assigner role tried to assign/unassign a role
 class NotRoleAssigner(Exception):
@@ -148,7 +150,7 @@ match os.getenv('IPC_METHOD', 'redis'):
     case 'redis':
         # for type-checking, this code path is statically checked regardless of IPC_METHOD,
         # and we don't want to force type-checking to install redis
-        import redis.asyncio as redis #type: ignore[import-not-found]
+        import redis.asyncio as redis  #type: ignore[import-not-found]
 
         REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
         REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))

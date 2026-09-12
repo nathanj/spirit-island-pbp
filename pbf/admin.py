@@ -1,10 +1,13 @@
+from typing import Any
+
 from django.conf import settings
 from django.contrib import admin
 from django.db.models.fields.related import ManyToManyField
 from django.forms.models import ModelMultipleChoiceField
 from django.http import HttpRequest
-from typing import Any
+
 from .models import Card, Game, GamePlayer
+
 
 class CardAdmin(admin.ModelAdmin): #type: ignore[type-arg]
     def has_add_permission(self, request: HttpRequest) -> bool:

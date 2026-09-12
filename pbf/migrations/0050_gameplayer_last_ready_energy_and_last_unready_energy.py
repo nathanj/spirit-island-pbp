@@ -3,6 +3,7 @@
 from django.db import migrations, models
 from django.db.models import F
 
+
 def init_last_ready(apps, schema_editor):
     GamePlayer = apps.get_model('pbf', 'GamePlayer')
     # Decided not to set this.

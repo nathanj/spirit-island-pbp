@@ -1,5 +1,6 @@
 from django.db import migrations
 
+
 def darkfire_to_dark_fire(apps, schema_editor):
     GamePlayer = apps.get_model('pbf', 'GamePlayer')
     players = GamePlayer.objects.filter(spirit__name='Shadows', aspect='DarkFire')

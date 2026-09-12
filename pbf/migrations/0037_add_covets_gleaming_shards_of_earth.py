@@ -1,5 +1,6 @@
 from django.db import migrations
 
+
 def load_covets_gleaming_shards(apps, schema_editor):
     Spirit = apps.get_model("pbf", "Spirit")
     Card = apps.get_model("pbf", "Card")

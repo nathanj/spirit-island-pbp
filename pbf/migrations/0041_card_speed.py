@@ -1,4 +1,5 @@
-from django.db import models, migrations
+from django.db import migrations, models
+
 
 def set_speeds(apps, schema_editor):
     Card = apps.get_model("pbf", "Card")

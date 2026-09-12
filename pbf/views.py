@@ -1,17 +1,26 @@
-import json
 import itertools
-import random
+import json
 import os
-
+import random
 from collections.abc import Iterable
+from typing import TYPE_CHECKING, Any, overload
+
 from django.conf import settings
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from typing import Any, TYPE_CHECKING, overload
 
-from .models import Card, Elements, Game, GameLog, GamePlayer, GamePlayerImpendingWithEnergy, Presence, Spirit
+from .models import (
+    Card,
+    Elements,
+    Game,
+    GameLog,
+    GamePlayer,
+    GamePlayerImpendingWithEnergy,
+    Presence,
+    Spirit,
+)
 
 if TYPE_CHECKING:
     from .models import Card_ManyRelatedManager
@@ -33,7 +42,7 @@ def set_ipc_method(method: str) -> None:
             try:
                 # for type-checking, this code path is statically checked regardless of IPC_METHOD,
                 # and we don't want to force type-checking to install redis
-                import redis #type: ignore[import-not-found]
+                import redis  #type: ignore[import-not-found]
             except ImportError as e:
                 e.add_note("If you want to use Redis to relay log messages to Discord, add `--group redis` to your `uv run` command.")
                 e.add_note("If you just want to develop the site (not running in production) and don't need to send messages to Discord, see .env.template for instructions on running in debug mode")

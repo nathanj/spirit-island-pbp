@@ -1,5 +1,6 @@
 from django.db import migrations
 
+
 def convert_exploratory_bringer(apps, schema_editor):
     GamePlayer = apps.get_model('pbf', 'GamePlayer')
     Spirit = apps.get_model('pbf', 'Spirit')

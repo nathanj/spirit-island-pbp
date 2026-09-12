@@ -1,5 +1,6 @@
 from django.db import migrations
 
+
 def earthquake_presence_impending(apps, schema_editor):
     Presence = apps.get_model('pbf', 'Presence')
     presences = Presence.objects.filter(left=753, top=147, energy="", elements="", game_player__spirit__name="Earthquakes")

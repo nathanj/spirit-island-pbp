@@ -2,6 +2,7 @@
 
 from django.db import migrations
 
+
 def load_horizon(apps, schema_editor):
     Spirit = apps.get_model("pbf", "Spirit")
     Card = apps.get_model("pbf", "Card")

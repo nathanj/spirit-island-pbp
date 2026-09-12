@@ -2,6 +2,7 @@
 
 from django.db import migrations
 
+
 def fix_boon(apps, schema_editor):
     Card = apps.get_model("pbf", "Card")
     card = Card.objects.get(name="Boon of Corrupted Blood")
