@@ -1138,7 +1138,7 @@ class TestElements(TestCase):
         # but the error message for a mismatch is not great.
         #self.assertEqual(player.elements, expected_elements)
         self.assertEqual(len(player.elements), len(expected_elements))
-        for e in player.elements.keys():
+        for e in player.elements:
             self.assertEqual(player.elements[e], expected_elements[e])
 
     def test_no_elements(self):
