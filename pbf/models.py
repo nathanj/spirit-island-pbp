@@ -9,6 +9,7 @@ from typing import Any, NamedTuple
 
 from django.core import checks
 from django.db import models
+from frozendict import frozendict
 
 
 def chunk(str: str, n: int) -> Iterable[str]:
@@ -81,7 +82,7 @@ class Spirit(models.Model):
     # If a future expansion adds an aspect that modifies an energy gain track,
     # the code that looks up from this dictionary needs to be modified,
     # so that it can include aspect in its lookup.
-    base_energy_per_turn = {
+    base_energy_per_turn = frozendict({
             'Bringer': 2,
             'Downpour': 1,
             'Earth': 2,
@@ -121,7 +122,7 @@ class Spirit(models.Model):
             'Waters': 0,
             'Rot': 2,
             'Covets': 0,
-            }
+    })
 
     def __str__(self) -> str:
         return self.name

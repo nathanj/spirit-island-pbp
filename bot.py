@@ -12,6 +12,7 @@ import discord
 import requests
 import structlog
 from dotenv import load_dotenv
+from frozendict import frozendict
 from PIL import Image
 
 
@@ -63,10 +64,10 @@ spirit_names = (
 'Whirlwind',
 'Wildfire',
 )
-spirit_disambig = {
+spirit_disambig = frozendict({
     'Earth': 'Vital.*Earth', # just "Earth" is ambiguous (Earthquakes)
     'Stone': 'Stones?(Unyielding|.*Defiance)', # just "Stone" is ambiguous (Rising Heat of Stone and Sand)
-}
+})
 
 resolved_spirit_emoji: dict[str, discord.Emoji] = {}
 energy_to_discord_map: dict[str, str] = {}

@@ -10,6 +10,7 @@ from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from frozendict import frozendict
 
 from .models import (
     Card,
@@ -308,15 +309,15 @@ def toggle_deck_mod(request: HttpRequest, game_id: str, mod: str) -> HttpRespons
 
 # Note that both spirit and aspect are used in this lookup,
 # so e.g. specifying "River" here will only affect base River.
-spirit_setup_energy = {
+spirit_setup_energy = frozendict({
         'River - Sunshine': 1,
         'Keeper - Spreading Hostility': 1,
         'Bringer - Violence': 1,
         'Vigil': 1,
         'Waters': 4,
-        }
+})
 
-spirit_presence = {
+spirit_presence = frozendict({
         'Bringer': ((452,155,1.0,'','Air'), (522,155,1.0,'3'), (592,155,1.0,'','Moon'), (662,155,1.0,'4'), (732,155,1.0), (802,155,1.0,'5'),
             (452,255,1.0), (522,255,1.0), (592,255,1.0), (662,255,1.0), (732,255,1.0)),
         'Downpour': ((434,205,1.0,'','Water'), (506,205,1.0,'','Plant'), (578,205,1.0,'','Water'), (650,205,1.0,'2','Air'), (720,205,1.0,'','Water'), (790,205,1.0,'','Earth'), (860,205,1.0,'','Water,Water'),
@@ -446,9 +447,9 @@ spirit_presence = {
                 # hoard treasure
                 (13,1146,1.0), (83,1146,1.0), (153,1146,1.0), (223,1146,1.0), (293,1146,1.0), (363,1146,1.0), (433,1146,1.0), (503,1146,1.0), (573,1146,1.0), (643,1146,1.0), (713,1146,1.0), (783,1146,1.0), (853,1146,1.0),
                 ),
-        }
+})
 
-spirit_additional_cards = {
+spirit_additional_cards = frozendict({
     'Dark FireShadows': ['Unquenchable Flames'],
     'NourishingEarth': ['Voracious Growth'],
     'SparkingLightning': ['Smite the Land with Fulmination'],
@@ -456,9 +457,9 @@ spirit_additional_cards = {
     'ViolenceBringer': ['Bats Scout for Raids by Darkness'],
     'WarriorThunderspeaker': ['Call to Bloodshed'],
     'LocusSerpent': ['Pull Beneath the Hungry Earth'],
-    }
+})
 
-spirit_remove_cards = {
+spirit_remove_cards = frozendict({
     'NourishingEarth': ['A Year of Perfect Stillness'],
     'SparkingLightning': ['Raging Storm'],
     'TanglesGreen': ['Gift of Proliferation'],
@@ -466,7 +467,7 @@ spirit_remove_cards = {
     'WarriorThunderspeaker': ['Manifestation of Power and Glory'],
     'LocusSerpent': ['Elemental Aegis'],
     'SunshineRiver': ['Boon of Vigor'],
-    }
+})
 
 def add_player(request: HttpRequest, game_id: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
