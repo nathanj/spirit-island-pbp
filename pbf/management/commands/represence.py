@@ -38,7 +38,6 @@ class Command(BaseCommand):
                     if new_presences[k] != current_presences[k]:
                         print(f"change presence {k}: {current_presences[k]} -> {new_presences[k]}")
                         change += 1
-                    pass
                 else:
                     raise AssertionError("impossible for it to be in neither")
 
