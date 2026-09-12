@@ -890,8 +890,8 @@ async def logger() -> None:
                 with protocol.msgbuflock:
                     await dequeue()
                 await asyncio.sleep(1)
-            except Exception as ex:
-                LOG.exception(ex) #noqa: TRY401 (not valid for structlog)
+            except Exception:
+                LOG.exception("exception while dequeueing (socket)")
 
     else:
         redis_obj = await redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}", decode_responses=True)
@@ -912,8 +912,8 @@ async def logger() -> None:
                     await asyncio.sleep(1)
             except asyncio.TimeoutError:
                 LOG.msg('timeout')
-            except Exception as ex:
-                LOG.exception(ex) #noqa: TRY401 (not valid for structlog)
+            except Exception:
+                LOG.exception("exception while dequeueing (Redis)")
 
 if __name__ == '__main__':
     #combine_images(["./pbf/static/pbf/settle_into_huntinggrounds.jpg","./pbf/static/pbf/flocking_redtalons.jpg","./pbf/static/pbf/vigor_of_the_breaking_dawn.jpg","./pbf/static/pbf/vengeance_of_the_dead.jpg"])
