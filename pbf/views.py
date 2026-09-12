@@ -617,7 +617,7 @@ def import_game(request: HttpRequest) -> HttpResponse:
             # opacity is respected if present, otherwise defaulted to the starting state
             if import_presence and 'opacity' in import_presence:
                 opacity = import_presence['opacity']
-            elif gp.aspect == 'Locus' and expected_elements == 'Fire':
+            elif gp.aspect == 'Locus' and expected_elements == 'Fire': #noqa: B023
                 opacity = 0.0
 
             if import_presence:
@@ -630,7 +630,7 @@ def import_game(request: HttpRequest) -> HttpResponse:
                 if import_presence.get('elements', '') != expected_elements:
                     raise ValueError(f"presence at {left}, {top} should have {expected_elements} elements but had {import_presence.get('elements')}")
 
-            return Presence(game_player=gp, left=left, top=top, opacity=opacity, energy=expected_energy, elements=expected_elements)
+            return Presence(game_player=gp, left=left, top=top, opacity=opacity, energy=expected_energy, elements=expected_elements) #noqa: B023
 
         gp.presence_set.bulk_create(presence_from_import_or_spec(import_presence, *spec) for (spec, import_presence) in zip(spirit_presence[spirit_name], itertools.chain(player.get('presence', []), itertools.repeat(None))))
 
