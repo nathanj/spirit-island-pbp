@@ -4,7 +4,7 @@ import uuid
 from collections import Counter, defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, IntEnum
 from typing import Any, NamedTuple
 
 from django.core import checks
@@ -153,9 +153,11 @@ class Card(models.Model):
     cost = models.IntegerField()
     elements = models.CharField(max_length=255, blank=False)
 
-    FAST = 1
-    SLOW = 2
-    speed = models.IntegerField(choices=[(0, 'Unknown'), (FAST, 'Fast'), (SLOW, 'Slow')])
+    class Speed(IntEnum):
+        UNKNOWN = 0
+        FAST = 1
+        SLOW = 2
+    speed = models.IntegerField(choices=((t.value, t.name.capitalize()) for t in Speed))
 
     # A minor or major with exclude_from_deck is excluded by default.
     # But if it is added to a given Game by the host's choice,
@@ -193,7 +195,7 @@ class Card(models.Model):
 
         not_healing = cls.objects.exclude(type=cls.HEALING)
 
-        unknown_speed = not_healing.exclude(speed__in=(cls.FAST, cls.SLOW))
+        unknown_speed = not_healing.exclude(speed__in=(cls.Speed.FAST, cls.Speed.SLOW))
         errors.extend(checks.Warning('unknown speed', obj=card) for card in unknown_speed)
 
         non_uniques_with_spirit = cls.objects.filter(type__in=(cls.MAJOR, cls.MINOR)).exclude(spirit=None)
@@ -691,7 +693,7 @@ class GamePlayer(models.Model):
 
     def get_play_cost(self) -> int:
         blitz = self.game.scenario == 'Blitz'
-        return sum(card.cost - (1 if blitz and card.speed == Card.FAST else 0) for card in self.cards_in_play)
+        return sum(card.cost - (1 if blitz and card.speed == Card.Speed.FAST else 0) for card in self.cards_in_play)
 
     @property
     def remaining_bargain_cost(self) -> int:
@@ -876,7 +878,7 @@ class GamePlayerImpendingWithEnergy(models.Model):
 
     @property
     def cost_with_scenario(self) -> int:
-        return self.card.cost - (1 if self.card.speed == Card.FAST and self.gameplayer.game.scenario == 'Blitz' else 0)
+        return self.card.cost - (1 if self.card.speed == Card.Speed.FAST and self.gameplayer.game.scenario == 'Blitz' else 0)
 
 spirit_thresholds: frozendict[str, list[tuple[int, int, str | list[str]]]] = frozendict({
         'EnticingBringer': [
