@@ -40,7 +40,7 @@ class Command(BaseCommand):
                         change += 1
                     pass
                 else:
-                    raise Exception("impossible for it to be in neither")
+                    raise AssertionError("impossible for it to be in neither")
 
             print(f"{playerid}: add {add}, change {change}, delete {delete}")
 
