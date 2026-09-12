@@ -19,9 +19,9 @@ def delete_exploratory_bringer(apps, schema_editor):
 
     if GamePlayer.objects.filter(spirit__name='Exploratory Bringer').exists():
         # this should not happen, because the migration runs convert_exploratory_bringer first.
-        raise Exception("Someone is using Exploratory Bringer")
+        raise AssertionError("Someone is using Exploratory Bringer")
     if cards := Card.objects.filter(spirit__name='Exploratory Bringer').values_list('name', flat=True):
-        raise Exception(f"Exploratory Bringer should not own any cards: {list(cards)}")
+        raise AssertionError(f"Exploratory Bringer should not own any cards: {list(cards)}")
 
     try:
         Spirit.objects.get(name='Exploratory Bringer').delete()

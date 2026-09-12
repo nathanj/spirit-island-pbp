@@ -15,7 +15,7 @@ def set_speeds(apps, schema_editor):
             card.speed = 2
             card.save()
         elif card.name not in ('Roiling Waters', 'Serene Waters', 'Waters Renew', 'Waters Taste of Ruin'):
-            raise Exception(f"Don't know what speed to assign to {card.name}")
+            raise ValueError(f"Don't know what speed to assign to {card.name}")
 
 FAST_CARDS = (
     "A Dreadful Tide of Scurrying Flesh",
