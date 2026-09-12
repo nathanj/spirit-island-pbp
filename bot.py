@@ -910,7 +910,7 @@ async def logger() -> None:
                     await dequeue()
 
                     await asyncio.sleep(1)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 LOG.msg('timeout')
             except Exception:
                 LOG.exception("exception while dequeueing (Redis)")
