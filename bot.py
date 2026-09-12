@@ -213,7 +213,8 @@ type AnyDiscordChannel = discord.TextChannel | discord.StageChannel | discord.Vo
 async def link_channel_to_game(after: AnyDiscordChannel, guid: str) -> bool:
     LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
     try:
-        r = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}')
+        # TODO: this lint is a valid concern; should probably switch to an async http library to fix it
+        r = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}') #noqa: ASYNC210
     except Exception as e:
         await after.send(f"Couldn't link the channel to the game ({type(e).__name__}). The bot owner needs to check the logs for the site API and/or bot")
         raise
