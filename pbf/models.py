@@ -322,6 +322,15 @@ class Game(models.Model):
     def __str__(self) -> str:
         return str(self.id)
 
+    def deck(self, t: Card.Type) -> 'Card_ManyRelatedManager[Any]': #noqa: F821
+        match t:
+            case Card.Type.MINOR:
+                return self.minor_deck
+            case Card.Type.MAJOR:
+                return self.major_deck
+            case _:
+                raise ValueError(f"no such deck: {t.name}")
+
     def color_freq(self) -> Iterable[tuple[str, int, str]]:
         colors = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'pink', 'brown', 'white']
         player_colors = Counter(self.gameplayer_set.values_list('color', flat=True))

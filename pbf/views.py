@@ -671,7 +671,7 @@ def import_game(request: HttpRequest) -> HttpResponse:
                 cards_in_game.add(card.id)
 
     for (name, type) in (('minor_deck', Card.Type.MINOR), ('major_deck', Card.Type.MAJOR)):
-        deck = getattr(game, name)
+        deck = game.deck(type)
         if name in to_import:
             deck.set(cards_with_name(to_import[name]))
         else:
@@ -792,13 +792,7 @@ def draw_cards(request: HttpRequest, game_id: str) -> HttpResponse:
     return with_log_trigger(render(request, 'host_draw.html', {'msg': f"You {draw_result}{draw_result_explain}: {card_names}", 'cards': cards_drawn}))
 
 def cards_from_deck(game: Game, cards_needed: int, type: Card.Type) -> list[Card]:
-    if type == Card.Type.MINOR:
-        deck: Card_ManyRelatedManager[Any] = game.minor_deck
-    elif type == Card.Type.MAJOR:
-        deck = game.major_deck
-    else:
-        raise ValueError(f"can't draw from {type.name} deck")
-
+    deck = game.deck(type)
     cards_have = deck.count()
 
     if cards_have >= cards_needed:
@@ -821,16 +815,10 @@ def cards_from_deck(game: Game, cards_needed: int, type: Card.Type) -> list[Card
     return cards_drawn
 
 def reshuffle_discard(game: Game, type: Card.Type) -> None:
-    if type == Card.Type.MINOR:
-        minors = game.discard_pile.filter(type=Card.Type.MINOR).all()
-        game.discard_pile.remove(*minors)
-        game.minor_deck.add(*minors)
-    elif type == Card.Type.MAJOR:
-        majors = game.discard_pile.filter(type=Card.Type.MAJOR).all()
-        game.discard_pile.remove(*majors)
-        game.major_deck.add(*majors)
-    else:
-        raise ValueError(f"can't reshuffle {type.name} deck")
+    deck = game.deck(type)
+    discards_of_type = game.discard_pile.filter(type=type).all()
+    game.discard_pile.remove(*discards_of_type)
+    deck.add(*discards_of_type)
 
     add_log_msg(game, text=f'Re-shuffling {type.name.lower()} power deck')
 
@@ -943,14 +931,7 @@ def return_to_deck(request: HttpRequest, player_id: int, card_id: int) -> HttpRe
     player = get_object_or_404(GamePlayer, pk=player_id)
     game = player.game
     card = get_object_or_404(game.discard_pile, pk=card_id)
-
-    if card.type == Card.Type.MINOR:
-        game.minor_deck.add(card)
-    elif card.type == Card.Type.MAJOR:
-        game.major_deck.add(card)
-    else:
-        raise ValueError(f"Can't return {card}")
-
+    game.deck(Card.Type(card.type)).add(card)
     game.discard_pile.remove(card)
 
     add_log_msg(game, text=f'{card.name} returned to the deck')
@@ -1094,36 +1075,27 @@ def create_days(request: HttpRequest, player_id: int, num: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     game = player.game
 
-    decks: list[tuple[Card_ManyRelatedManager[Any], str]] = [(game.minor_deck, 'minor'), (game.major_deck, 'major')]
-    for (deck, name) in decks:
+    for card_type in (Card.Type.MINOR, Card.Type.MAJOR):
+        deck = game.deck(card_type)
         days = random.sample(list(deck.all()), num)
         deck.remove(*days)
         player.days.add(*days)
-        add_log_msg(player.game, player=player, text=f'starts with {num} {name} powers in the Days That Never Were', cards=days)
+        add_log_msg(player.game, player=player, text=f'starts with {num} {card_type.name.lower()} powers in the Days That Never Were', cards=days)
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
 def setup_deck_to_player(request: HttpRequest, player_id: int, type: Card.Type) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
-    if type == Card.Type.MINOR:
-        cards = player.game.minor_deck.all()
-    elif type == Card.Type.MAJOR:
-        cards = player.game.major_deck.all()
-    elif type == Card.Type.UNIQUE:
+    if type == Card.Type.UNIQUE:
         cards = Card.objects.filter(type=Card.Type.UNIQUE)
     else:
-        raise ValueError('invalid card type')
+        cards = player.game.deck(type).all()
 
     return render(request, 'power_deck_setup.html', {'name': type.name.capitalize(), 'player': player, 'owned': player.scenario.all(), 'deck': cards})
 
 def setup_deck_to_discard(request: HttpRequest, game_id: str, type: Card.Type) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
-    if type == Card.Type.MINOR:
-        cards = game.minor_deck.all()
-    elif type == Card.Type.MAJOR:
-        cards = game.major_deck.all()
-    else:
-        raise ValueError('invalid card type')
+    cards = game.deck(type).all()
 
     return render(request, 'power_deck_setup.html', {'name': type.name.capitalize(), 'game': game, 'owned': game.discard_pile.all(), 'deck': cards})
 
@@ -1133,13 +1105,10 @@ def setup_deck_to_discard(request: HttpRequest, game_id: str, type: Card.Type) -
 # if the card does not belong to a deck (unique), returns the card and None.
 def move_card_from_deck(card_id: int, game: Game, dst: 'Card_ManyRelatedManager[Any]') -> tuple[Card, 'Card_ManyRelatedManager[Any] | None']:
     card = get_object_or_404(Card, pk=card_id)
-    if card.type == Card.Type.MINOR:
-        deck: Card_ManyRelatedManager[Any] = game.minor_deck
-    elif card.type == Card.Type.MAJOR:
-        deck = game.major_deck
-    else:
+    if card.type == Card.Type.UNIQUE:
         return (card, None)
 
+    deck = game.deck(Card.Type(card.type))
     if deck.filter(id=card.id).exists():
         deck.remove(card)
         dst.add(card)
