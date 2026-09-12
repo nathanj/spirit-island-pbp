@@ -532,7 +532,7 @@ def import_game(request: HttpRequest) -> HttpResponse:
     # but it doesn't seem to hurt to be permissive here.
 
     if isinstance(request.FILES['json'], list):
-        raise ValueError("multiple files unsupported")
+        raise TypeError("multiple files unsupported")
     to_import = json.load(request.FILES['json'])
     game = Game(
             name=to_import.get('name', 'Untitled Imported Game'),
@@ -690,7 +690,7 @@ def view_game(request: HttpRequest, game_id: str, spirit_spec: str | None = None
 
             file = request.FILES[key]
             if isinstance(file, list):
-                raise ValueError("multiple files in the same field unsupported")
+                raise TypeError("multiple files in the same field unsupported")
 
             # Some hosts always use the same filename for their uploads.
             # Django's behaviour is to try to use that filename,
