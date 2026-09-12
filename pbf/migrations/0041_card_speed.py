@@ -367,11 +367,11 @@ SLOW_CARDS = (
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0040_game_scenario'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='card',
             name='speed',
@@ -387,4 +387,4 @@ class Migration(migrations.Migration):
             # remove the temporary default
             field=models.IntegerField(choices=[(0, 'Unknown'), (1, 'Fast'), (2, 'Slow')]),
         ),
-    ]
+    )

@@ -23,10 +23,10 @@ def unfix_cost(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0024_gameplayer_impending'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(fix_cost, unfix_cost),
-    ]
+    )

@@ -5,13 +5,13 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0008_alter_gameplayer_color'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RemoveField(
             model_name='gameplayer',
             name='notes',
         ),
-    ]
+    )

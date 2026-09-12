@@ -31,10 +31,10 @@ def rev(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0062_gameplayer_scenario'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(fwd, rev),
-    ]
+    )

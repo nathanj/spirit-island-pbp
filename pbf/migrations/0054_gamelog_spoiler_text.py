@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0053_exploratory_bringer'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='gamelog',
             name='spoiler_text',
             field=models.CharField(blank=True, max_length=255),
         ),
-    ]
+    )

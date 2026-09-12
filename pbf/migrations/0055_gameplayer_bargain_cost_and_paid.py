@@ -5,11 +5,11 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0054_gamelog_spoiler_text'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='gameplayer',
             name='bargain_cost_per_turn',
@@ -20,4 +20,4 @@ class Migration(migrations.Migration):
             name='bargain_paid_this_turn',
             field=models.IntegerField(default=0),
         ),
-    ]
+    )

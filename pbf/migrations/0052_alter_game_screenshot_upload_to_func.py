@@ -7,11 +7,11 @@ import pbf.models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0051_game_always_suffix_screenshot'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AlterField(
             model_name='game',
             name='screenshot',
@@ -22,4 +22,4 @@ class Migration(migrations.Migration):
             name='screenshot2',
             field=models.ImageField(blank=True, upload_to=pbf.models.Game.screenshot_with_suffix),
         ),
-    ]
+    )

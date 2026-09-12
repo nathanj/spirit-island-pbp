@@ -14,10 +14,10 @@ def covets_110_add_earth(apps, schema_editor):
     card.save()
 
 class Migration(migrations.Migration):
-    dependencies = [
+    dependencies = (
         ('pbf', '0042_gameplayer_color_white'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(covets_121_remove_earth, covets_110_add_earth),
-    ]
+    )

@@ -5,13 +5,13 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0059_vengeance_of_the_dead_exploratory'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RemoveField(
             model_name='gameplayer',
             name='base_energy_per_turn',
         ),
-    ]
+    )

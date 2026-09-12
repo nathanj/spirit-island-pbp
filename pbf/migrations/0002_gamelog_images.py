@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0001_initial'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='gamelog',
             name='images',
             field=models.CharField(blank=True, max_length=1024, null=True),
         ),
-    ]
+    )

@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0023_add_nature_incarnate'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='gameplayer',
             name='impending',
             field=models.ManyToManyField(blank=True, related_name='impending', to='pbf.Card'),
         ),
-    ]
+    )

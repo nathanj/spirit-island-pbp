@@ -33,12 +33,12 @@ def add_exploratory_bringer(apps, schema_editor):
     Spirit(name='Exploratory Bringer').save()
 
 class Migration(migrations.Migration):
-    dependencies = [
+    dependencies = (
         ('pbf', '0052_alter_game_screenshot_upload_to_func'),
-    ]
+    )
 
-    operations = [
+    operations = (
             migrations.RunPython(convert_exploratory_bringer, migrations.RunPython.noop),
             #migrations.RunPython(delete_exploratory_bringer, add_exploratory_bringer),
             migrations.RunPython(delete_exploratory_bringer, migrations.RunPython.noop),
-    ]
+    )

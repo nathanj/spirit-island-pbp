@@ -13,11 +13,11 @@ def migrate_impending(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0034_merge_20240425_1643'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.CreateModel(
             name='GamePlayerImpendingWithEnergy',
             fields=[
@@ -41,4 +41,4 @@ class Migration(migrations.Migration):
             model_name='gameplayer',
             name='impending',
         ),
-    ]
+    )

@@ -13,10 +13,10 @@ def delete_vengeance_of_the_dead_exploratory(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0058_card_exclude_from_deck'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(add_vengeance_of_the_dead_exploratory, delete_vengeance_of_the_dead_exploratory),
-    ]
+    )

@@ -14,10 +14,10 @@ def rename_memory_to_shifting(apps, schema_editor):
     rename_spirit(apps, 'Memory', 'Shifting')
 
 class Migration(migrations.Migration):
-    dependencies = [
+    dependencies = (
         ('pbf', '0056_covets_gleaming_shards_of_earth_v13'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(rename_shifting_to_memory, rename_memory_to_shifting),
-    ]
+    )

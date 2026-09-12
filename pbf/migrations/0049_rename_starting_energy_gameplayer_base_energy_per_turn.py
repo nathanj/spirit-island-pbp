@@ -5,14 +5,14 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0048_card_spirit_blank'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RenameField(
             model_name='gameplayer',
             old_name='starting_energy',
             new_name='base_energy_per_turn',
         ),
-    ]
+    )

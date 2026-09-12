@@ -14,10 +14,10 @@ def noop(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0027_gameplayer_healing_alter_card_type'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(fix_boon, noop),
-    ]
+    )

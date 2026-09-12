@@ -19,10 +19,10 @@ def delete_waters_cards(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0025_fix_costs'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(add_waters_cards, delete_waters_cards),
-    ]
+    )

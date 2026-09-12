@@ -15,10 +15,10 @@ def earthquake_presence_unimpend(apps, schema_editor):
     presences.update(energy="")
 
 class Migration(migrations.Migration):
-    dependencies = [
+    dependencies = (
         ('pbf', '0045_title_case'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(earthquake_presence_impending, earthquake_presence_unimpend),
-    ]
+    )

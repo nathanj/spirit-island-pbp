@@ -5,13 +5,13 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0009_remove_gameplayer_notes'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AlterModelOptions(
             name='gameplayer',
             options={'ordering': ('-id',)},
         ),
-    ]
+    )

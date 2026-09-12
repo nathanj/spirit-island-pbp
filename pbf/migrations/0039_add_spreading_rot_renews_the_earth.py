@@ -19,10 +19,10 @@ def delete_spreading_rot(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0038_gameplayer_spirit_specific_per_turn_flag'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(load_spreading_rot, delete_spreading_rot),
-    ]
+    )

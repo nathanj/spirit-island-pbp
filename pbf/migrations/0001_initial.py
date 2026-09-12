@@ -375,10 +375,10 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = (
+    )
 
-    operations = [
+    operations = (
         migrations.CreateModel(
             name='Card',
             fields=[
@@ -461,4 +461,4 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='pbf.spirit'),
         ),
         migrations.RunPython(load_initial_content, delete_initial_content),
-    ]
+    )

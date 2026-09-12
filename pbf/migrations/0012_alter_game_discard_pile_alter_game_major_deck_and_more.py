@@ -5,11 +5,11 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0011_game_discard_pile'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AlterField(
             model_name='game',
             name='discard_pile',
@@ -25,4 +25,4 @@ class Migration(migrations.Migration):
             name='minor_deck',
             field=models.ManyToManyField(blank=True, related_name='minor_deck', to='pbf.Card'),
         ),
-    ]
+    )

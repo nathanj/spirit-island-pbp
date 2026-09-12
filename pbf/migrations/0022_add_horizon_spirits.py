@@ -53,11 +53,11 @@ def delete_horizon(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0021_alter_game_discord_channel'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(load_horizon, delete_horizon),
-    ]
+    )
 

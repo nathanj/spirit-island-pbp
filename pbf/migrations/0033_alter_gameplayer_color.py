@@ -5,11 +5,11 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ("pbf", "0031_auto_20230904_1351"),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AlterField(
             model_name="gameplayer",
             name="color",
@@ -29,4 +29,4 @@ class Migration(migrations.Migration):
                 max_length=255,
             ),
         ),
-    ]
+    )

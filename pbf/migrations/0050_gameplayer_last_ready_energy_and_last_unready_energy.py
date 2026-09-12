@@ -13,11 +13,11 @@ def init_last_ready(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0049_rename_starting_energy_gameplayer_base_energy_per_turn'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='gameplayer',
             name='last_ready_energy',
@@ -29,4 +29,4 @@ class Migration(migrations.Migration):
             field=models.IntegerField(null=True),
         ),
         migrations.RunPython(init_last_ready, reverse_code=migrations.RunPython.noop),
-    ]
+    )

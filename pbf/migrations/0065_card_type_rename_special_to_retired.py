@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0064_card_type_add_healing'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AlterField(
             model_name='card',
             name='type',
             field=models.IntegerField(choices=[(0, 'Minor'), (1, 'Major'), (2, 'Unique'), (3, 'Retired'), (4, 'Healing')]),
         ),
-    ]
+    )

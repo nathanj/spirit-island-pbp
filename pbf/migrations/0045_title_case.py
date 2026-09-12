@@ -68,10 +68,10 @@ def untitlecase(apps, schema_editor):
         card.save()
 
 class Migration(migrations.Migration):
-    dependencies = [
+    dependencies = (
         ('pbf', '0044_dark_fire_shadows'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.RunPython(titlecase, untitlecase),
-    ]
+    )

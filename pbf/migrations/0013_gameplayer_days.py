@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0012_alter_game_discard_pile_alter_game_major_deck_and_more'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AddField(
             model_name='gameplayer',
             name='days',
             field=models.ManyToManyField(blank=True, related_name='days', to='pbf.Card'),
         ),
-    ]
+    )

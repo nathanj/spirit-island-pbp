@@ -6,14 +6,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
+    dependencies = (
         ('pbf', '0047_impending_this_turn'),
-    ]
+    )
 
-    operations = [
+    operations = (
         migrations.AlterField(
             model_name='card',
             name='spirit',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='pbf.spirit'),
         ),
-    ]
+    )
