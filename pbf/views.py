@@ -793,7 +793,7 @@ def draw_cards(request: HttpRequest, game_id: str) -> HttpResponse:
 
 def cards_from_deck(game: Game, cards_needed: int, type: str) -> list[Card]:
     if type == 'minor':
-        deck: 'Card_ManyRelatedManager[Any]' = game.minor_deck
+        deck: Card_ManyRelatedManager[Any] = game.minor_deck
     elif type == 'major':
         deck = game.major_deck
     else:
@@ -1093,7 +1093,7 @@ def create_days(request: HttpRequest, player_id: int, num: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     game = player.game
 
-    decks: list[tuple['Card_ManyRelatedManager[Any]', str]] = [(game.minor_deck, 'minor'), (game.major_deck, 'major')]
+    decks: list[tuple[Card_ManyRelatedManager[Any], str]] = [(game.minor_deck, 'minor'), (game.major_deck, 'major')]
     for (deck, name) in decks:
         days = random.sample(list(deck.all()), num)
         deck.remove(*days)
@@ -1133,7 +1133,7 @@ def setup_discard_pile(request: HttpRequest, game_id: str, type: str) -> HttpRes
 def move_card_from_deck(card_id: int, game: Game, dst: 'Card_ManyRelatedManager[Any]') -> tuple[Card, 'Card_ManyRelatedManager[Any] | None']:
     card = get_object_or_404(Card, pk=card_id)
     if card.type == Card.MINOR:
-        deck: 'Card_ManyRelatedManager[Any]' = game.minor_deck
+        deck: Card_ManyRelatedManager[Any] = game.minor_deck
     elif card.type == Card.MAJOR:
         deck = game.major_deck
     else:
