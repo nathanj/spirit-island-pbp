@@ -26,8 +26,8 @@ dev = ["django-debug-toolbar>=7.0.0"]
 # so we'll skip that to keep fewer dependencies.
 redis = ["redis>=5.2,<5.3"]
 bot = [
+    "aiohttp>=3.14.3",
     "discord.py>=2.5.0",
-    "requests>=2.0.0",
     "structlog>=25.1.0",
 ]
 typecheck = [
