@@ -1779,7 +1779,7 @@ class TestImpending(TestCase):
         player.game.scenario = 'Blitz'
         player.game.save()
 
-        cards = player.hand.filter(cost=3, speed=Card.FAST).values_list('id', flat=True)
+        cards = player.hand.filter(cost=3, speed=Card.Speed.FAST).values_list('id', flat=True)
 
         client.post(f"/game/{player.id}/impend/{cards[0]}")
         self.assert_impending_energy(player, [0])
@@ -1796,7 +1796,7 @@ class TestImpending(TestCase):
         player.game.scenario = 'Blitz'
         player.game.save()
 
-        cards = player.hand.filter(cost=2, speed=Card.SLOW).values_list('id', flat=True)
+        cards = player.hand.filter(cost=2, speed=Card.Speed.SLOW).values_list('id', flat=True)
 
         client.post(f"/game/{player.id}/impend/{cards[0]}")
         self.assert_impending_energy(player, [0])
