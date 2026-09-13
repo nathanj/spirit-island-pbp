@@ -8,8 +8,8 @@ from collections.abc import Callable, Iterable
 from itertools import takewhile
 from typing import Any, NotRequired, TypedDict, TypeVar, Unpack
 
+import aiohttp
 import discord
-import requests
 import structlog
 from dotenv import load_dotenv
 from frozendict import frozendict
@@ -213,17 +213,20 @@ type AnyDiscordChannel = discord.TextChannel | discord.StageChannel | discord.Vo
 
 async def link_channel_to_game(after: AnyDiscordChannel, guid: str) -> bool:
     LOG.msg(f'found guid: {guid}, linking to channel: {after.id}')
-    try:
-        # TODO: this lint is a valid concern; should probably switch to an async http library to fix it
-        r = requests.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}') #noqa: ASYNC210
-    except Exception as e:
-        await after.send(f"Couldn't link the channel to the game ({type(e).__name__}). The bot owner needs to check the logs for the site API and/or bot")
-        raise
-    LOG.msg(r)
-    if r.status_code == 200:
+    # TODO: we could try to keep this session across multiple requests,
+    # but it hasn't been necessary yet
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post(f'http://{DJANGO_HOST}:{DJANGO_PORT}/api/game/{guid}/link/{after.id}') as resp:
+                LOG.msg(resp)
+                status = resp.status
+        except Exception as e:
+            await after.send(f"Couldn't link the channel to the game ({type(e).__name__}). The bot owner needs to check the logs for the site API and/or bot")
+            raise
+    if status == 200:
         await after.send(f'Now relaying game log for {guid} to this channel. Good luck!')
         return True
-    await after.send(f"Couldn't link the channel to the game ({r.status_code}). The bot owner needs to check the logs for the site API and/or bot")
+    await after.send(f"Couldn't link the channel to the game ({status}). The bot owner needs to check the logs for the site API and/or bot")
     return False
 
 @client.event
