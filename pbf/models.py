@@ -361,7 +361,7 @@ class Game(models.Model):
         }
         return self.scenario in scenarios
 
-colors_to_circle_color_map = {
+colors_to_circle_color_map = frozendict({
         'blue': '#705dff',
         'green': '#0d9501',
         'orange': '#d15a01',
@@ -372,9 +372,9 @@ colors_to_circle_color_map = {
         'brown': '#cc9054',
         'pink': '#ed93e4',
         'white': '#eaeaeb',
-        }
+})
 
-colors_to_emoji_map = {
+colors_to_emoji_map = frozendict({
         'blue': '💙',
         'green': '💚',
         'orange': '🧡',
@@ -385,7 +385,7 @@ colors_to_emoji_map = {
         'brown': '🤎',
         'pink': '🩷',
         'white': '🤍',
-        }
+})
 
 # eight elements to fit in a 32-bit integer: each element can have four bits
 # (so can store values from 0 to 15 inclusive)
@@ -878,7 +878,7 @@ class GamePlayerImpendingWithEnergy(models.Model):
     def cost_with_scenario(self) -> int:
         return self.card.cost - (1 if self.card.speed == Card.FAST and self.gameplayer.game.scenario == 'Blitz' else 0)
 
-spirit_thresholds: dict[str, list[tuple[int, int, str | list[str]]]] = {
+spirit_thresholds: frozendict[str, list[tuple[int, int, str | list[str]]]] = frozendict({
         'EnticingBringer': [
             (360, 450, '2M2A'),
             (360, 515, '3M'),
@@ -1500,9 +1500,9 @@ spirit_thresholds: dict[str, list[tuple[int, int, str | list[str]]]] = {
             (667, 1081, '3S2E2N'),
             (667, 1110, '4S2E2N'),
             ],
-        }
+})
 
-card_thresholds = {
+card_thresholds = frozendict({
 # Unique
 "Blinding Glare": [ (40, 72, '5S') ],
 "Blooming of the Rocks and Trees": [ (40, 80, '3P') ],
@@ -1609,7 +1609,7 @@ card_thresholds = {
 "Solidify Echoes of Majesty Past": [ (30, 75, '2S2M2E') ],
 "Transformative Sacrifice": [ (30, 75, '2M3F2P') ],
 "Unearth a Beast of Wrathful Stone": [ (30, 73, '2M3E3N') ],
-}
+})
 
 
 class Presence(models.Model):
