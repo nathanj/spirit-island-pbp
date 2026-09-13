@@ -1103,7 +1103,7 @@ def create_days(request: HttpRequest, player_id: int, num: int) -> HttpResponse:
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def setup_deck(request: HttpRequest, player_id: int, type: str) -> HttpResponse:
+def setup_deck_to_player(request: HttpRequest, player_id: int, type: str) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     if type == 'minor':
         cards = player.game.minor_deck.all()
@@ -1116,7 +1116,7 @@ def setup_deck(request: HttpRequest, player_id: int, type: str) -> HttpResponse:
 
     return render(request, 'power_deck_setup.html', {'name': type.capitalize(), 'player': player, 'owned': player.scenario.all(), 'deck': cards})
 
-def setup_discard_pile(request: HttpRequest, game_id: str, type: str) -> HttpResponse:
+def setup_deck_to_discard(request: HttpRequest, game_id: str, type: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     if type == 'minor':
         cards = game.minor_deck.all()
