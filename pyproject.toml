@@ -3,21 +3,21 @@ name = "spirit-island"
 version = "0.1.0"
 description = ""
 authors = [{ name = "Nathan Jones", email = "nathanj439@gmail.com" }]
-requires-python = ">=3.12,<4"
+requires-python = ">=3.12"
 dependencies = [
-    "Django>=6.0.0,<7",
-    "django-cleanup>=9.0.0,<10",
+    "Django>=6.0.0",
+    "django-cleanup>=9.0.0",
     # Although the site never imports Pillow, ImageField requires it.
-    "Pillow>=12.0.0,<13",
-    "django-ninja>=1.0.0,<2",
-    "gunicorn>=26.0.0,<27",
-    "python-dotenv>=1.0.0,<2",
-    "django-prometheus>=2.2.0,<3",
+    "Pillow>=12.0.0",
+    "django-ninja>=1.0.0",
+    "gunicorn>=26.0.0",
+    "python-dotenv>=1.0.0",
+    "django-prometheus>=2.2.0",
     "frozendict>=2.4.7",
 ]
 
 [dependency-groups]
-dev = ["django-debug-toolbar>=7.0.0,<8"]
+dev = ["django-debug-toolbar>=7.0.0"]
 # 6.0.0 and above only officially supports Redis 7.2, 7.4, and 8.0.
 # We've unofficially observed that it will still work for older versions,
 # but need more data before being able to rely on this.
@@ -26,15 +26,13 @@ dev = ["django-debug-toolbar>=7.0.0,<8"]
 # so we'll skip that to keep fewer dependencies.
 redis = ["redis>=5.2,<5.3"]
 bot = [
-    "discord.py>=2.5.0,<3",
-    "requests>=2.0.0,<3",
-    # structlog uses calendar versioning,
-    # so any upper bound is unnecessarily restrictive
+    "discord.py>=2.5.0",
+    "requests>=2.0.0",
     "structlog>=25.1.0",
 ]
 typecheck = [
-    "mypy>=2.0.0,<3",
-    "django-stubs>=6.0.0,<7",
+    "mypy>=2.0.0",
+    "django-stubs>=6.0.0",
 ]
 
 [tool.uv]
