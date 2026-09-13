@@ -776,14 +776,14 @@ def try_match_spirit(game: Game, spirit_spec: str | None) -> int | None:
 def draw_cards(request: HttpRequest, game_id: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     cards_needed = int(request.POST['num_cards'])
-    type = request.POST['type']
+    type = Card.Type[request.POST['type'].upper()]
     if cards_needed <= 0:
         return render(request, 'host_draw.html', {'msg': f"Can't draw {cards_needed} cards"})
 
     cards_drawn = cards_from_deck(game, cards_needed, type)
     game.discard_pile.add(*cards_drawn)
 
-    draw_result = f"drew {len(cards_drawn)} {type} power card{'s' if len(cards_drawn) != 1 else ''}"
+    draw_result = f"drew {len(cards_drawn)} {type.name.lower()} power card{'s' if len(cards_drawn) != 1 else ''}"
     draw_result_explain = "" if len(cards_drawn) == cards_needed else f" (there were not enough cards to draw all {cards_needed})"
 
     add_log_msg(game, text=f'Host {draw_result}', cards=cards_drawn)
@@ -791,13 +791,13 @@ def draw_cards(request: HttpRequest, game_id: str) -> HttpResponse:
     card_names = ', '.join(card.name for card in cards_drawn)
     return with_log_trigger(render(request, 'host_draw.html', {'msg': f"You {draw_result}{draw_result_explain}: {card_names}", 'cards': cards_drawn}))
 
-def cards_from_deck(game: Game, cards_needed: int, type: str) -> list[Card]:
-    if type == 'minor':
+def cards_from_deck(game: Game, cards_needed: int, type: Card.Type) -> list[Card]:
+    if type == Card.Type.MINOR:
         deck: Card_ManyRelatedManager[Any] = game.minor_deck
-    elif type == 'major':
+    elif type == Card.Type.MAJOR:
         deck = game.major_deck
     else:
-        raise ValueError(f"can't draw from {type} deck")
+        raise ValueError(f"can't draw from {type.name} deck")
 
     cards_have = deck.count()
 
@@ -820,21 +820,21 @@ def cards_from_deck(game: Game, cards_needed: int, type: str) -> list[Card]:
 
     return cards_drawn
 
-def reshuffle_discard(game: Game, type: str) -> None:
-    if type == 'minor':
+def reshuffle_discard(game: Game, type: Card.Type) -> None:
+    if type == Card.Type.MINOR:
         minors = game.discard_pile.filter(type=Card.Type.MINOR).all()
         game.discard_pile.remove(*minors)
         game.minor_deck.add(*minors)
-    elif type == 'major':
+    elif type == Card.Type.MAJOR:
         majors = game.discard_pile.filter(type=Card.Type.MAJOR).all()
         game.discard_pile.remove(*majors)
         game.major_deck.add(*majors)
     else:
-        raise ValueError(f"can't reshuffle {type} deck")
+        raise ValueError(f"can't reshuffle {type.name} deck")
 
-    add_log_msg(game, text=f'Re-shuffling {type} power deck')
+    add_log_msg(game, text=f'Re-shuffling {type.name.lower()} power deck')
 
-def take_powers(request: HttpRequest, player_id: int, type: str, num: int) -> HttpResponse:
+def take_powers(request: HttpRequest, player_id: int, type: Card.Type, num: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     # most compliant browsers should send 'on', but we'll allow 'true' as well
     spoiler = request.GET.get('spoiler_power_gain', '') in ('on', 'true')
@@ -843,17 +843,17 @@ def take_powers(request: HttpRequest, player_id: int, type: str, num: int) -> Ht
     player.hand.add(*taken_cards)
 
     if num == 1:
-        add_log_msg(player.game, player=player, text=f'takes a {type} power', cards=taken_cards, spoiler=spoiler)
+        add_log_msg(player.game, player=player, text=f'takes a {type.name.lower()} power', cards=taken_cards, spoiler=spoiler)
     else:
-        if player.spirit.name == 'Covets' and player.aspect == 'v1.3' and type == 'major' and num == 3:
+        if player.spirit.name == 'Covets' and player.aspect == 'v1.3' and type == Card.Type.MAJOR and num == 3:
             # This is the Plant Treasure that can only be used once, so unset the flag.
             player.spirit_specific_per_turn_flags &= ~GamePlayer.PLANT_TREASURE_THIS_TURN
             player.save(update_fields=['spirit_specific_per_turn_flags'])
-        add_log_msg(player.game, player=player, text=f'takes {num} {type} powers', cards=taken_cards, spoiler=spoiler)
+        add_log_msg(player.game, player=player, text=f'takes {num} {type.name.lower()} powers', cards=taken_cards, spoiler=spoiler)
 
     return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
 
-def take_play_powers(request: HttpRequest, player_id: int, type: str, num: int) -> HttpResponse:
+def take_play_powers(request: HttpRequest, player_id: int, type: Card.Type, num: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     # most compliant browsers should send 'on', but we'll allow 'true' as well
     spoiler = request.GET.get('spoiler_power_gain', '') in ('on', 'true')
@@ -862,9 +862,9 @@ def take_play_powers(request: HttpRequest, player_id: int, type: str, num: int) 
     player.play.add(*taken_cards)
 
     if num == 1:
-        add_log_msg(player.game, player=player, text=f'takes and plays a {type} power', cards=taken_cards, spoiler=spoiler)
+        add_log_msg(player.game, player=player, text=f'takes and plays a {type.name.lower()} power', cards=taken_cards, spoiler=spoiler)
     else:
-        add_log_msg(player.game, player=player, text=f'takes and plays {num} {type} powers', cards=taken_cards, spoiler=spoiler)
+        add_log_msg(player.game, player=player, text=f'takes and plays {num} {type.name.lower()} powers', cards=taken_cards, spoiler=spoiler)
 
     return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards': taken_cards}))
 
@@ -879,7 +879,7 @@ def gain_healing(request: HttpRequest, player_id: int) -> HttpResponse:
 
     return render(request, 'player.html', {'player': player})
 
-def gain_power(request: HttpRequest, player_id: int, type: str, num: int) -> HttpResponse:
+def gain_power(request: HttpRequest, player_id: int, type: Card.Type, num: int) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
     if player.selection.exists():
         # Don't set a new selection while the player already has one.
@@ -905,7 +905,7 @@ def gain_power(request: HttpRequest, player_id: int, type: str, num: int) -> Htt
         # making the two harder to unify (if that's desired in the future).
         # Overall it seems better to put this in the function matching its verb.
         player.hand.add(*selection)
-        add_log_msg(player.game, player=player, text=f'gains {num} {type} powers', cards=selection, spoiler=spoiler)
+        add_log_msg(player.game, player=player, text=f'gains {num} {type.name.lower()} powers', cards=selection, spoiler=spoiler)
         return with_log_trigger(render(request, 'player.html', {'player': player, 'taken_cards_verb': 'gained', 'taken_cards': selection}))
 
     if player.spirit.name == 'Fractured':
@@ -921,7 +921,7 @@ def gain_power(request: HttpRequest, player_id: int, type: str, num: int) -> Htt
     player.selection.set(selection)
 
     # TODO: Should we set a flag on the player, such that when they actually select the card, it is also spoilered?
-    add_log_msg(player.game, player=player, text=f'gains a {type} power. Choices', cards=selection, spoiler=spoiler)
+    add_log_msg(player.game, player=player, text=f'gains a {type.name.lower()} power. Choices', cards=selection, spoiler=spoiler)
 
     return with_log_trigger(render(request, 'player.html', {'player': player, 'spoiler_power_gain': spoiler}))
 
@@ -1103,29 +1103,29 @@ def create_days(request: HttpRequest, player_id: int, num: int) -> HttpResponse:
 
     return with_log_trigger(render(request, 'player.html', {'player': player}))
 
-def setup_deck_to_player(request: HttpRequest, player_id: int, type: str) -> HttpResponse:
+def setup_deck_to_player(request: HttpRequest, player_id: int, type: Card.Type) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
-    if type == 'minor':
+    if type == Card.Type.MINOR:
         cards = player.game.minor_deck.all()
-    elif type == 'major':
+    elif type == Card.Type.MAJOR:
         cards = player.game.major_deck.all()
-    elif type == 'unique':
+    elif type == Card.Type.UNIQUE:
         cards = Card.objects.filter(type=Card.Type.UNIQUE)
     else:
         raise ValueError('invalid card type')
 
-    return render(request, 'power_deck_setup.html', {'name': type.capitalize(), 'player': player, 'owned': player.scenario.all(), 'deck': cards})
+    return render(request, 'power_deck_setup.html', {'name': type.name.capitalize(), 'player': player, 'owned': player.scenario.all(), 'deck': cards})
 
-def setup_deck_to_discard(request: HttpRequest, game_id: str, type: str) -> HttpResponse:
+def setup_deck_to_discard(request: HttpRequest, game_id: str, type: Card.Type) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
-    if type == 'minor':
+    if type == Card.Type.MINOR:
         cards = game.minor_deck.all()
-    elif type == 'major':
+    elif type == Card.Type.MAJOR:
         cards = game.major_deck.all()
     else:
         raise ValueError('invalid card type')
 
-    return render(request, 'power_deck_setup.html', {'name': type.capitalize(), 'game': game, 'owned': game.discard_pile.all(), 'deck': cards})
+    return render(request, 'power_deck_setup.html', {'name': type.name.capitalize(), 'game': game, 'owned': game.discard_pile.all(), 'deck': cards})
 
 # move a card from its corresponding deck (minor or major), if it's there
 # if the card belongs to a deck (major or minor),
@@ -1206,7 +1206,7 @@ def create_plant_treasure(request: HttpRequest, player_id: int) -> HttpResponse:
         return render(request, 'player.html', {'player': player})
 
     game = player.game
-    majors = cards_from_deck(game, 3, 'major')
+    majors = cards_from_deck(game, 3, Card.Type.MAJOR)
     add_log_msg(game, player=player, text='stores the Plant Treasure and sets aside 3 major powers', cards=majors)
     player.plant_treasure.add(*majors)
     player.spirit_specific_per_turn_flags &= ~GamePlayer.PLANT_TREASURE_THIS_TURN
