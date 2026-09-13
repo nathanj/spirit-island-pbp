@@ -249,7 +249,7 @@ class TestSetupEnergyAndBaseGain(TestCase):
         self.assert_spirit("Waters", per_turn=0, setup=4)
 
 class TestSetupPowerCards(TestCase):
-    NUM_MINORS = Card.objects.filter(type=Card.MINOR).count()
+    NUM_MINORS = Card.objects.filter(type=Card.Type.MINOR).count()
 
     def setup_game(self, spirit):
         client = Client()
@@ -317,8 +317,8 @@ class TestSetupPowerCards(TestCase):
         self.assertEqual(game.minor_deck.count(), minors - 4)
         self.assertEqual(game.major_deck.count(), majors - 4)
         self.assertEqual(player.days.count(), 8)
-        self.assertEqual(player.days.filter(type=Card.MINOR).count(), 4)
-        self.assertEqual(player.days.filter(type=Card.MAJOR).count(), 4)
+        self.assertEqual(player.days.filter(type=Card.Type.MINOR).count(), 4)
+        self.assertEqual(player.days.filter(type=Card.Type.MAJOR).count(), 4)
 
 class TestSetupSpiritSpecificResources(TestCase):
     def setup_game(self, spirit):
@@ -564,11 +564,11 @@ class TestReshuffleOrNot(TestCase):
         client, game, player = self.setup_game(arbitrary_cards_in_deck)
 
         discard_before = game.discard_pile.count()
-        majors_before = player.hand.filter(type=Card.MAJOR).count()
+        majors_before = player.hand.filter(type=Card.Type.MAJOR).count()
 
         client.post(f"/game/{player.id}/take/major/4")
 
-        self.assertEqual(player.hand.filter(type=Card.MAJOR).count(), majors_before + 4)
+        self.assertEqual(player.hand.filter(type=Card.Type.MAJOR).count(), majors_before + 4)
         self.assertEqual(game.major_deck.count(), arbitrary_cards_in_deck - 4)
         self.assertEqual(game.discard_pile.count(), discard_before)
 
@@ -576,12 +576,12 @@ class TestReshuffleOrNot(TestCase):
         client, game, player = self.setup_game(1)
 
         remaining = list(game.major_deck.all())
-        majors_before = player.hand.filter(type=Card.MAJOR).count()
+        majors_before = player.hand.filter(type=Card.Type.MAJOR).count()
         available_cards = game.major_deck.count() + game.discard_pile.count()
 
         client.post(f"/game/{player.id}/take/major/2")
 
-        self.assertEqual(player.hand.filter(type=Card.MAJOR).count(), majors_before + 2)
+        self.assertEqual(player.hand.filter(type=Card.Type.MAJOR).count(), majors_before + 2)
         for rem in remaining:
             self.assertIn(rem, player.hand.all(), "card in deck before reshuffle should have been taken")
         self.assertEqual(game.major_deck.count(), available_cards - 2)
@@ -592,11 +592,11 @@ class TestReshuffleOrNot(TestCase):
         client, game, player = self.setup_game(arbitrary_cards_in_deck)
 
         discard_before = game.discard_pile.count()
-        majors_before = player.play.filter(type=Card.MAJOR).count()
+        majors_before = player.play.filter(type=Card.Type.MAJOR).count()
 
         client.post(f"/game/{player.id}/take_play/major/4")
 
-        self.assertEqual(player.play.filter(type=Card.MAJOR).count(), majors_before + 4)
+        self.assertEqual(player.play.filter(type=Card.Type.MAJOR).count(), majors_before + 4)
         self.assertEqual(game.major_deck.count(), arbitrary_cards_in_deck - 4)
         self.assertEqual(game.discard_pile.count(), discard_before)
 
@@ -604,12 +604,12 @@ class TestReshuffleOrNot(TestCase):
         client, game, player = self.setup_game(1)
 
         remaining = list(game.major_deck.all())
-        majors_before = player.play.filter(type=Card.MAJOR).count()
+        majors_before = player.play.filter(type=Card.Type.MAJOR).count()
         available_cards = game.major_deck.count() + game.discard_pile.count()
 
         client.post(f"/game/{player.id}/take_play/major/2")
 
-        self.assertEqual(player.play.filter(type=Card.MAJOR).count(), majors_before + 2)
+        self.assertEqual(player.play.filter(type=Card.Type.MAJOR).count(), majors_before + 2)
         for rem in remaining:
             self.assertIn(rem, player.play.all(), "card in deck before reshuffle should have been taken")
         self.assertEqual(game.major_deck.count(), available_cards - 2)
@@ -656,14 +656,14 @@ class TestReshuffleOrNot(TestCase):
     # since the logic should all be the same.
     # Just doing a few to make sure the basic functionality is there,
     def test_reshuffle_minors_only(self):
-        client, game, player = self.setup_game(Card.objects.filter(type=Card.MAJOR).count())
+        client, game, player = self.setup_game(Card.objects.filter(type=Card.Type.MAJOR).count())
 
         cards = list(game.minor_deck.all())
         game.minor_deck.set(cards[:2])
         game.discard_pile.add(*cards[2:])
 
         remaining = list(game.minor_deck.all())
-        available_cards = game.minor_deck.count() + game.discard_pile.filter(type=Card.MINOR).count()
+        available_cards = game.minor_deck.count() + game.discard_pile.filter(type=Card.Type.MINOR).count()
 
         client.post(f"/game/{player.id}/gain/minor/4")
 
@@ -681,15 +681,15 @@ class TestReshuffleOrNot(TestCase):
         game.minor_deck.set(cards[:2])
         game.discard_pile.add(*cards[2:])
 
-        available_cards = game.minor_deck.count() + game.discard_pile.filter(type=Card.MINOR).count()
-        majors_in_discard = game.discard_pile.filter(type=Card.MAJOR).count()
+        available_cards = game.minor_deck.count() + game.discard_pile.filter(type=Card.Type.MINOR).count()
+        majors_in_discard = game.discard_pile.filter(type=Card.Type.MAJOR).count()
 
         client.post(f"/game/{player.id}/gain/minor/4")
 
         self.assertEqual(player.selection.count(), 4)
         self.assertEqual(game.minor_deck.count(), available_cards - 4)
         self.assertEqual(game.discard_pile.count(), majors_in_discard)
-        self.assertEqual(set(game.discard_pile.values_list('type', flat=True)), {Card.MAJOR})
+        self.assertEqual(set(game.discard_pile.values_list('type', flat=True)), {Card.Type.MAJOR})
 
 class TestRot(TestCase):
     def assert_rot(self, rot, expected_rot_loss, expected_energy_gain, round_down=False):
@@ -1565,8 +1565,8 @@ class TestDaysThatNeverWere(TestCase):
         client.post(f'/game/{player.id}/create_days/4')
 
         self.assertEqual(player.days.count(), 8)
-        self.assertEqual(player.days.filter(type=Card.MINOR).count(), 4)
-        self.assertEqual(player.days.filter(type=Card.MAJOR).count(), 4)
+        self.assertEqual(player.days.filter(type=Card.Type.MINOR).count(), 4)
+        self.assertEqual(player.days.filter(type=Card.Type.MAJOR).count(), 4)
         self.assertEqual(game.minor_deck.count(), minors_before - 4)
         self.assertEqual(game.major_deck.count(), majors_before - 4)
 
@@ -1834,7 +1834,7 @@ class TestCovetsGleamingShardsPlantTreasure(TestCase):
         self.assertEqual(player.hand.count(), hand_before)
 
         for card in player.plant_treasure.all():
-            self.assertEqual(card.type, Card.MAJOR)
+            self.assertEqual(card.type, Card.Type.MAJOR)
 
     def test_create_reshuffle(self):
         client, game, player = self.setup_players()
@@ -2008,7 +2008,7 @@ class TestUpload(TestCase):
         self.assertNotEqual(ss1.path, ss3.path)
 
 class TestImport(TestCase):
-    NUM_MINORS = Card.objects.filter(type=Card.MINOR).count()
+    NUM_MINORS = Card.objects.filter(type=Card.Type.MINOR).count()
 
     def import_game(self, str):
         import io
@@ -2243,8 +2243,8 @@ class TestApi(TestCase):
         client.post("/new")
         game = Game.objects.last()
         j = json.loads(client.get(f'/api/game/{game.id}').content)
-        self.assertEqual([c['name'] for c in j['minor_deck']], list(Card.objects.filter(type=Card.MINOR, exclude_from_deck=False).values_list('name', flat=True)))
-        self.assertEqual([c['name'] for c in j['major_deck']], list(Card.objects.filter(type=Card.MAJOR, exclude_from_deck=False).values_list('name', flat=True)))
+        self.assertEqual([c['name'] for c in j['minor_deck']], list(Card.objects.filter(type=Card.Type.MINOR, exclude_from_deck=False).values_list('name', flat=True)))
+        self.assertEqual([c['name'] for c in j['major_deck']], list(Card.objects.filter(type=Card.Type.MAJOR, exclude_from_deck=False).values_list('name', flat=True)))
         self.assertEqual(j['discard_pile'], [])
 
     def test_spirit(self):

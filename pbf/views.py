@@ -161,8 +161,8 @@ def view_screenshot(request: HttpRequest, game_id: str | None = None, filename: 
 def new_game(request: HttpRequest) -> HttpResponse:
     game = Game(name='My Game')
     game.save()
-    game.minor_deck.set(Card.objects.filter(type=Card.MINOR, exclude_from_deck=False))
-    game.major_deck.set(Card.objects.filter(type=Card.MAJOR, exclude_from_deck=False))
+    game.minor_deck.set(Card.objects.filter(type=Card.Type.MINOR, exclude_from_deck=False))
+    game.major_deck.set(Card.objects.filter(type=Card.Type.MAJOR, exclude_from_deck=False))
     return redirect(reverse('game_setup', args=[game.id]))
 
 def edit_players(request: HttpRequest, game_id: str) -> HttpResponse:
@@ -508,8 +508,8 @@ def make_initial_hand(gp: GamePlayer, remove_from_decks: bool = True) -> None:
         cards = [Card.objects.get(name=name) for name in spirit_additional_cards[gp.full_name()]]
         gp.hand.add(*cards)
         # Iterates over cards twice, but cards is currently small for all spirits, so not an issue yet.
-        game.minor_deck.remove(*[card for card in cards if card.type == Card.MINOR])
-        game.major_deck.remove(*[card for card in cards if card.type == Card.MAJOR])
+        game.minor_deck.remove(*[card for card in cards if card.type == Card.Type.MINOR])
+        game.major_deck.remove(*[card for card in cards if card.type == Card.Type.MAJOR])
     if gp.full_name() in spirit_remove_cards:
         gp.hand.remove(*[Card.objects.get(name=name) for name in spirit_remove_cards[gp.full_name()]])
 
@@ -670,7 +670,7 @@ def import_game(request: HttpRequest) -> HttpResponse:
                         ).save()
                 cards_in_game.add(card.id)
 
-    for (name, type) in (('minor_deck', Card.MINOR), ('major_deck', Card.MAJOR)):
+    for (name, type) in (('minor_deck', Card.Type.MINOR), ('major_deck', Card.Type.MAJOR)):
         deck = getattr(game, name)
         if name in to_import:
             deck.set(cards_with_name(to_import[name]))
@@ -822,11 +822,11 @@ def cards_from_deck(game: Game, cards_needed: int, type: str) -> list[Card]:
 
 def reshuffle_discard(game: Game, type: str) -> None:
     if type == 'minor':
-        minors = game.discard_pile.filter(type=Card.MINOR).all()
+        minors = game.discard_pile.filter(type=Card.Type.MINOR).all()
         game.discard_pile.remove(*minors)
         game.minor_deck.add(*minors)
     elif type == 'major':
-        majors = game.discard_pile.filter(type=Card.MAJOR).all()
+        majors = game.discard_pile.filter(type=Card.Type.MAJOR).all()
         game.discard_pile.remove(*majors)
         game.major_deck.add(*majors)
     else:
@@ -875,7 +875,7 @@ def gain_healing(request: HttpRequest, player_id: int) -> HttpResponse:
         # Otherwise, cards in the previous selection would no longer be accessible.
         return render(request, 'player.html', {'player': player})
 
-    player.selection.set(Card.objects.filter(type=Card.HEALING))
+    player.selection.set(Card.objects.filter(type=Card.Type.HEALING))
 
     return render(request, 'player.html', {'player': player})
 
@@ -944,9 +944,9 @@ def return_to_deck(request: HttpRequest, player_id: int, card_id: int) -> HttpRe
     game = player.game
     card = get_object_or_404(game.discard_pile, pk=card_id)
 
-    if card.type == card.MINOR:
+    if card.type == Card.Type.MINOR:
         game.minor_deck.add(card)
-    elif card.type == card.MAJOR:
+    elif card.type == Card.Type.MAJOR:
         game.major_deck.add(card)
     else:
         raise ValueError(f"Can't return {card}")
@@ -1003,7 +1003,7 @@ def choose_card(request: HttpRequest, player_id: int, card_id: int) -> HttpRespo
     # most compliant browsers should send 'on', but we'll allow 'true' as well
     spoiler = request.GET.get('spoiler_power_gain', '') in ('on', 'true')
 
-    if card.type == Card.HEALING:
+    if card.type == Card.Type.HEALING:
         # passing spoiler to this not implemented because of no demand
         return choose_healing_card(request, player, card)
 
@@ -1029,7 +1029,7 @@ def choose_card(request: HttpRequest, player_id: int, card_id: int) -> HttpRespo
             player.spirit_specific_per_turn_flags -= GamePlayer.FRACTURED_DAYS_TO_HAND
             player.save(update_fields=['spirit_specific_per_turn_flags'])
     else:
-        can_keep_selecting = card.type == Card.MINOR and (cards_left == 5 or player.aspect == 'Mentor' and cards_left > 1)
+        can_keep_selecting = card.type == Card.Type.MINOR and (cards_left == 5 or player.aspect == 'Mentor' and cards_left > 1)
     if not can_keep_selecting:
         player.game.discard_pile.add(*player.selection.all())
         player.selection.clear()
@@ -1052,13 +1052,13 @@ def undo_gain_card(request: HttpRequest, player_id: int) -> HttpResponse:
         # we don't remove from player.selection immediately,
         # as that would modify the selection we're iterating over,
         # plus we want to add/remove all at once.
-        if sel.type == Card.MINOR:
+        if sel.type == Card.Type.MINOR:
             minors.append(sel)
             to_remove.append(sel)
-        elif sel.type == Card.MAJOR:
+        elif sel.type == Card.Type.MAJOR:
             majors.append(sel)
             to_remove.append(sel)
-        elif sel.type == Card.HEALING:
+        elif sel.type == Card.Type.HEALING:
             to_remove.append(sel)
         # If it's not any of these types, we'll leave it in selection, as something's gone wrong.
 
@@ -1110,7 +1110,7 @@ def setup_deck_to_player(request: HttpRequest, player_id: int, type: str) -> Htt
     elif type == 'major':
         cards = player.game.major_deck.all()
     elif type == 'unique':
-        cards = Card.objects.filter(type=Card.UNIQUE)
+        cards = Card.objects.filter(type=Card.Type.UNIQUE)
     else:
         raise ValueError('invalid card type')
 
@@ -1133,9 +1133,9 @@ def setup_deck_to_discard(request: HttpRequest, game_id: str, type: str) -> Http
 # if the card does not belong to a deck (unique), returns the card and None.
 def move_card_from_deck(card_id: int, game: Game, dst: 'Card_ManyRelatedManager[Any]') -> tuple[Card, 'Card_ManyRelatedManager[Any] | None']:
     card = get_object_or_404(Card, pk=card_id)
-    if card.type == Card.MINOR:
+    if card.type == Card.Type.MINOR:
         deck: Card_ManyRelatedManager[Any] = game.minor_deck
-    elif card.type == Card.MAJOR:
+    elif card.type == Card.Type.MAJOR:
         deck = game.major_deck
     else:
         return (card, None)
@@ -1167,9 +1167,9 @@ def add_to_scenario(request: HttpRequest, player_id: int, card_id: int) -> HttpR
     player = get_object_or_404(GamePlayer, pk=player_id)
     card, deck = move_card_from_deck(card_id, player.game, player.scenario)
     if not deck:
-        if card.type == Card.UNIQUE and player.game.scenario_setup_uniques():
+        if card.type == Card.Type.UNIQUE and player.game.scenario_setup_uniques():
             player.scenario.add(card)
-            return render(request, 'power_deck_setup.html', {'name': 'Unique', 'player': player, 'owned': player.scenario.all(), 'deck': Card.objects.filter(type=Card.UNIQUE)})
+            return render(request, 'power_deck_setup.html', {'name': 'Unique', 'player': player, 'owned': player.scenario.all(), 'deck': Card.objects.filter(type=Card.Type.UNIQUE)})
         raise ValueError(f"Can't add {card}")
 
     return render(request, 'power_deck_setup.html', {'name': card.get_type_display(), 'player': player, 'owned': player.scenario.all(), 'deck': deck.all()})
