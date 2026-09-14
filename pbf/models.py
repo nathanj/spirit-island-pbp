@@ -5,7 +5,7 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum, IntEnum
-from typing import Any, NamedTuple
+from typing import Any, Protocol
 
 from django.core import checks
 from django.db import models
@@ -666,13 +666,13 @@ class GamePlayer(models.Model):
         return {k: v for (k, v) in result}
 
 
-    class PresenceInfo(NamedTuple):
+    class PresenceInfo(Protocol):
         energy: str
         elements: str
 
     @functools.cached_property
     def presences_off_track(self) -> Iterable[PresenceInfo]:
-        return self.presence_set.filter(opacity=0.0).exclude(energy='', elements='').values_list('energy', 'elements', named=True) #type: ignore[return-value]
+        return self.presence_set.filter(opacity=0.0).exclude(energy='', elements='').values_list('energy', 'elements', named=True)
 
     # Any code that creates a GamePlayer is expected to (manually) call this function once after creating it,
     # (currently add_player in views)
