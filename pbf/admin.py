@@ -8,8 +8,14 @@ from django.http import HttpRequest
 
 from .models import Card, Game, GamePlayer
 
+# annotating ModelAdmin with a type argument allows various methods to be type-checked,
+# however ModelAdmin is not subscriptable,
+# so subscripting it will normally cause a failure at runtime.
+# (lightweight reimplementation of https://github.com/typeddjango/django-stubs/blob/master/ext/django_stubs_ext/patch.py)
+admin.ModelAdmin.__class_getitem__ = classmethod(lambda cls, _item: cls) #type: ignore[attr-defined]
 
-class CardAdmin(admin.ModelAdmin): #type: ignore[type-arg]
+
+class CardAdmin(admin.ModelAdmin[Card]):
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
     def has_change_permission(self, request: HttpRequest, obj: Card | None = None) -> bool:
@@ -19,7 +25,7 @@ class CardAdmin(admin.ModelAdmin): #type: ignore[type-arg]
     search_fields = ('name',)
     list_display = ('name', 'spirit__name', 'type')
 
-class GameAdmin(admin.ModelAdmin): #type: ignore[type-arg]
+class GameAdmin(admin.ModelAdmin[Game]):
     search_fields = ('id', 'name')
     search_help_text = 'Search by ID or name'
     list_display = ('id', 'created_at', 'name', 'scenario', 'discord_channel')
@@ -28,7 +34,7 @@ class GameAdmin(admin.ModelAdmin): #type: ignore[type-arg]
     def has_delete_permission(self, request: HttpRequest, obj: Game | None = None) -> bool:
         return False
 
-class GamePlayerAdmin(admin.ModelAdmin): #type: ignore[type-arg]
+class GamePlayerAdmin(admin.ModelAdmin[GamePlayer]):
     search_fields = ('game__id', 'name')
     search_help_text = 'Search by game ID or player name'
     list_display = ('id', 'game', 'spirit__name', 'aspect', 'name')
@@ -53,6 +59,7 @@ class GamePlayerAdmin(admin.ModelAdmin): #type: ignore[type-arg]
         return excludes
 
     filter_horizontal = ('healing', )
+    # we don't presently get benefits from adding type arguments to these, so we won't.
     def formfield_for_manytomany(self, db_field: ManyToManyField, request: HttpRequest, **kwargs: Any) -> ModelMultipleChoiceField | None: #type: ignore[type-arg]
         if db_field.name == 'healing':
             kwargs['queryset'] = Card.objects.filter(type=Card.Type.HEALING)
