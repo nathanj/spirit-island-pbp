@@ -513,7 +513,7 @@ async def mod_players_and_roles(message: discord.Message, verb: str, direction: 
     try:
         assert_allowed_role_manager(message, role)
     except NotRoleAssigner:
-        await reply(message, "You aren't allowed to manage roles (ask a PBP admin to give you the role that allows it)")
+        await reply(message, "You need to be a PBP host to assign roles")
         return
     except DisallowedRole:
         await reply(message, "I only manage roles related to PBP, which that role doesn't appear to be")
