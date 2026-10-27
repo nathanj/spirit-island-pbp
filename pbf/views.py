@@ -156,7 +156,14 @@ def home(request: HttpRequest) -> HttpResponse:
 
 # For use in development only, not production.
 def view_screenshot(request: HttpRequest, game_id: UUID | None = None, filename: str | None = None) -> HttpResponse:
-    with open(os.path.join(*[s for s in ['screenshot', str(game_id) if game_id else None, filename] if s]), mode='rb') as f:
+    from pathlib import Path
+
+    from django.http import Http404
+    screenshots = Path('screenshot')
+    screenshot = screenshots.joinpath(*[s for s in [str(game_id) if game_id else None, filename] if s])
+    if not screenshot.resolve().is_relative_to(screenshots.resolve()):
+        raise Http404()
+    with open(screenshot, mode='rb') as f:
         return HttpResponse(f.read(), content_type='image/jpeg')
 
 def new_game(request: HttpRequest) -> HttpResponse:
