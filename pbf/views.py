@@ -4,6 +4,7 @@ import os
 import random
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, overload
+from uuid import UUID
 
 from django.conf import settings
 from django.forms import ModelForm
@@ -154,8 +155,8 @@ def home(request: HttpRequest) -> HttpResponse:
     return render(request, 'index.html')
 
 # For use in development only, not production.
-def view_screenshot(request: HttpRequest, game_id: str | None = None, filename: str | None = None) -> HttpResponse:
-    with open(os.path.join(*[s for s in ['screenshot', game_id, filename] if s]), mode='rb') as f:
+def view_screenshot(request: HttpRequest, game_id: UUID | None = None, filename: str | None = None) -> HttpResponse:
+    with open(os.path.join(*[s for s in ['screenshot', str(game_id) if game_id else None, filename] if s]), mode='rb') as f:
         return HttpResponse(f.read(), content_type='image/jpeg')
 
 def new_game(request: HttpRequest) -> HttpResponse:
@@ -165,14 +166,14 @@ def new_game(request: HttpRequest) -> HttpResponse:
     game.major_deck.set(Card.objects.filter(type=Card.Type.MAJOR, exclude_from_deck=False))
     return redirect(reverse('game_setup', args=[game.id]))
 
-def edit_players(request: HttpRequest, game_id: str) -> HttpResponse:
+def edit_players(request: HttpRequest, game_id: UUID) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     players = zip(request.POST.getlist('id'), request.POST.getlist('name'), request.POST.getlist('color'))
     GamePlayer.objects.bulk_update([GamePlayer(id=id, name=name, color=color) for id, name, color in players], ['name', 'color'])
 
     return redirect(reverse('game_setup', args=[game.id]))
 
-def game_setup(request: HttpRequest, game_id: str) -> HttpResponse:
+def game_setup(request: HttpRequest, game_id: UUID) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
 
     spirits_by_expansion: dict[str, list[tuple[str, str, tuple[str, ...]]]] = {
@@ -259,23 +260,23 @@ def game_setup(request: HttpRequest, game_id: str) -> HttpResponse:
 
     return render(request, 'setup.html', { 'game': game, 'spirits_by_expansion': spirits_by_expansion })
 
-def change_game_name(request: HttpRequest, game_id: str) -> HttpResponse:
+def change_game_name(request: HttpRequest, game_id: UUID) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     game.name = request.POST['name']
     game.save()
     return redirect(reverse('game_setup', args=[game.id]))
 
-def change_scenario(request: HttpRequest, game_id: str) -> HttpResponse:
+def change_scenario(request: HttpRequest, game_id: UUID) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     game.scenario = request.POST['scenario']
     game.save()
     return redirect(reverse('game_setup', args=[game.id]))
 
-def deck_mods(request: HttpRequest, game_id: str) -> HttpResponse:
+def deck_mods(request: HttpRequest, game_id: UUID) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     return render(request, 'deck_mods.html', { 'game': game })
 
-def toggle_deck_mod(request: HttpRequest, game_id: str, mod: str) -> HttpResponse:
+def toggle_deck_mod(request: HttpRequest, game_id: UUID, mod: str) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
 
     def replace_card(loc: Card.Location, old: Card, new: Card) -> None:
@@ -469,7 +470,7 @@ spirit_remove_cards = frozendict({
     'SunshineRiver': ['Boon of Vigor'],
 })
 
-def add_player(request: HttpRequest, game_id: str) -> HttpResponse:
+def add_player(request: HttpRequest, game_id: UUID) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     colors = [c for (c, freq, _) in game.color_freq() if freq == 0]
     color = request.POST['color']
@@ -681,7 +682,7 @@ def import_game(request: HttpRequest) -> HttpResponse:
 
     return redirect(reverse('view_game', args=[game.id]))
 
-def view_game(request: HttpRequest, game_id: str, spirit_spec: str | None = None) -> HttpResponse:
+def view_game(request: HttpRequest, game_id: UUID, spirit_spec: str | None = None) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     if request.method == 'POST':
         if 'spirit_spec' in request.POST:
@@ -773,7 +774,7 @@ def try_match_spirit(game: Game, spirit_spec: str | None) -> int | None:
 
     return None
 
-def draw_cards(request: HttpRequest, game_id: str) -> HttpResponse:
+def draw_cards(request: HttpRequest, game_id: UUID) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     cards_needed = int(request.POST['num_cards'])
     type = Card.Type[request.POST['type'].upper()]
@@ -913,11 +914,11 @@ def gain_power(request: HttpRequest, player_id: int, type: Card.Type, num: int) 
 
     return with_log_trigger(render(request, 'player.html', {'player': player, 'spoiler_power_gain': spoiler}))
 
-def minor_deck(request: HttpRequest, game_id: str) -> HttpResponse:
+def minor_deck(request: HttpRequest, game_id: UUID) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     return render(request, 'power_deck.html', {'name': 'Minor', 'cards': game.minor_deck.all()})
 
-def major_deck(request: HttpRequest, game_id: str) -> HttpResponse:
+def major_deck(request: HttpRequest, game_id: UUID) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     return render(request, 'power_deck.html', {'name': 'Major', 'cards': game.major_deck.all()})
 
@@ -1094,7 +1095,7 @@ def setup_deck_to_player(request: HttpRequest, player_id: int, type: Card.Type) 
 
     return render(request, 'power_deck_setup.html', {'name': type.name.capitalize(), 'player': player, 'owned': player.scenario.all(), 'deck': cards})
 
-def setup_deck_to_discard(request: HttpRequest, game_id: str, type: Card.Type) -> HttpResponse:
+def setup_deck_to_discard(request: HttpRequest, game_id: UUID, type: Card.Type) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     cards = game.deck(type).all()
 
@@ -1115,7 +1116,7 @@ def move_card_from_deck(card_id: int, game: Game, dst: 'Card_ManyRelatedManager[
         dst.add(card)
     return (card, deck)
 
-def setup_discard_card_game(request: HttpRequest, game_id: str, card_id: int) -> HttpResponse:
+def setup_discard_card_game(request: HttpRequest, game_id: UUID, card_id: int) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     card, deck = move_card_from_deck(card_id, game, game.discard_pile)
     if not deck:
@@ -1577,12 +1578,12 @@ def remove_element_permanent(request: HttpRequest, player_id: int, element: str)
 
     return render(request, 'player.html', {'player': player})
 
-def tab(request: HttpRequest, game_id: int, player_id: int) -> HttpResponse:
+def tab(request: HttpRequest, game_id: UUID, player_id: int) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     player = get_object_or_404(GamePlayer, pk=player_id)
     return render(request, 'tabs.html', {'game': game, 'player': player})
 
-def game_logs(request: HttpRequest, game_id: int) -> HttpResponse:
+def game_logs(request: HttpRequest, game_id: UUID) -> HttpResponse:
     game = get_object_or_404(Game, pk=game_id)
     logs = reversed(game.gamelog_set.order_by('-date').all()[:30])
     return render(request, 'logs.html', {'game': game, 'logs': logs})
