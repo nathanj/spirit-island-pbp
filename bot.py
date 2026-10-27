@@ -147,7 +147,6 @@ GUILD_ID = int(os.getenv('DISCORD_GUILD_ID', 846580409050857493))
 match os.getenv('IPC_METHOD', 'redis'):
     case 'socket':
         import socket
-        import threading
         SOCKET_PATH = os.getenv('SOCKET_PATH', 'si.sock')
     case 'redis':
         # for type-checking, this code path is statically checked regardless of IPC_METHOD,
@@ -839,7 +838,6 @@ last_message: dict[int, Any] = {}
 
 class SIDatagramProtocol(asyncio.DatagramProtocol):
     def __init__(self, enqueue: Callable[[int, str, Callable[[str], GameLogEntry]], None]):
-        self.msgbuflock = threading.Lock()
         self.enqueue = enqueue
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
@@ -850,8 +848,7 @@ class SIDatagramProtocol(asyncio.DatagramProtocol):
         LOG.msg("got message (socket)", message=message)
         j = json.loads(message)
         channel_id = int(j['channel'])
-        with self.msgbuflock:
-            self.enqueue(channel_id, message, lambda _: j)
+        self.enqueue(channel_id, message, lambda _: j)
 
 async def logger() -> None:
     await client.wait_until_ready()
@@ -899,7 +896,7 @@ async def logger() -> None:
         if os.path.exists(SOCKET_PATH):
             os.remove(SOCKET_PATH)
         LOG.msg("trying to create", socket_path=SOCKET_PATH)
-        _transport, protocol = await loop.create_datagram_endpoint(
+        _transport, _protocol = await loop.create_datagram_endpoint(
             lambda: SIDatagramProtocol(enqueue),
             local_addr=SOCKET_PATH,
             family=socket.AF_UNIX,
@@ -908,8 +905,7 @@ async def logger() -> None:
 
         while True:
             try:
-                with protocol.msgbuflock:
-                    await dequeue()
+                await dequeue()
                 await asyncio.sleep(1)
             except Exception:
                 LOG.exception("exception while dequeueing (socket)")
