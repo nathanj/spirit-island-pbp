@@ -271,17 +271,14 @@ async def on_message(message: discord.Message) -> None:
             text = "\n".join(( #noqa: FLY002
                 "Players can be specified by either @mentioning them or replying to a message that does.",
                 "The role is auto-detected from the PBP channel, or you can explicitly @mention a role if using the commands outside of a PBP channel",
-                "### Example 1",
-                "message 1: $role @99-pbp @player1 @player2 @player3 @player4 you were randomly selected as the players for my game",
-                "message 2 (reply to message 1): $unrole",
-                "### Example 2 (specifying the role separately from the players by replying to the message)",
-                "message 1: @player1 @player2 @player3 @player4 you were randomly selected as the players for my game",
-                "message 2 (reply to message 1, the list of players): $role @99-pbp",
-                "message 3 (reply to message 1, the list of players): $unrole @99-pbp",
-                "### Example 3 (using $unrole as a reply to a reply so that you don't have to specify the role a second time)",
-                "message 1: @player1 @player2 @player3 @player4 you were randomly selected as the players for my game",
-                "message 2 (reply to message 1, the list of players): $role @99-pbp",
-                "message 3 (reply to message 2, the $role message): $unrole",
+                "### Add players",
+                "in the commands channel: $role @99-pbp @your_discord_name",
+                "in the game channel: $role @player1 @player2 @player3",
+                "### Remove a player",
+                "in the game channel: $unrole @player",
+                "### Remove all players",
+                "in the game channel: $unrole all",
+                "",
             ))
             await message.channel.send(text)
             return
