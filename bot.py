@@ -788,9 +788,16 @@ async def relay_game(channel_id: int, log: Iterable[GameLogEntry]) -> None:
         LOG.warning(f"channel {channel_id} is {type(channel).__name__}, not sendable")
         return
 
+    # https://docs.discord.com/developers/resources/message#create-message
+    # content: "up to 2000 characters"
+    maxlen = 2000
+
     combined_text: list[str] = []
     for entry in log:
         msg = adjust_msg(entry['text'])
+        if len(msg) > maxlen:
+            too_long = "... (message too long for Discord)"
+            msg = msg[:maxlen - len(too_long)] + too_long
         if 'images' in entry:
             if len(combined_text) > 0:
                 await channel.send('\n'.join(combined_text))
@@ -818,6 +825,10 @@ async def relay_game(channel_id: int, log: Iterable[GameLogEntry]) -> None:
                 # Players probably don't need to be informed of this, so we can just pass.
                 await channel.send(msg + " (the image has since been deleted)")
         else:
+            if sum(len(m) + 1 for m in combined_text) + len(msg) > maxlen:
+                # adding the new message would make the combined message too long
+                await channel.send('\n'.join(combined_text))
+                combined_text = []
             combined_text.append(msg)
 
     if len(combined_text) > 0:
