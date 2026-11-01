@@ -78,7 +78,14 @@ class GameDetailSchema(ModelSchema):
 class GameLogSchema(ModelSchema):
     class Meta:
         model = GameLog
-        fields = ('id', 'date', 'text', 'spoiler_text', 'images')
+        fields = ('id', 'date')
+    # declared here instead of fields so that long values don't fail validation:
+    # taking them from fields means the model's max lengths are used,
+    # however sqlite database does not constrain stored values to the max length,
+    # so discarding a large number of minors will result in text longer than the max length.
+    text: str
+    spoiler_text: str
+    images: str | None
 
 class InvalidIP(Exception):
     pass
