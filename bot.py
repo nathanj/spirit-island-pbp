@@ -435,9 +435,9 @@ async def topic(interaction: discord.Interaction, new_topic: str = "") -> None:
         # without needing to explicitly call link_channel_to_game here.
         await edit_channel(interaction, interaction.channel, 'changed the channel topic', topic=new_topic)
     except discord.Forbidden:
-        await interaction.response.send_message("I don't have permission to set the channel topic")
+        await interaction.followup.send("I don't have permission to set the channel topic")
     except discord.HTTPException:
-        await interaction.response.send_message("Failed to set the topic due to an HTTP error.")
+        await interaction.followup.send("Failed to set the topic due to an HTTP error.")
 
 @tree.command(guild=command_scope)
 @discord.app_commands.describe(new_name="new channel name, or empty to clear the name. DO NOT include the NNup- or NNdc- prefix")
@@ -482,9 +482,9 @@ async def rename(interaction: discord.Interaction, new_name: str = "") -> None:
     try:
         await edit_channel(interaction, interaction.channel, verb, name=new_name)
     except discord.Forbidden:
-        await interaction.response.send_message("I don't have permission to rename the channel")
+        await interaction.followup.send("I don't have permission to rename the channel")
     except discord.HTTPException:
-        await interaction.response.send_message("Failed to rename the channel due to an HTTP error.")
+        await interaction.followup.send("Failed to rename the channel due to an HTTP error.")
 
 class ChannelChanges(TypedDict):
     name: NotRequired[str]
@@ -498,26 +498,19 @@ async def edit_channel(interaction: discord.Interaction, channel: discord.TextCh
         return
 
     edit_task = asyncio.create_task(channel.edit(**changes, reason=f"{interaction.user.display_name} ({interaction.user.name}) requested"))
-    deferred = False
 
     async def check_task_completion() -> None:
-        nonlocal deferred
         await asyncio.sleep(3)
         # Didn't find a way to introspect the channel edit task to see its status (time left to wait)
         # so best we can do is check whether it's done.
         if edit_task.done():
             return
-        await interaction.response.defer(thinking=True)
-        deferred = True
         await channel.send("Got rate-limited by Discord (Discord limits the bot to 2 changes to the same channel within 10 minutes), automatically retrying when possible. Thanks for your patience.")
 
     check_task = asyncio.create_task(check_task_completion())
+    await interaction.response.defer(thinking=True)
     await edit_task
-    msg = f"{interaction.user.mention} {action}"
-    if deferred:
-        await interaction.followup.send(msg)
-    else:
-        await interaction.response.send_message(msg)
+    await interaction.followup.send(f"{interaction.user.mention} {action}")
     await check_task
 
 @tree.command(guild=command_scope)
