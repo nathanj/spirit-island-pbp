@@ -339,7 +339,7 @@ async def follow(interaction: discord.Interaction, game_url: str) -> None:
     v = await interaction.response.send_message(f"https://{GAME_URL}/game/{guid}")
     if isinstance(v.resource, discord.InteractionMessage):
         try:
-            await v.resource.pin(reason=f"{interaction.user.display_name} ({interaction.user.name}) requested")
+            await v.resource.pin(reason=f"{interaction.user.display_name} ({interaction.user.name}, ID {interaction.user.id}) requested")
         except discord.Forbidden:
             await interaction.channel.send("I don't have permission to pin messages, so you'll have to pin the link yourself, but I'll still relay game logs.")
         except discord.HTTPException:
@@ -489,7 +489,7 @@ async def edit_channel(interaction: discord.Interaction, channel: discord.TextCh
         await interaction.response.send_message("I only manage PBP channels, which this channel doesn't appear to be")
         return
 
-    edit_task = asyncio.create_task(channel.edit(**changes, reason=f"{interaction.user.display_name} ({interaction.user.name}) requested"))
+    edit_task = asyncio.create_task(channel.edit(**changes, reason=f"{interaction.user.display_name} ({interaction.user.name}, ID {interaction.user.id}) requested"))
 
     async def check_task_completion() -> None:
         await asyncio.sleep(3)
@@ -581,7 +581,7 @@ async def mod_players_and_roles(interaction: discord.Interaction, members: Colle
             # This should have been asserted above for a friendlier message,
             # but intentionally asserting it a second time in case a refactor accidentally removes the above assert or makes it no longer exit.
             assert_allowed_role_manager(interaction.user, role)
-            await getattr(member, f"{verb}_roles")(role, reason=f"{interaction.user.display_name} ({interaction.user.name}) requested {verb}")
+            await getattr(member, f"{verb}_roles")(role, reason=f"{interaction.user.display_name} ({interaction.user.name}, ID {interaction.user.id}) requested {verb}")
     except discord.Forbidden:
         if role.is_assignable():
             await interaction.response.send_message("I don't have permission to manage roles on this server")
@@ -629,7 +629,7 @@ async def createrole(interaction: discord.Interaction, rolenum: discord.app_comm
         return
 
     try:
-        await interaction.guild.create_role(name=new_role_name, mentionable=True, reason=f"{interaction.user.display_name} ({interaction.user.name}) requested")
+        await interaction.guild.create_role(name=new_role_name, mentionable=True, reason=f"{interaction.user.display_name} ({interaction.user.name}, ID {interaction.user.id}) requested")
     except discord.Forbidden:
         await interaction.response.send_message("I don't have permission to create roles")
         return
@@ -672,7 +672,7 @@ async def mod_hosts(interaction: discord.Interaction, member: discord.Member, ve
         return
 
     try:
-        await getattr(member, f"{verb}_roles")(role, reason=f"{interaction.user.display_name} ({interaction.user.name}) requested {verb}")
+        await getattr(member, f"{verb}_roles")(role, reason=f"{interaction.user.display_name} ({interaction.user.name}, ID {interaction.user.id}) requested {verb}")
     except discord.Forbidden:
         if role.is_assignable():
             await interaction.response.send_message("I don't have permission to manage roles on this server")
