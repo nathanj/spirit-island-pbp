@@ -299,7 +299,7 @@ async def help(interaction: discord.Interaction, topic: Literal['general', 'admi
                 "in the game channel: /role @player1 @player2 @player3",
                 "### Remove a player",
                 "in the game channel: /unrole @player",
-                "### Remove all players",
+                "### Remove all players (including yourself)",
                 "in the game channel: /unroleall",
                 "",
             ))
