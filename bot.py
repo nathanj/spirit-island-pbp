@@ -612,7 +612,7 @@ async def createrole(interaction: discord.Interaction, rolenum: discord.app_comm
     """create PBP role of the given number (PBP admin only)"""
     new_role_name = f"{rolenum}-pbp"
     if not isinstance(interaction.user, discord.Member) or not any(role.id == ROLE_CREATOR_ROLE for role in interaction.user.roles):
-        await interaction.response.send_message("You aren't allowed to create roles")
+        await interaction.response.send_message("You need to be a PBP admin to create roles")
         return
     if not interaction.guild:
         await interaction.response.send_message("Can't create a role without a server")
@@ -649,7 +649,7 @@ async def unhost(interaction: discord.Interaction, member: discord.Member) -> No
 
 async def mod_hosts(interaction: discord.Interaction, member: discord.Member, verb: str, direction: str) -> None:
     if not isinstance(interaction.user, discord.Member) or not any(role.id == ROLE_ASSIGNER_ADMIN_ROLE for role in interaction.user.roles):
-        await interaction.response.send_message(f"You aren't allowed to {verb} players {direction} the host role")
+        await interaction.response.send_message(f"You need to be a PBP admin to {verb} players {direction} the host role")
         return
     if not (interaction.channel and interaction.channel.id == ROLE_CHANNEL) and not (isinstance(interaction.channel, discord.TextChannel) and re.search(MANAGED_CHANNEL_PATTERN, interaction.channel.name)):
         await interaction.response.send_message("For auditability reasons, please keep role commands to PBP game channels or the bot channel, thanks!")
