@@ -134,7 +134,6 @@ if '--fake-discord' in sys.argv:
     tree: discord.app_commands.CommandTree = Tree() #type: ignore[assignment]
 else:
     intents = discord.Intents.default()
-    intents.message_content = True
     intents.members = True
 
     client = discord.Client(intents=intents)
