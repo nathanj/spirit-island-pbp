@@ -346,9 +346,14 @@ async def follow(interaction: discord.Interaction, game_url: str) -> None:
 
 @tree.command(guild=command_scope)
 async def unpinall(interaction: discord.Interaction) -> None:
-    """unpin all messages in this channel"""
+    """unpin all messages in this channel (PBP channels only)"""
     if not interaction.channel or isinstance(interaction.channel, (discord.ForumChannel, discord.CategoryChannel)):
         await interaction.response.send_message(f"this kind of channel ({type(interaction.channel).__name__}) doesn't have any pins")
+        return
+    # Ideally the guild uses permissions to restrict what the bot can do,
+    # but defence in depth is desirable for such sensitive operations.
+    if isinstance(interaction.channel, discord.DMChannel) or not re.search(MANAGED_CHANNEL_PATTERN, interaction.channel.name or ""):
+        await interaction.response.send_message("I only manage PBP channels, which this channel doesn't appear to be")
         return
 
     num_unpinned = 0
