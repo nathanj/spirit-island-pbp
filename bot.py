@@ -379,6 +379,11 @@ async def unpinall(interaction: discord.Interaction) -> None:
         return
     await interaction.response.send_message(f"{interaction.user.mention} unpinned {num_unpinned} messages")
 
+# TODO: Maybe consider a https://docs.discord.com/developers/interactions/application-commands#message-commands
+# https://docs.discord.com/developers/gateway/you-might-not-need-a-privileged-intent#what-you-can-do-without-the-intent-3
+# listed under heading "Message Context Menu Commands"
+# However, would that add the option to every single message?
+# It would be preferable to add it only to the bot's messages.
 @tree.command(guild=command_scope)
 @discord.app_commands.describe(message_id="ID of the message to delete (17-20 digit number)")
 # can't use int, because int only supports int53, but message IDs can be up to 64 bits
