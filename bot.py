@@ -664,6 +664,13 @@ async def mod_hosts(interaction: discord.Interaction, member: discord.Member, ve
 
     suffix = "d" if verb[-1] == "e" else "ed"
 
+    if member.bot and direction == "add":
+        await interaction.response.send_message("Bots cannot be hosts")
+        return
+    if member.system and direction == "add":
+        await interaction.response.send_message("System users cannot be hosts")
+        return
+
     try:
         await getattr(member, f"{verb}_roles")(role, reason=f"{interaction.user.display_name} ({interaction.user.name}) requested {verb}")
     except discord.Forbidden:
