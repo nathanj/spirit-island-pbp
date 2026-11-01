@@ -134,6 +134,10 @@ if '--fake-discord' in sys.argv:
     tree: discord.app_commands.CommandTree = Tree() #type: ignore[assignment]
 else:
     intents = discord.Intents.default()
+    # TODO: we migrated to slash commands now, so we do not need message_content to serve any functionality.
+    # we are temporarily keeping message_content in order to respond to any old $-prefixed commands.
+    # it can be removed when everyone has been sufficiently educated
+    intents.message_content = True
     intents.members = True
 
     client = discord.Client(intents=intents)
@@ -280,6 +284,14 @@ async def on_guild_channel_update(before: discord.abc.GuildChannel, after: disco
             LOG.msg('skip non-update channel')
             return
         await link_channel_to_game(after, guid)
+
+@client.event
+async def on_message(message: discord.Message) -> None:
+    if message.author == client.user:
+        return
+    parts = message.content.split()
+    if parts and parts[0] in ('$follow', '$help', '$pin', '$unpin', '$delete', '$topic', '$rename', '$role', '$unrole', '$host', '$unhost', '$createrole'):
+        await message.reply(f"Unfortunately, Discord has forced {client.user.name if client.user else 'PBP Bot'} to discontinue $-prefixed commands. All commands have to be slash commands now, type / to bring up the menu or /help for a list")
 
 @tree.command(guild=command_scope)
 @discord.app_commands.describe(topic="what you want help on")
