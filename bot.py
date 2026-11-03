@@ -155,6 +155,9 @@ NON_UPDATE_CHANNEL_PATTERN = re.compile(os.getenv('DISCORD_NON_UPDATE_CHANNEL_PA
 ROLE_CHANNEL = int(os.getenv('DISCORD_ROLE_CHANNEL', 846584074943725599))
 ROLE_PATTERN = re.compile(os.getenv('DISCORD_ROLE_PATTERN', r'\A\d+-pbp\Z'))
 ROLE_ASSIGNER_ROLE = int(os.getenv('DISCORD_ROLE_ASSIGNER_ROLE', 1195873293622857789))
+# For now, these two roles will be one and the same.
+# If there's a need to separate them, it will need a new config option and a new way to assign it.
+GAME_HOST_ROLE = ROLE_ASSIGNER_ROLE
 ROLE_ASSIGNER_ADMIN_ROLE = int(os.getenv('DISCORD_ROLE_ASSIGNER_ADMIN_ROLE', 925206661528948736))
 ROLE_CREATOR_ROLE = int(os.getenv('DISCORD_ROLE_CREATOR_ROLE', 925206661528948736))
 GAME_URL = os.getenv('GAME_URL', 'si.bitcrafter.net')
@@ -321,7 +324,7 @@ async def help(interaction: discord.Interaction, topic: Literal['general', 'admi
                 "",
                 "`/topic new topic` to set the channel topic (set an update channel's topic to a game link to start sending updates to that channel)",
                 "`/follow gameurl` for forum posts (where it's not possible to set a topic)",
-                "`/delete messageID` to delete a message (only messages posted by the bot)",
+                "`/delete_screenshot messageID` to delete a screenshot",
                 "`/rename new name` to set the channel name",
                 "`/roleme rolenum` to add yourself to a role",
                 "`/role` and `/unrole` to add/remove other players to/from a role",
@@ -385,10 +388,10 @@ async def unpinall(interaction: discord.Interaction) -> None:
 # However, would that add the option to every single message?
 # It would be preferable to add it only to the bot's messages.
 @tree.command(guild=command_scope)
-@discord.app_commands.describe(message_id_or_link="ID (17-20 digit number) or link (https://discord.com/channels/...) of the message to delete")
+@discord.app_commands.describe(message_id_or_link="ID (17-20 digit number) or link (https://discord.com/channels/...) of the message with the screenshot to delete")
 # can't use int, because int only supports int53, but message IDs can be up to 64 bits
-async def delete(interaction: discord.Interaction, message_id_or_link: str) -> None:
-    """delete the message with the specified ID (bot's messages only)"""
+async def delete_screenshot(interaction: discord.Interaction, message_id_or_link: str) -> None:
+    """delete the screenshot attached to the message with the specified ID"""
     if not interaction.channel or isinstance(interaction.channel, (discord.ForumChannel, discord.CategoryChannel)):
         await interaction.response.send_message("couldn't find a message with that ID in this channel (need to be in the same channel)")
         return
@@ -404,26 +407,34 @@ async def delete(interaction: discord.Interaction, message_id_or_link: str) -> N
         return
 
     try:
-        message_to_delete = await interaction.channel.fetch_message(message_id)
+        message = await interaction.channel.fetch_message(message_id)
     except discord.errors.NotFound:
-        await interaction.response.send_message("couldn't find a message with that ID in this channel (need to be in the same channel)")
+        await interaction.response.send_message("couldn't find a message with that ID in this channel (need to be in the same channel and specify the message with the screenshot, not the screenshot itself)")
         return
     except discord.errors.Forbidden:
         await interaction.response.send_message("I don't have permission to get past messages")
         return
 
-    if message_to_delete.author != client.user:
-        await interaction.response.send_message("I only delete my own messages")
+    if message.author != client.user:
+        await interaction.response.send_message("this command can only delete screenshots")
         return
-    if message_to_delete.mentions or message_to_delete.interaction_metadata:
-        await interaction.response.send_message("This message seems to mention some users, which means it may be an audit message. Deleting it may be unsafe.")
+    if not message.attachments or "screenshot" not in message.content:
+        await interaction.response.send_message("I couldn't find any screenshots attached to that message")
+        return
+    if (datetime.datetime.now(datetime.UTC) - message.created_at).days:
+        await interaction.response.send_message("the screenshot was posted too long ago to be deleted")
+        return
+    if not isinstance(interaction.user, discord.Member) or not any(role.id == GAME_HOST_ROLE or role.id == ROLE_ASSIGNER_ADMIN_ROLE for role in interaction.user.roles):
+        await interaction.response.send_message("you need to be a PBP host to delete screenshots")
         return
 
-    # delete doesn't accept a reason argument
-    # doesn't matter anyway since we're deleting our own message,
-    # which doesn't create an audit log entry
-    if await act_on_message(interaction, message_to_delete, 'delete', reason=False):
-        await interaction.response.send_message(f"{interaction.user.mention} deleted the message I sent at {message_to_delete.created_at}")
+    try:
+        await message.edit(content=f"{message.content} (deleted by {interaction.user.mention} at {datetime.datetime.now()})", attachments=())
+        await interaction.response.send_message(f"{interaction.user.mention} deleted the screenshot in {message.jump_url}")
+    except discord.Forbidden:
+        await interaction.response.send_message("I don't have permission to edit messages.")
+    except discord.HTTPException:
+        await interaction.response.send_message("Failed to delete the screenshot due to an HTTP error.")
 
 async def act_on_message(interaction: discord.Interaction, message_to_modify: discord.Message, verb: str, reason: bool = True) -> bool:
     try:

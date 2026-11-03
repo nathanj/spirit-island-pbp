@@ -131,7 +131,7 @@ The bot does not require any server-wide permissions, only permissions specific 
 * Required: Send Messages
 * Required: Attach Files
 * Optional: Use External Emoji (If you want the bot to use Spirit Island emoji on a server other than Spirit Island)
-* Optional: Read Message History (Enables commands like `/delete`, where the bot needs to access the message that the command specifies)
+* Optional: Read Message History (Enables commands like `/delete_screenshot`, where the bot needs to access the message that the command specifies)
 * Optional: Pin Messages (If you are comfortable allowing the bot to, as a convenience, perform the following functions)
   * pin the game link in response to a `/follow` command
   * unpin all messages in response to an `/unpinall` command
