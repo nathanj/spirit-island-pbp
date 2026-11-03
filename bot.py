@@ -812,7 +812,7 @@ async def relay_game(channel_id: int, log: Iterable[GameLogEntry]) -> None:
                 # TODO: After we've confirmed this is in fact what's happening
                 #       we can probably delete this message, and just pass here.
                 # Players probably don't need to be informed of this, so we can just pass.
-                await channel.send(msg + " (the image has since been deleted)")
+                await channel.send(msg + " (the image was deleted before it could be posted)")
         else:
             if sum(len(m) + 1 for m in combined_text) + len(msg) > maxlen:
                 # adding the new message would make the combined message too long
