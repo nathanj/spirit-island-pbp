@@ -329,6 +329,7 @@ async def help(interaction: discord.Interaction, topic: Literal['general', 'admi
                 "`/roleme rolenum` to add yourself to a role",
                 "`/role` and `/unrole` to add/remove other players to/from a role",
                 "`/unroleall` to remove all players from a role",
+                "`/cleanup` to clean up a channel after a game (pins, topic, name)",
                 "`/help role` for more detailed help on roles",
                 "`/help admin` to show admin-only commands",
             ))
@@ -362,35 +363,37 @@ async def follow(interaction: discord.Interaction, game_url: str) -> None:
 @tree.command(guild=command_scope)
 async def unpinall(interaction: discord.Interaction) -> None:
     """unpin all messages in this channel (PBP channels only)"""
+    _, feedback = await unpinall_impl(interaction)
+    await interaction.response.send_message(feedback)
+
+async def unpinall_impl(interaction: discord.Interaction) -> tuple[bool, str]:
+    """returns: whether successful, string feedback"""
     if not interaction.channel or isinstance(interaction.channel, (discord.ForumChannel, discord.CategoryChannel)):
-        await interaction.response.send_message(f"this kind of channel ({type(interaction.channel).__name__}) doesn't have any pins")
-        return
+        return (False, f"this kind of channel ({type(interaction.channel).__name__}) doesn't have any pins")
     # Ideally the guild uses permissions to restrict what the bot can do,
     # but defence in depth is desirable for such sensitive operations.
     if isinstance(interaction.channel, discord.DMChannel) or not re.search(MANAGED_CHANNEL_PATTERN, interaction.channel.name or ""):
-        await interaction.response.send_message("I only manage PBP channels, which this channel doesn't appear to be")
-        return
+        return (False, "I only manage PBP channels, which this channel doesn't appear to be")
 
-    async def unpin_one(message: discord.Message) -> bool:
+    async def unpin_one(message: discord.Message) -> str | None:
         try:
             await message.unpin(reason=f"{interaction.user.display_name} ({interaction.user.name}, ID {interaction.user.id}) requested")
-            return True
+            return None
         except discord.Forbidden:
-            await interaction.response.send_message("I don't have permission to unpin messages.")
+            return "I don't have permission to unpin messages."
         except discord.HTTPException:
-            await interaction.response.send_message("Failed to unpin the message due to an HTTP error.")
-        return False
+            return "Failed to unpin the message due to an HTTP error."
+        return "Failed for an unknown reason"
 
     num_unpinned = 0
     try:
         async for to_unpin in interaction.channel.pins():
-            if not await unpin_one(to_unpin):
-                return
+            if (err := await unpin_one(to_unpin)):
+                return (False, err)
             num_unpinned += 1
     except discord.Forbidden:
-        await interaction.response.send_message("I don't have permission to get the pinned messages")
-        return
-    await interaction.response.send_message(f"{interaction.user.mention} unpinned {num_unpinned} messages")
+        return (False, "I don't have permission to get the pinned messages")
+    return (True, f"{interaction.user.mention} unpinned {num_unpinned} messages")
 
 # TODO: Maybe consider a https://docs.discord.com/developers/interactions/application-commands#message-commands
 # https://docs.discord.com/developers/gateway/you-might-not-need-a-privileged-intent#what-you-can-do-without-the-intent-3
@@ -516,6 +519,35 @@ async def rename(interaction: discord.Interaction, new_name: str = "") -> None:
         await interaction.followup.send("I don't have permission to rename the channel")
     except discord.HTTPException:
         await interaction.followup.send("Failed to rename the channel due to an HTTP error.")
+
+@tree.command(guild=command_scope)
+async def cleanup(interaction: discord.Interaction) -> None:
+    """clean up this channel after a game is complete (clear pins, topic, name)"""
+
+    # unpinall_impl and edit_channel SHOULD also individually check everything they need to,
+    # but we need to check the type to be able to pass the channel to edit_channel anyway.
+    if not isinstance(interaction.channel, discord.TextChannel):
+        # Note: assumes that rename and topic only support TextChannel, as does this function.
+        # If the three functions start supporting different types of channels, below guidance needs to be adjusted.
+        await interaction.response.send_message(f"This bot only supports cleaning up text channels, not {type(interaction.channel).__name__}s. Try unpinall instead.")
+        return
+
+    if not isinstance(interaction.user, discord.Member) or not any(role.id == GAME_HOST_ROLE or role.id == ROLE_ASSIGNER_ADMIN_ROLE for role in interaction.user.roles):
+        await interaction.response.send_message("you need to be a PBP host to clean up the channel")
+        return
+
+    existing_name = interaction.channel.name
+    new_name = existing_name[:existing_name.index('-')] if '-' in existing_name else existing_name
+
+    success, feedback = await unpinall_impl(interaction)
+    unpin_result = f"{"✅" if success else "❌"} {feedback}"
+
+    try:
+        await edit_channel(interaction, interaction.channel, f"cleaned up the channel\n* {unpin_result}\n* ✅ {interaction.user.mention} cleared the topic and channel name", name=new_name, topic="")
+    except discord.Forbidden:
+        await interaction.followup.send(f"* {unpin_result}\n* ❌ I don't have permission to clean up the channel")
+    except discord.HTTPException:
+        await interaction.followup.send(f"* {unpin_result}\n* ❌ Failed to clean up the channel due to an HTTP error")
 
 class ChannelChanges(TypedDict):
     name: NotRequired[str]
