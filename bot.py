@@ -436,6 +436,8 @@ async def topic(interaction: discord.Interaction, new_topic: str = "") -> None:
         await edit_channel(interaction, interaction.channel, 'changed the channel topic', topic=new_topic)
     except discord.Forbidden:
         await interaction.response.send_message("I don't have permission to set the channel topic")
+    except discord.HTTPException:
+        await interaction.response.send_message("Failed to set the topic due to an HTTP error.")
 
 @tree.command(guild=command_scope)
 @discord.app_commands.describe(new_name="new channel name, or empty to clear the name. DO NOT include the NNup- or NNdc- prefix")
@@ -481,6 +483,8 @@ async def rename(interaction: discord.Interaction, new_name: str = "") -> None:
         await edit_channel(interaction, interaction.channel, verb, name=new_name)
     except discord.Forbidden:
         await interaction.response.send_message("I don't have permission to rename the channel")
+    except discord.HTTPException:
+        await interaction.response.send_message("Failed to rename the channel due to an HTTP error.")
 
 class ChannelChanges(TypedDict):
     name: NotRequired[str]
@@ -598,6 +602,9 @@ async def mod_players_and_roles(interaction: discord.Interaction, members: Colle
             await interaction.response.send_message("I don't have permission to manage roles on this server")
         else:
             await interaction.response.send_message("I don't have permission to manage that role (it outranks me)")
+        return
+    except discord.HTTPException:
+        await interaction.response.send_message(f"Failed to {verb} {direction} the role due to an HTTP error")
         return
 
     suffix = "d" if verb[-1] == "e" else "ed"
