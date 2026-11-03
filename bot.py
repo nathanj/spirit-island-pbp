@@ -371,10 +371,20 @@ async def unpinall(interaction: discord.Interaction) -> None:
         await interaction.response.send_message("I only manage PBP channels, which this channel doesn't appear to be")
         return
 
+    async def unpin_one(message: discord.Message) -> bool:
+        try:
+            await message.unpin(reason=f"{interaction.user.display_name} ({interaction.user.name}, ID {interaction.user.id}) requested")
+            return True
+        except discord.Forbidden:
+            await interaction.response.send_message("I don't have permission to unpin messages.")
+        except discord.HTTPException:
+            await interaction.response.send_message("Failed to unpin the message due to an HTTP error.")
+        return False
+
     num_unpinned = 0
     try:
         async for to_unpin in interaction.channel.pins():
-            if not await act_on_message(interaction, to_unpin, 'unpin'):
+            if not await unpin_one(to_unpin):
                 return
             num_unpinned += 1
     except discord.Forbidden:
@@ -435,17 +445,6 @@ async def delete_screenshot(interaction: discord.Interaction, message_id_or_link
         await interaction.response.send_message("I don't have permission to edit messages.")
     except discord.HTTPException:
         await interaction.response.send_message("Failed to delete the screenshot due to an HTTP error.")
-
-async def act_on_message(interaction: discord.Interaction, message_to_modify: discord.Message, verb: str, reason: bool = True) -> bool:
-    try:
-        kwargs = {'reason': f"{interaction.user.display_name} ({interaction.user.name}, ID {interaction.user.id}) requested"} if reason else {}
-        await getattr(message_to_modify, verb)(**kwargs)
-        return True
-    except discord.Forbidden:
-        await interaction.response.send_message(f"I don't have permission to {verb} messages.")
-    except discord.HTTPException:
-        await interaction.response.send_message(f"Failed to {verb} the message due to an HTTP error.")
-    return False
 
 @tree.command(guild=command_scope)
 @discord.app_commands.describe(new_topic="new topic, or empty to clear the topic")
