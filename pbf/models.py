@@ -1507,6 +1507,11 @@ spirit_thresholds: frozendict[str, list[tuple[int, int, str | list[str]]]] = fro
             (667, 1081, '3S2E2N'),
             (667, 1110, '4S2E2N'),
             ],
+        'BuzzingBreeze': [
+            # Busily Buzzing Here and There
+            (366, 588, '1S1A'),
+            (629, 588, '3A2P'),
+        ],
 })
 
 card_thresholds = frozendict({

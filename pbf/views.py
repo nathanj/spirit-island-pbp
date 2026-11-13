@@ -252,6 +252,9 @@ def game_setup(request: HttpRequest, game_id: UUID) -> HttpResponse:
             ('Shadows', 'Shadows Flicker Like Flame', ('NO BASE', 'Exploratory', )),
             ('Bringer', 'Bringer of Dreams and Nightmares', ('NO BASE', 'Exploratory', )),
         ],
+        'Custom': [
+            ('BuzzingBreeze', 'Buzzing Breeze Carries Gifts', ()),
+        ],
     }
     spirits_present = [spirit for (expansion, spirits) in spirits_by_expansion.items() for (spirit, _, _) in spirits]
     spirits = [s.name for s in Spirit.objects.order_by('name').all()]
@@ -455,6 +458,10 @@ spirit_presence = frozendict({
                 # hoard treasure
                 (13,1146,1.0), (83,1146,1.0), (153,1146,1.0), (223,1146,1.0), (293,1146,1.0), (363,1146,1.0), (433,1146,1.0), (503,1146,1.0), (573,1146,1.0), (643,1146,1.0), (713,1146,1.0), (783,1146,1.0), (853,1146,1.0),
                 ),
+        'BuzzingBreeze': ((482,166,1.0,'','Sun'), (596,150,1.0), (712,153,1.0,'','Air'),
+                (407,225,1.0), (526,248,1.0), (616,226,1.0), (706,230,1.0), (830,225,1.0,'+2'),
+                (367,301,1.0), (468,310,1.0,'','Air'), (560,328,1.0), (664,309,1.0,'','Sun'), (758,306,1.0,'+1'), (862,305,1.0),
+                (367,394,1.0), (480,414,1.0), (638,406,1.0), (750,410,1.0), (854,402,1.0)),
 })
 
 spirit_additional_cards = frozendict({
