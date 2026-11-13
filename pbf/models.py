@@ -122,6 +122,7 @@ class Spirit(models.Model):
             'Waters': 0,
             'Rot': 2,
             'Covets': 0,
+            'CustomPlaceholder': 0,
     })
 
     def __str__(self) -> str:
