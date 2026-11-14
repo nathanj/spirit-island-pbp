@@ -384,7 +384,7 @@ spirit_presence = frozendict({
         'Wildfire': ((444,155,1.0,'','Fire'), (513,155,1.0,'1'), (584,155,1.0,'2'), (653,155,1.0,'','Fire,Plant'), (725,155,1.0,'3'),
             (443,253,1.0,'','Fire'), (513,253,1.0), (584,253,1.0), (653,253,1.0,'','Fire'), (724,253,1.0)),
         'Serpent': ((442,151,1.0,'','Fire'), (512,151,1.0), (582,151,1.0), (717,151,1.0,'6'), (787,151,1.0), (857,151,1.0,'12'),
-            (652,201,1.0,'','Earth'), 
+            (652,201,1.0,'','Earth'),
             (442,251,1.0,'','Moon'), (512,251,1.0), (582,251,1.0,'','Water'), (727,251,1.0), (797,251,1.0),
             (68,480,0.0), (138,480,0.0), (208,480,0.0),
             (35,540,0.0), (105,540,0.0), (175,540,0.0)),
@@ -484,7 +484,7 @@ def add_player(request: HttpRequest, game_id: UUID) -> HttpResponse:
     # this automatically handles random by virtue of random not being in colors.
     # TODO: maybe consider showing an error if they select a color already in use?
     if color not in colors:
-        color = random.choice(colors)
+        color = random.choice(colors) # noqa: S311
     spirit_name = request.POST['spirit']
     spirit_and_aspect = spirit_name
     aspect = None
@@ -1519,6 +1519,7 @@ def toggle_presence(request: HttpRequest, player_id: int, left: int, top: int) -
 
 def add_element(request: HttpRequest, player_id: int, element: str) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
+    # ruff: disable[E701]
     if element == 'sun': player.temporary_sun += 1
     if element == 'moon': player.temporary_moon += 1
     if element == 'fire': player.temporary_fire += 1
@@ -1528,12 +1529,14 @@ def add_element(request: HttpRequest, player_id: int, element: str) -> HttpRespo
     if element == 'plant': player.temporary_plant += 1
     if element == 'animal': player.temporary_animal += 1
     if element == 'moonfire': player.temporary_moon += 1
+    # ruff: enable[E701]
     player.save()
 
     return render(request, 'player.html', {'player': player})
 
 def remove_element(request: HttpRequest, player_id: int, element: str) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
+    # ruff: disable[E701]
     if element == 'sun': player.temporary_sun -= 1
     if element == 'moon': player.temporary_moon -= 1
     if element == 'fire': player.temporary_fire -= 1
@@ -1542,6 +1545,7 @@ def remove_element(request: HttpRequest, player_id: int, element: str) -> HttpRe
     if element == 'earth': player.temporary_earth -= 1
     if element == 'plant': player.temporary_plant -= 1
     if element == 'animal': player.temporary_animal -= 1
+    # ruff: enable[E701]
     if element == 'moonfire':
         if player.temporary_moon > 0:
             player.temporary_moon -= 1
@@ -1553,6 +1557,7 @@ def remove_element(request: HttpRequest, player_id: int, element: str) -> HttpRe
 
 def add_element_permanent(request: HttpRequest, player_id: int, element: str) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
+    # ruff: disable[E701]
     if element == 'sun': player.permanent_sun += 1
     if element == 'moon': player.permanent_moon += 1
     if element == 'fire': player.permanent_fire += 1
@@ -1562,12 +1567,14 @@ def add_element_permanent(request: HttpRequest, player_id: int, element: str) ->
     if element == 'plant': player.permanent_plant += 1
     if element == 'animal': player.permanent_animal += 1
     if element == 'moonfire': player.permanent_moon += 1
+    # ruff: enable[E701]
     player.save()
 
     return render(request, 'player.html', {'player': player})
 
 def remove_element_permanent(request: HttpRequest, player_id: int, element: str) -> HttpResponse:
     player = get_object_or_404(GamePlayer, pk=player_id)
+    # ruff: disable[E701]
     if element == 'sun': player.permanent_sun -= 1
     if element == 'moon': player.permanent_moon -= 1
     if element == 'fire': player.permanent_fire -= 1
@@ -1576,6 +1583,7 @@ def remove_element_permanent(request: HttpRequest, player_id: int, element: str)
     if element == 'earth': player.permanent_earth -= 1
     if element == 'plant': player.permanent_plant -= 1
     if element == 'animal': player.permanent_animal -= 1
+    # ruff: enable[E701]
     if element == 'moonfire':
         if player.permanent_moon > 0:
             player.permanent_moon -= 1

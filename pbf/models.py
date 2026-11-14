@@ -25,13 +25,15 @@ def check_elements(elements: dict['Elements', int], desired: list[str] | str, eq
     if equiv_elements:
         threshold = sum(int(c[0]) for c in chunks if c[1] in equiv_elements)
         in_play = sum(elements[Elements.from_char(e)] for e in equiv_elements) #type: ignore[index, misc]
-        if in_play < threshold: return False
+        if in_play < threshold:
+            return False
         chunks = [c for c in chunks if c[1] not in equiv_elements]
 
     for c in chunks:
         amt = int(c[0])
         e = Elements.from_char(c[1])
-        if e and elements[e] < amt: return False
+        if e and elements[e] < amt:
+            return False
     return True
 
 
@@ -47,6 +49,7 @@ class Elements(Enum):
 
     @staticmethod
     def from_char(c: str) -> 'Elements | None':
+        # ruff: disable[E701]
         if c == 'S': return Elements.Sun
         if c == 'M': return Elements.Moon
         if c == 'F': return Elements.Fire
@@ -55,6 +58,7 @@ class Elements(Enum):
         if c == 'E': return Elements.Earth
         if c == 'P': return Elements.Plant
         if c == 'N': return Elements.Animal
+        # ruff: enable[E701]
         return None
 
 class Threshold:
@@ -647,7 +651,8 @@ class GamePlayer(models.Model):
         return self.impending_with_energy.filter(gameplayerimpendingwithenergy__in_play=True)
 
     def equiv_elements(self) -> str | None:
-        if self.aspect == 'Dark Fire': return "MF"
+        if self.aspect == 'Dark Fire':
+            return "MF"
         return None
 
     def total_and_temporary_elements(self) -> Iterable[tuple[str, int, int]]:
@@ -663,7 +668,7 @@ class GamePlayer(models.Model):
         result = [(elt.name.lower(), getattr(self, 'permanent_' + elt.name.lower())) for elt in Elements]
         if self.aspect == 'Dark Fire':
             result[1:3] = [('moonfire', self.permanent_moon + self.permanent_fire)]
-        return {k: v for (k, v) in result}
+        return dict(result)
 
 
     class PresenceInfo(Protocol):

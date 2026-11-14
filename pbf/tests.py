@@ -1922,7 +1922,7 @@ class TestUpload(TestCase):
         png_chunk('IHDR', [
             0, 0, 0, 1, # width 1
             0, 0, 0, 1, # height 1
-            1, 0, 0, 0, 0 # bit depth, colour type, compression method, filter method, interlace method
+            1, 0, 0, 0, 0, # bit depth, colour type, compression method, filter method, interlace method
         ]),
         png_chunk('IDAT', [
             0, 0,
