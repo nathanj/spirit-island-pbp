@@ -50,7 +50,7 @@ def set_ipc_method(method: str) -> None:
                 e.add_note("If you just want to develop the site (not running in production) and don't need to send messages to Discord, see .env.template for instructions on running in debug mode")
                 raise
             REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
-            REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+            REDIS_PORT = int(os.getenv('REDIS_PORT', 6379)) # noqa: PLW1508
             bot_socket = None
             redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=1)
         case _:
