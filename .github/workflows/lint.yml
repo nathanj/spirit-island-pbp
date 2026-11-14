@@ -24,4 +24,4 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install ruff
-      - run: ruff check --ignore E701
+      - run: ruff check
