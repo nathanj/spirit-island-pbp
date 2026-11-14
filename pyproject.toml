@@ -45,3 +45,15 @@ build-backend = "uv_build"
 [tool.uv.build-backend]
 module-root = "./"
 module-name = "pbf"
+
+[tool.ruff.lint]
+extend-select = [
+    "W",   # PyCodeStyle warnings
+    "E",   # PyCodeStyle errors
+    "C4",  # comprehensions
+    "S",   # sec
+    "COM812", # require trailing comma
+]
+ignore = [
+    "E501", # line too long
+]
