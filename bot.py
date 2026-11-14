@@ -147,6 +147,9 @@ list_guilds = '--list-guilds' in sys.argv
 
 LOG = structlog.get_logger()
 
+# PLW1508: Invalid type for environment variable default
+# It's completely pointless to use strings when integers are the final type.
+# ruff: disable[PLW1508]
 DISCORD_KEY = os.getenv('DISCORD_KEY', '')
 DJANGO_HOST = os.getenv('DJANGO_HOST', 'localhost')
 DJANGO_PORT = int(os.getenv('DJANGO_PORT', 8000))
@@ -162,6 +165,7 @@ ROLE_ASSIGNER_ADMIN_ROLE = int(os.getenv('DISCORD_ROLE_ASSIGNER_ADMIN_ROLE', 925
 ROLE_CREATOR_ROLE = int(os.getenv('DISCORD_ROLE_CREATOR_ROLE', 925206661528948736))
 GAME_URL = os.getenv('GAME_URL', 'si.bitcrafter.net')
 GUILD_ID = int(os.getenv('DISCORD_GUILD_ID', 846580409050857493))
+# ruff: enable[PLW1508]
 
 match os.getenv('IPC_METHOD', 'redis'):
     case 'socket':
@@ -173,7 +177,7 @@ match os.getenv('IPC_METHOD', 'redis'):
         import redis.asyncio as redis  #type: ignore[import-not-found]
 
         REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
-        REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+        REDIS_PORT = int(os.getenv('REDIS_PORT', 6379)) # noqa: PLW1508
         SOCKET_PATH = None #type: ignore[assignment]
     case _:
         raise ValueError('unknown IPC method')
