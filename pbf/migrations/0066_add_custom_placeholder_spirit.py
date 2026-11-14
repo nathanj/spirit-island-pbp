@@ -6,12 +6,12 @@ def load_custom(apps, schema_editor):
     Card = apps.get_model("pbf", "Card")
     mijn = Spirit(name="CustomPlaceholder")
     mijn.save()
-    Card(name="CustomPlaceholder Card A", cost=0, type=2, speed=0, spirit=mijn, elements="").save()
-    Card(name="CustomPlaceholder Card B", cost=0, type=2, speed=0, spirit=mijn, elements="").save()
-    Card(name="CustomPlaceholder Card C", cost=0, type=2, speed=1, spirit=mijn, elements="").save()
-    Card(name="CustomPlaceholder Card D", cost=0, type=2, speed=0, spirit=mijn, elements="").save()
-    Card(name="CustomPlaceholder Card E", cost=0, type=2, speed=0, spirit=mijn, elements="").save()
-    Card(name="CustomPlaceholder Card F", cost=0, type=2, speed=0, spirit=mijn, elements="").save()
+    Card(name="CustomPlaceholder Card A", cost=0, type=2, speed=2, spirit=mijn, elements="").save()
+    Card(name="CustomPlaceholder Card B", cost=0, type=2, speed=2, spirit=mijn, elements="").save()
+    Card(name="CustomPlaceholder Card C", cost=0, type=2, speed=2, spirit=mijn, elements="").save()
+    Card(name="CustomPlaceholder Card D", cost=0, type=2, speed=2, spirit=mijn, elements="").save()
+    Card(name="CustomPlaceholder Card E", cost=0, type=2, speed=2, spirit=mijn, elements="").save()
+    Card(name="CustomPlaceholder Card F", cost=0, type=2, speed=2, spirit=mijn, elements="").save()
 
 
 def delete_custom(apps, schema_editor):
