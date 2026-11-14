@@ -62,7 +62,7 @@ spirit_names = (
 'Volcano',
 'Waters',
 'Whirlwind',
-'Wildfire',
+'Wildfire'
 )
 spirit_disambig = frozendict({
     'Earth': 'Vital.*Earth', # just "Earth" is ambiguous (Earthquakes)
@@ -76,7 +76,7 @@ load_dotenv()
 
 if '--fake-discord' in sys.argv:
     class Client:
-        class User:
+        class User:    
             def __init__(self) -> None:
                 self.name = 'fake discord bot'
 
