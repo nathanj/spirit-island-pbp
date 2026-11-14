@@ -538,7 +538,7 @@ class GamePlayer(models.Model):
             'IntensifyMemory': 'Prepared Elements',
             'MentorMemory': 'Prepared Elements',
             'Waters': 'Healing Markers',
-            'CustomPlaceholder': 'Custom Resource Tracker'
+            'CustomPlaceholder': 'Custom Resource Tracker',
         }
         return d.get(self.full_name())
 
