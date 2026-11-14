@@ -99,7 +99,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django_prometheus.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    },
 }
 
 
