@@ -668,7 +668,7 @@ class GamePlayer(models.Model):
         result = [(elt.name.lower(), getattr(self, 'permanent_' + elt.name.lower())) for elt in Elements]
         if self.aspect == 'Dark Fire':
             result[1:3] = [('moonfire', self.permanent_moon + self.permanent_fire)]
-        return {k: v for (k, v) in result}
+        return dict(result)
 
 
     class PresenceInfo(Protocol):
