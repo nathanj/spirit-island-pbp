@@ -484,7 +484,7 @@ def add_player(request: HttpRequest, game_id: UUID) -> HttpResponse:
     # this automatically handles random by virtue of random not being in colors.
     # TODO: maybe consider showing an error if they select a color already in use?
     if color not in colors:
-        color = random.choice(colors)
+        color = random.choice(colors) # noqa: S311
     spirit_name = request.POST['spirit']
     spirit_and_aspect = spirit_name
     aspect = None
