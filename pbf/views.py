@@ -458,7 +458,7 @@ spirit_presence = frozendict({
                 # hoard treasure
                 (13,1146,1.0), (83,1146,1.0), (153,1146,1.0), (223,1146,1.0), (293,1146,1.0), (363,1146,1.0), (433,1146,1.0), (503,1146,1.0), (573,1146,1.0), (643,1146,1.0), (713,1146,1.0), (783,1146,1.0), (853,1146,1.0),
                 ),
-        'ManualPlaceholder': tuple((449 + 73 * i, y, 1.0) for y in (118, 222) for i in range(6)),
+        'ManualPlaceholder': tuple((449 + 73 * i, y, 0.0 if i == 6 else 1.0) for y in (118, 222) for i in range(7)),
 })
 
 spirit_additional_cards = frozendict({
