@@ -6,12 +6,8 @@ def load_manual(apps, schema_editor):
     Card = apps.get_model("pbf", "Card")
     spirit = Spirit(name="ManualPlaceholder")
     spirit.save()
-    Card(name="ManualPlaceholder Card A", cost=0, type=2, speed=2, spirit=spirit, elements="").save()
-    Card(name="ManualPlaceholder Card B", cost=0, type=2, speed=2, spirit=spirit, elements="").save()
-    Card(name="ManualPlaceholder Card C", cost=0, type=2, speed=2, spirit=spirit, elements="").save()
-    Card(name="ManualPlaceholder Card D", cost=0, type=2, speed=2, spirit=spirit, elements="").save()
-    Card(name="ManualPlaceholder Card E", cost=0, type=2, speed=2, spirit=spirit, elements="").save()
-    Card(name="ManualPlaceholder Card F", cost=0, type=2, speed=2, spirit=spirit, elements="").save()
+    for letter in "ABCDEF":
+        Card(name=f"{spirit.name} Card {letter}", cost=0, type=2, speed=2, spirit=spirit, elements="").save()
 
 
 def delete_manual(apps, schema_editor):
