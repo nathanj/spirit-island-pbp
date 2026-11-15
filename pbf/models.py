@@ -126,6 +126,7 @@ class Spirit(models.Model):
             'Waters': 0,
             'Rot': 2,
             'Covets': 0,
+            'ManualPlaceholder': 0,
     })
 
     def __str__(self) -> str:
@@ -203,7 +204,7 @@ class Card(models.Model):
         uniques_without_spirit = cls.objects.filter(type=cls.Type.UNIQUE, spirit=None).exclude(name__in=('Belligerent and Aggressive Crops', 'Smite the Land with Fulmination'))
         errors.extend(checks.Warning("doesn't have a spirit but should", obj=card) for card in uniques_without_spirit)
 
-        no_elements = not_healing.filter(elements='').exclude(name__in=('Elemental Boon', "Gift of Nature's Connection", 'Draw Towards a Consuming Void'))
+        no_elements = not_healing.filter(elements='').exclude(name__in=('Elemental Boon', "Gift of Nature's Connection", 'Draw Towards a Consuming Void', *(f"ManualPlaceholder Card {letter}" for letter in "ABCDEF")))
         errors.extend(checks.Warning('no elements', obj=card) for card in no_elements)
 
         for card in cls.objects.filter(elements__contains=','):
@@ -541,6 +542,7 @@ class GamePlayer(models.Model):
             'IntensifyMemory': 'Prepared Elements',
             'MentorMemory': 'Prepared Elements',
             'Waters': 'Healing Markers',
+            'ManualPlaceholder': 'Spirit-Specific Resource',
         }
         return d.get(self.full_name())
 
