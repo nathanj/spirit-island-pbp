@@ -252,8 +252,8 @@ def game_setup(request: HttpRequest, game_id: UUID) -> HttpResponse:
             ('Shadows', 'Shadows Flicker Like Flame', ('NO BASE', 'Exploratory', )),
             ('Bringer', 'Bringer of Dreams and Nightmares', ('NO BASE', 'Exploratory', )),
         ],
-        'Custom': [
-            ('CustomPlaceholder', 'A placeholder for custom spirits', ()),
+        'Manual': [
+            ('ManualPlaceholder', 'Blank placeholder spirit with manual tracking', ()),
         ],
     }
     spirits_present = [spirit for (expansion, spirits) in spirits_by_expansion.items() for (spirit, _, _) in spirits]
@@ -458,7 +458,7 @@ spirit_presence = frozendict({
                 # hoard treasure
                 (13,1146,1.0), (83,1146,1.0), (153,1146,1.0), (223,1146,1.0), (293,1146,1.0), (363,1146,1.0), (433,1146,1.0), (503,1146,1.0), (573,1146,1.0), (643,1146,1.0), (713,1146,1.0), (783,1146,1.0), (853,1146,1.0),
                 ),
-        'CustomPlaceholder': ((449,118,1.0),(521,118,1.0),(594,118,1.0),(665,118,1.0),(737,118,1.0),(809,118,1.0),
+        'ManualPlaceholder': ((449,118,1.0),(521,118,1.0),(594,118,1.0),(665,118,1.0),(737,118,1.0),(809,118,1.0),
                 (449,209,1.0),(521,209,1.0),(594,209,1.0),(665,209,1.0),(737,209,1.0),(809,209,1.0)),
 })
 

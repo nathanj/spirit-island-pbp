@@ -126,7 +126,7 @@ class Spirit(models.Model):
             'Waters': 0,
             'Rot': 2,
             'Covets': 0,
-            'CustomPlaceholder': 0,
+            'ManualPlaceholder': 0,
     })
 
     def __str__(self) -> str:
@@ -542,7 +542,7 @@ class GamePlayer(models.Model):
             'IntensifyMemory': 'Prepared Elements',
             'MentorMemory': 'Prepared Elements',
             'Waters': 'Healing Markers',
-            'CustomPlaceholder': 'Custom Resource Tracker',
+            'ManualPlaceholder': 'Spirit-Specific Resource',
         }
         return d.get(self.full_name())
 
